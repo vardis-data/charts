@@ -1,0 +1,17 @@
+{{- if .Values.localStorage.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "pgbackweb.fullname" . }}-backups
+  labels:
+    {{- include "pgbackweb.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.localStorage.storageClassName }}
+  storageClassName: {{ .Values.localStorage.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.localStorage.size }}
+{{- end }}

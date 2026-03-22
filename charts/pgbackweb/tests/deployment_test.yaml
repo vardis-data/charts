@@ -1,0 +1,93 @@
+suite: deployment tests
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: should render deployment
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should have correct name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-pgbackweb
+
+  - it: should use correct image
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "eduardolat/pgbackweb:0.5.1"
+
+  - it: should have correct container port
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8085
+
+  - it: should have reloader annotation by default
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["reloader.stakater.com/auto"]
+          value: "true"
+
+  - it: should disable reloader annotation when configured
+    set:
+      reloader:
+        enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations
+
+  - it: should set timezone
+    set:
+      timezone: America/Sao_Paulo
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TZ
+            value: "America/Sao_Paulo"
+
+  - it: should set path prefix when configured
+    set:
+      server:
+        pathPrefix: /pgbackweb
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PBW_PATH_PREFIX
+            value: "/pgbackweb"
+
+  - it: should mount local storage volume when enabled
+    set:
+      localStorage:
+        enabled: true
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts
+      - exists:
+          path: spec.template.spec.volumes
+
+  - it: should not mount local storage volume when disabled
+    set:
+      localStorage:
+        enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: should have default resources
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].resources
+
+  - it: should have liveness and readiness probes
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe

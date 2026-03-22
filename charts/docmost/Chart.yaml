@@ -2,7 +2,7 @@ apiVersion: v2
 name: docmost
 description: Open-source collaborative documentation and wiki software
 type: application
-version: 1.0.0
+version: 1.1.0
 appVersion: 0.8.2
 home: https://docmost.com
 sources:
@@ -11,3 +11,8 @@ keywords:
   - documentation
   - wiki
   - collaboration
+dependencies:
+  - name: postgres
+    version: 0.18.3
+    repository: oci://registry-1.docker.io/cloudpirates
+    condition: postgres.enabled

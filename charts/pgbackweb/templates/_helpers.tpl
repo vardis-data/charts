@@ -1,8 +1,8 @@
-{{- define "docmost.name" -}}
+{{- define "pgbackweb.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "docmost.fullname" -}}
+{{- define "pgbackweb.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -15,19 +15,19 @@
 {{- end }}
 {{- end }}
 
-{{- define "docmost.labels" -}}
+{{- define "pgbackweb.labels" -}}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-app.kubernetes.io/name: {{ include "docmost.name" . }}
+app.kubernetes.io/name: {{ include "pgbackweb.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
-{{- define "docmost.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "docmost.name" . }}
+{{- define "pgbackweb.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "pgbackweb.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{- define "docmost.databaseHost" -}}
+{{- define "pgbackweb.databaseHost" -}}
 {{- if .Values.postgres.enabled }}
 {{- printf "%s-postgres" .Release.Name }}
 {{- else }}
@@ -35,7 +35,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
-{{- define "docmost.databasePort" -}}
+{{- define "pgbackweb.databasePort" -}}
 {{- if .Values.postgres.enabled }}
 {{- 5432 }}
 {{- else }}
@@ -43,7 +43,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
-{{- define "docmost.databaseName" -}}
+{{- define "pgbackweb.databaseName" -}}
 {{- if .Values.postgres.enabled }}
 {{- .Values.postgres.customUser.database }}
 {{- else }}
@@ -51,7 +51,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
-{{- define "docmost.databaseUser" -}}
+{{- define "pgbackweb.databaseUser" -}}
 {{- if .Values.postgres.enabled }}
 {{- .Values.postgres.customUser.name }}
 {{- else }}
@@ -59,7 +59,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
-{{- define "docmost.databasePassword" -}}
+{{- define "pgbackweb.databasePassword" -}}
 {{- if .Values.postgres.enabled }}
 {{- .Values.postgres.customUser.password }}
 {{- else }}
@@ -67,14 +67,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
-{{- define "docmost.databaseUrl" -}}
-postgresql://{{ include "docmost.databaseUser" . }}:{{ include "docmost.databasePassword" . }}@{{ include "docmost.databaseHost" . }}:{{ include "docmost.databasePort" . }}/{{ include "docmost.databaseName" . }}?schema=public
+{{- define "pgbackweb.databaseSslMode" -}}
+{{- if .Values.postgres.enabled }}
+{{- "disable" }}
+{{- else }}
+{{- .Values.database.sslMode }}
+{{- end }}
 {{- end }}
 
-{{- define "docmost.redisUrl" -}}
-{{- if .Values.redis.password }}
-redis://default:{{ .Values.redis.password }}@{{ .Values.redis.host }}:{{ .Values.redis.port }}
-{{- else }}
-redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}
-{{- end }}
+{{- define "pgbackweb.databaseUrl" -}}
+postgresql://{{ include "pgbackweb.databaseUser" . }}:{{ include "pgbackweb.databasePassword" . }}@{{ include "pgbackweb.databaseHost" . }}:{{ include "pgbackweb.databasePort" . }}/{{ include "pgbackweb.databaseName" . }}?sslmode={{ include "pgbackweb.databaseSslMode" . }}
 {{- end }}

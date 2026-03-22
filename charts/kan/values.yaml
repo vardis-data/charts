@@ -17,7 +17,7 @@ baseUrl: ""
 # -- Better Auth secret (required) - used for session encryption
 betterAuthSecret: ""
 
-# -- Database configuration
+# -- External database configuration (used when postgres.enabled is false)
 database:
   # -- PostgreSQL host
   host: ""
@@ -83,3 +83,17 @@ resources:
 # -- Enable reloader annotation for automatic restarts on secret changes
 reloader:
   enabled: true
+
+# -- Embedded PostgreSQL configuration (cloudpirates/postgres subchart)
+postgres:
+  # -- Enable embedded PostgreSQL
+  enabled: true
+  # -- Custom user configuration for Kan database
+  customUser:
+    name: kan
+    database: kan
+    password: ""
+  # -- Persistence configuration
+  persistence:
+    enabled: true
+    size: 1Gi

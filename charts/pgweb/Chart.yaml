@@ -1,0 +1,14 @@
+apiVersion: v2
+name: pgweb
+description: Web-based PostgreSQL database browser
+type: application
+version: 1.0.0
+appVersion: 0.17.0
+home: https://github.com/sosedoff/pgweb
+sources:
+  - https://github.com/sosedoff/pgweb
+keywords:
+  - postgresql
+  - database
+  - browser
+  - admin

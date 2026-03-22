@@ -61,7 +61,7 @@
         </div>
         <div class="install-cmd">
             <code id="cmd-{{ chart.name }}">helm install {{ chart.name }} vardis/{{ chart.name }}</code>
-            <button class="copy-btn" onclick="copy('cmd-{{ chart.name }}')">Copy</button>
+            <button class="copy-btn" onclick="copy('cmd-{{ chart.name }}', this)">Copy</button>
         </div>
     </div>
     {% endfor %}
@@ -69,9 +69,11 @@
     <p><a href="https://github.com/vardis-data/charts">GitHub</a></p>
 
     <script>
-        function copy(id) {
+        function copy(id, btn) {
             const text = document.getElementById(id).innerText;
             navigator.clipboard.writeText(text);
+            btn.innerText = 'Copied!';
+            setTimeout(() => btn.innerText = 'Copy', 1500);
         }
     </script>
 </body>

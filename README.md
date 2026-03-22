@@ -5,7 +5,7 @@ Helm chart repository for Vardis infrastructure.
 ## Usage
 
 ```bash
-helm repo add vardis https://vardis.github.io/charts
+helm repo add vardis https://vardis-data.github.io/charts
 helm repo update
 ```
 

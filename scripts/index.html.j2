@@ -26,6 +26,7 @@
         .chart-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
         .chart-name { font-weight: bold; }
         .chart-versions { color: #8b949e; font-size: 0.9em; }
+        .chart-desc { color: #8b949e; margin: 0.5rem 0; }
         .install-cmd {
             display: flex;
             align-items: center;
@@ -59,6 +60,7 @@
             <span class="chart-name">{{ chart.name }}</span>
             <span class="chart-versions">{{ chart.version }} / {{ chart.app_version }}</span>
         </div>
+        <p class="chart-desc">{{ chart.description }}</p>
         <div class="install-cmd">
             <code id="cmd-{{ chart.name }}">helm install {{ chart.name }} vardis/{{ chart.name }}</code>
             <button class="copy-btn" onclick="copy('cmd-{{ chart.name }}', this)">Copy</button>

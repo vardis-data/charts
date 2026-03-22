@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kan.fullname" . }}
+  labels:
+    {{- include "kan.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "kan.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "kan.selectorLabels" . | nindent 8 }}
+      {{- if .Values.reloader.enabled }}
+      annotations:
+        reloader.stakater.com/auto: "true"
+      {{- end }}
+    spec:
+      containers:
+        - name: kan
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: NEXT_PUBLIC_BASE_URL
+              value: {{ .Values.baseUrl | quote }}
+            - name: NEXT_PUBLIC_ALLOW_CREDENTIALS
+              value: "true"
+            - name: BETTER_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kan.fullname" . }}
+                  key: BETTER_AUTH_SECRET
+            - name: POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kan.fullname" . }}
+                  key: POSTGRES_URL
+            {{- if .Values.s3.enabled }}
+            - name: S3_ENDPOINT
+              value: {{ .Values.s3.endpoint | quote }}
+            - name: S3_REGION
+              value: {{ .Values.s3.region | quote }}
+            - name: S3_FORCE_PATH_STYLE
+              value: {{ .Values.s3.forcePathStyle | quote }}
+            - name: NEXT_PUBLIC_STORAGE_URL
+              value: {{ .Values.s3.endpoint | quote }}
+            - name: NEXT_PUBLIC_STORAGE_DOMAIN
+              value: {{ trimPrefix "https://" .Values.s3.endpoint | quote }}
+            - name: NEXT_PUBLIC_AVATAR_BUCKET_NAME
+              value: {{ .Values.s3.avatarBucket | quote }}
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kan.fullname" . }}
+                  key: S3_ACCESS_KEY_ID
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kan.fullname" . }}
+                  key: S3_SECRET_ACCESS_KEY
+            {{- end }}
+            {{- if .Values.smtp.enabled }}
+            - name: EMAIL_FROM
+              value: {{ .Values.smtp.fromAddress | quote }}
+            - name: SMTP_HOST
+              value: {{ .Values.smtp.host | quote }}
+            - name: SMTP_PORT
+              value: {{ .Values.smtp.port | quote }}
+            - name: SMTP_USER
+              value: {{ .Values.smtp.username | quote }}
+            - name: SMTP_SECURE
+              value: {{ .Values.smtp.secure | quote }}
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kan.fullname" . }}
+                  key: SMTP_PASSWORD
+            {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      restartPolicy: Always

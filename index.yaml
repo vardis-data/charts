@@ -1,5 +1,41 @@
 apiVersion: v1
 entries:
+  docmost:
+  - apiVersion: v2
+    appVersion: 0.8.2
+    created: "2026-03-22T17:51:21.096213957Z"
+    description: Open-source collaborative documentation and wiki software
+    digest: e944f07ec9507d2589f99b86d3959dd57c06243918ee8dc4f2b204ecfcc78983
+    home: https://docmost.com
+    keywords:
+    - documentation
+    - wiki
+    - collaboration
+    name: docmost
+    sources:
+    - https://github.com/docmost/docmost
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/docmost-0.1.0/docmost-0.1.0.tgz
+    version: 0.1.0
+  kan:
+  - apiVersion: v2
+    appVersion: 0.8.1
+    created: "2026-03-22T17:51:21.283460739Z"
+    description: Open-source Kanban board for project management
+    digest: ea4d77390b9d0b7f07cfa1ca7f18e6f0ed3b31ea47edfc164c40f991a2382add
+    home: https://github.com/kanbn/kan
+    keywords:
+    - kanban
+    - project-management
+    - tasks
+    name: kan
+    sources:
+    - https://github.com/kanbn/kan
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/kan-0.1.0/kan-0.1.0.tgz
+    version: 0.1.0
   system-upgrade-controller:
   - apiVersion: v2
     appVersion: v0.19.0
@@ -20,4 +56,4 @@ entries:
     urls:
     - https://github.com/vardis-data/charts/releases/download/system-upgrade-controller-0.1.1/system-upgrade-controller-0.1.1.tgz
     version: 0.1.1
-generated: "2026-03-22T17:38:06.791570051Z"
+generated: "2026-03-22T17:51:21.28346659Z"

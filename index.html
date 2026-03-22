@@ -26,6 +26,7 @@
         .chart-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
         .chart-name { font-weight: bold; }
         .chart-versions { color: #8b949e; font-size: 0.9em; }
+        .chart-desc { color: #8b949e; margin: 0.5rem 0; }
         .install-cmd {
             display: flex;
             align-items: center;
@@ -59,6 +60,7 @@
             <span class="chart-name">system-upgrade-controller</span>
             <span class="chart-versions">0.1.1 / v0.19.0</span>
         </div>
+        <p class="chart-desc">Kubernetes-native upgrade controller for nodes using declarative Plans</p>
         <div class="install-cmd">
             <code id="cmd-system-upgrade-controller">helm install system-upgrade-controller vardis/system-upgrade-controller</code>
             <button class="copy-btn" onclick="copy('cmd-system-upgrade-controller', this)">Copy</button>

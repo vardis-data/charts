@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: system-ui, sans-serif;
-            max-width: 600px;
+            max-width: 700px;
             margin: 2rem auto;
             padding: 0 1rem;
             line-height: 1.6;
@@ -22,8 +22,30 @@
             margin: 1rem 0;
             border-radius: 6px;
         }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #30363d; }
+        .chart { margin: 1.5rem 0; padding-bottom: 1.5rem; border-bottom: 1px solid #30363d; }
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+        .chart-name { font-weight: bold; }
+        .chart-versions { color: #8b949e; font-size: 0.9em; }
+        .install-cmd {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .install-cmd code {
+            flex: 1;
+            margin: 0;
+            font-size: 0.85em;
+        }
+        .copy-btn {
+            background: #238636;
+            color: #fff;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .copy-btn:hover { background: #2ea043; }
         a { color: #58a6ff; }
     </style>
 </head>
@@ -31,25 +53,26 @@
     <h1>Vardis Helm Charts</h1>
     <code>helm repo add vardis https://vardis-data.github.io/charts</code>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Chart</th>
-                <th>Version</th>
-                <th>App Version</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for chart in charts %}
-            <tr>
-                <td>{{ chart.name }}</td>
-                <td>{{ chart.version }}</td>
-                <td>{{ chart.app_version }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% for chart in charts %}
+    <div class="chart">
+        <div class="chart-header">
+            <span class="chart-name">{{ chart.name }}</span>
+            <span class="chart-versions">{{ chart.version }} / {{ chart.app_version }}</span>
+        </div>
+        <div class="install-cmd">
+            <code id="cmd-{{ chart.name }}">helm install {{ chart.name }} vardis/{{ chart.name }}</code>
+            <button class="copy-btn" onclick="copy('cmd-{{ chart.name }}')">Copy</button>
+        </div>
+    </div>
+    {% endfor %}
 
     <p><a href="https://github.com/vardis-data/charts">GitHub</a></p>
+
+    <script>
+        function copy(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text);
+        }
+    </script>
 </body>
 </html>

@@ -1,3 +1,23 @@
 apiVersion: v1
-entries: {}
-generated: "2026-03-22T17:27:07Z"
+entries:
+  system-upgrade-controller:
+  - apiVersion: v2
+    appVersion: v0.19.0
+    created: "2026-03-22T17:38:06.791559592Z"
+    description: Kubernetes-native upgrade controller for nodes using declarative
+      Plans
+    digest: 48cb9c238648e8795e27bc974c5388b9c3212d8369ff3ba62efae44ddc5dd168
+    home: https://github.com/rancher/system-upgrade-controller
+    keywords:
+    - kubernetes
+    - upgrades
+    - k3s
+    - system-upgrade
+    name: system-upgrade-controller
+    sources:
+    - https://github.com/rancher/system-upgrade-controller
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/system-upgrade-controller-0.1.1/system-upgrade-controller-0.1.1.tgz
+    version: 0.1.1
+generated: "2026-03-22T17:38:06.791570051Z"

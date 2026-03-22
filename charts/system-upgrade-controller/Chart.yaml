@@ -10,5 +10,5 @@ sources:
 keywords:
   - kubernetes
   - upgrades
-  - nodes
   - k3s
+  - system-upgrade

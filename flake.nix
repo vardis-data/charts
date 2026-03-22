@@ -21,12 +21,14 @@
         };
       in
       {
-        devShells.default = pkgs.mkShell {
-          buildInputs = [
-            helm
-            pkgs.just
-          ];
-        };
+        devShells.default =
+          with pkgs;
+          mkShell {
+            buildInputs = [
+              helm
+              just
+            ];
+          };
       }
     );
 }

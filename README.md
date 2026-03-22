@@ -9,20 +9,6 @@ helm repo add vardis https://vardis-data.github.io/charts
 helm repo update
 ```
 
-## Available Charts
-
-| Chart                                                           | Description                                                                   |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| [system-upgrade-controller](./charts/system-upgrade-controller) | Deploys Rancher's System Upgrade Controller for automated K3s and OS upgrades |
-
-## Installing a Chart
-
-```bash
-helm install system-upgrade-controller vardis/system-upgrade-controller \
-  --namespace system-upgrade \
-  --create-namespace
-```
-
 ## Development
 
 ### Prerequisites

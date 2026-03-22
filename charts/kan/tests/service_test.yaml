@@ -1,0 +1,26 @@
+suite: service tests
+templates:
+  - templates/service.yaml
+tests:
+  - it: should render service
+    asserts:
+      - isKind:
+          of: Service
+
+  - it: should have correct name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-kan
+
+  - it: should have ClusterIP type by default
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+
+  - it: should use port 3000 by default
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 3000

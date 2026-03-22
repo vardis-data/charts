@@ -1,0 +1,80 @@
+suite: deployment tests
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: should render deployment
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should have correct name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-docmost
+
+  - it: should use correct image
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "docmost/docmost:0.8.2"
+
+  - it: should set APP_URL env var
+    set:
+      appUrl: https://docmost.example.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_URL
+            value: "https://docmost.example.com"
+
+  - it: should enable S3 when configured
+    set:
+      s3:
+        enabled: true
+        endpoint: https://s3.example.com
+        region: us-east-1
+        bucket: docmost
+        accessKeyId: test
+        secretAccessKey: test
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: STORAGE_DRIVER
+            value: "s3"
+
+  - it: should enable SMTP when configured
+    set:
+      smtp:
+        enabled: true
+        host: smtp.example.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MAIL_DRIVER
+            value: "smtp"
+
+  - it: should have liveness probe by default
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe
+
+  - it: should have readiness probe by default
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe
+
+  - it: should disable probes when configured
+    set:
+      livenessProbe:
+        enabled: false
+      readinessProbe:
+        enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe

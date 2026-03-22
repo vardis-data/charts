@@ -1,0 +1,105 @@
+suite: clusterrole tests
+templates:
+  - templates/clusterrole.yaml
+tests:
+  - it: should render clusterrole with correct kind
+    asserts:
+      - isKind:
+          of: ClusterRole
+
+  - it: should have correct name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: system-upgrade
+
+  - it: should have standard labels
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: system-upgrade-controller
+      - exists:
+          path: metadata.labels["helm.sh/chart"]
+      - exists:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+
+  - it: should have batch jobs permissions
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["batch"]
+            resources: ["jobs"]
+            verbs: ["*"]
+
+  - it: should have namespace and nodes read permissions
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["namespaces", "nodes"]
+            verbs: ["get", "list", "watch"]
+
+  - it: should have nodes update permission
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["nodes"]
+            verbs: ["update"]
+
+  - it: should have pods permissions
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["pods"]
+            verbs: ["get", "list", "watch", "delete"]
+
+  - it: should have pods eviction permission
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["pods/eviction"]
+            verbs: ["create"]
+
+  - it: should have daemonsets read permission
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["apps"]
+            resources: ["daemonsets"]
+            verbs: ["get"]
+
+  - it: should have secrets read permissions
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["secrets"]
+            verbs: ["get", "list", "watch"]
+
+  - it: should have upgrade.cattle.io plans full permissions
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["upgrade.cattle.io"]
+            resources: ["plans", "plans/status"]
+            verbs: ["*"]
+
+  - it: should have leases full permissions
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["coordination.k8s.io"]
+            resources: ["leases"]
+            verbs: ["*"]

@@ -1,0 +1,51 @@
+name: Test Charts
+
+on:
+  pull_request:
+    paths:
+      - "charts/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "charts/**"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint charts
+        run: |
+          for chart in charts/*/; do
+            echo "Linting $chart..."
+            helm lint "$chart"
+          done
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install helm-unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+
+      - name: Run unit tests
+        run: |
+          for chart in charts/*/; do
+            if [ -d "${chart}tests" ]; then
+              echo "Testing $chart..."
+              helm unittest "$chart"
+            fi
+          done

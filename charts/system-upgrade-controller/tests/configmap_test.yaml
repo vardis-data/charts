@@ -1,0 +1,104 @@
+suite: configmap tests
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should render configmap with default values
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: system-upgrade-controller
+
+  - it: should have default controller settings
+    asserts:
+      - equal:
+          path: data.SYSTEM_UPGRADE_CONTROLLER_DEBUG
+          value: "false"
+      - equal:
+          path: data.SYSTEM_UPGRADE_CONTROLLER_THREADS
+          value: "2"
+
+  - it: should have default job settings
+    asserts:
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS
+          value: "900"
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_BACKOFF_LIMIT
+          value: "99"
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_PRIVILEGED
+          value: "true"
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_TTL_SECONDS_AFTER_FINISH
+          value: "900"
+
+  - it: should have default kubectl image
+    asserts:
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE
+          value: rancher/kubectl:v1.35.0
+
+  - it: should have default plan polling interval
+    asserts:
+      - equal:
+          path: data.SYSTEM_UPGRADE_PLAN_POLLING_INTERVAL
+          value: 15m
+
+  - it: should use custom controller settings when specified
+    set:
+      controller.debug: true
+      controller.threads: 4
+    asserts:
+      - equal:
+          path: data.SYSTEM_UPGRADE_CONTROLLER_DEBUG
+          value: "true"
+      - equal:
+          path: data.SYSTEM_UPGRADE_CONTROLLER_THREADS
+          value: "4"
+
+  - it: should use custom job settings when specified
+    set:
+      job.activeDeadlineSeconds: 1800
+      job.backoffLimit: 50
+      job.privileged: false
+      job.ttlSecondsAfterFinish: 300
+    asserts:
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS
+          value: "1800"
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_BACKOFF_LIMIT
+          value: "50"
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_PRIVILEGED
+          value: "false"
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_TTL_SECONDS_AFTER_FINISH
+          value: "300"
+
+  - it: should use custom kubectl image when specified
+    set:
+      kubectlImage.repository: custom/kubectl
+      kubectlImage.tag: v1.30.0
+    asserts:
+      - equal:
+          path: data.SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE
+          value: custom/kubectl:v1.30.0
+
+  - it: should use custom plan polling interval when specified
+    set:
+      plan.pollingInterval: 30m
+    asserts:
+      - equal:
+          path: data.SYSTEM_UPGRADE_PLAN_POLLING_INTERVAL
+          value: 30m
+
+  - it: should have correct labels
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: system-upgrade-controller
+      - exists:
+          path: metadata.labels["helm.sh/chart"]

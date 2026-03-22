@@ -1,0 +1,80 @@
+# -- Override the full name of resources
+fullnameOverride: system-upgrade-controller
+
+# -- Controller image configuration
+image:
+  # -- Image repository for the system-upgrade-controller
+  repository: rancher/system-upgrade-controller
+  # -- Image tag (immutable tags are recommended)
+  # renovate: datasource=docker depName=rancher/system-upgrade-controller
+  tag: v0.19.0
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+
+# -- Kubectl image used by upgrade jobs to drain/uncordon nodes
+kubectlImage:
+  # -- Kubectl image repository
+  repository: rancher/kubectl
+  # -- Kubectl image tag
+  # renovate: datasource=docker depName=rancher/kubectl
+  tag: v1.35.0
+  # -- Kubectl image pull policy (Always recommended to get security patches)
+  pullPolicy: Always
+
+# -- Controller runtime settings
+controller:
+  # -- Enable debug logging
+  debug: false
+  # -- Number of worker threads for processing upgrade plans
+  threads: 2
+
+# -- Upgrade job configuration
+job:
+  # -- Maximum time (seconds) for an upgrade job to complete before termination
+  activeDeadlineSeconds: 900
+  # -- Number of retries before marking the job as failed
+  backoffLimit: 99
+  # -- Run upgrade jobs in privileged mode (required for most system upgrades)
+  privileged: true
+  # -- Time (seconds) to keep completed jobs before cleanup
+  ttlSecondsAfterFinish: 900
+
+# -- Plan controller settings
+plan:
+  # -- How often to poll for plan changes (e.g., 15m, 1h)
+  pollingInterval: 15m
+
+# -- Tolerations for controller pod scheduling on control-plane nodes
+# @default -- Tolerates control-plane, master, etcd, and critical addon taints
+tolerations:
+  - key: CriticalAddonsOnly
+    operator: Exists
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/controlplane
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/etcd
+    operator: Exists
+    effect: NoExecute
+
+# -- Pod-level security context
+# @default -- No pod security context (uses container security context instead)
+podSecurityContext: {}
+
+# -- Container-level security context for the controller
+# @default -- Runs as non-root (nobody:65534) with minimal privileges
+containerSecurityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  runAsUser: 65534
+  runAsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop:
+      - ALL

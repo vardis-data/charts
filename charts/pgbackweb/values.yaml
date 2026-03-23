@@ -1,63 +1,44 @@
-# -- Image configuration
 image:
-  # -- PG Back Web image repository
   repository: eduardolat/pgbackweb
-  # -- Image tag
   # renovate: datasource=docker depName=eduardolat/pgbackweb
   tag: "0.5.1"
-  # -- Image pull policy
   pullPolicy: IfNotPresent
 
-# -- Number of replicas (should be 1 for data consistency)
 replicaCount: 1
 
-# -- Encryption key for sensitive data (required)
 encryptionKey: ""
 
-# -- External database configuration (used when postgres.enabled is false)
+existingSecret:
+  enabled: false
+  name: ""
+  keys:
+    encryptionKey: "encryptionKey"
+    databaseUrl: "databaseUrl"
+
 database:
-  # -- PostgreSQL host
   host: ""
-  # -- PostgreSQL port
   port: 5432
-  # -- Database name
   name: pgbackweb
-  # -- Database user
   user: pgbackweb
-  # -- Database password (required)
   password: ""
-  # -- SSL mode (disable, require, verify-ca, verify-full)
   sslMode: disable
 
-# -- Server configuration
 server:
-  # -- Listen host
   host: "0.0.0.0"
-  # -- Listen port
   port: 8085
-  # -- Path prefix (e.g., /pgbackweb). Must start with / and not end with /
   pathPrefix: ""
 
-# -- Timezone configuration
 timezone: "UTC"
 
-# -- Local backup storage configuration
 localStorage:
-  # -- Enable local storage for backups
   enabled: false
-  # -- Size of the persistent volume
   size: 10Gi
-  # -- Storage class name (empty for default)
   storageClassName: ""
 
-# -- Service configuration
 service:
-  # -- Service type
   type: ClusterIP
-  # -- Service port
   port: 8085
 
-# -- Resource limits and requests
 resources:
   requests:
     cpu: 100m
@@ -66,20 +47,15 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-# -- Enable reloader annotation for automatic restarts on secret changes
 reloader:
   enabled: true
 
-# -- Embedded PostgreSQL configuration (cloudpirates/postgres subchart)
 postgres:
-  # -- Enable embedded PostgreSQL for PG Back Web data storage
   enabled: true
-  # -- Custom user configuration for PG Back Web database
   customUser:
     name: pgbackweb
     database: pgbackweb
     password: ""
-  # -- Persistence configuration
   persistence:
     enabled: true
     size: 1Gi

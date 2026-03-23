@@ -71,10 +71,43 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 postgresql://{{ include "docmost.databaseUser" . }}:{{ include "docmost.databasePassword" . }}@{{ include "docmost.databaseHost" . }}:{{ include "docmost.databasePort" . }}/{{ include "docmost.databaseName" . }}?schema=public
 {{- end }}
 
-{{- define "docmost.redisUrl" -}}
-{{- if .Values.redis.password }}
-redis://default:{{ .Values.redis.password }}@{{ .Values.redis.host }}:{{ .Values.redis.port }}
+{{- define "docmost.redisHost" -}}
+{{- if .Values.valkey.enabled }}
+{{- printf "%s-valkey" .Release.Name }}
 {{- else }}
-redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}
+{{- .Values.redis.host }}
+{{- end }}
+{{- end }}
+
+{{- define "docmost.redisPort" -}}
+{{- if .Values.valkey.enabled }}
+{{- .Values.valkey.service.port | default 6379 }}
+{{- else }}
+{{- .Values.redis.port }}
+{{- end }}
+{{- end }}
+
+{{- define "docmost.redisPassword" -}}
+{{- if .Values.valkey.enabled }}
+{{- .Values.valkey.password }}
+{{- else }}
+{{- .Values.redis.password }}
+{{- end }}
+{{- end }}
+
+{{- define "docmost.redisUrl" -}}
+{{- $password := include "docmost.redisPassword" . }}
+{{- if $password }}
+redis://default:{{ $password }}@{{ include "docmost.redisHost" . }}:{{ include "docmost.redisPort" . }}
+{{- else }}
+redis://{{ include "docmost.redisHost" . }}:{{ include "docmost.redisPort" . }}
+{{- end }}
+{{- end }}
+
+{{- define "docmost.secretName" -}}
+{{- if .Values.existingSecret.enabled }}
+{{- .Values.existingSecret.name }}
+{{- else }}
+{{- include "docmost.fullname" . }}
 {{- end }}
 {{- end }}

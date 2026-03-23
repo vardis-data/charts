@@ -30,13 +30,13 @@ spec:
             - name: PBW_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "pgbackweb.fullname" . }}
-                  key: PBW_ENCRYPTION_KEY
+                  name: {{ include "pgbackweb.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.encryptionKey }}{{ else }}PBW_ENCRYPTION_KEY{{ end }}
             - name: PBW_POSTGRES_CONN_STRING
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "pgbackweb.fullname" . }}
-                  key: PBW_POSTGRES_CONN_STRING
+                  name: {{ include "pgbackweb.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.databaseUrl }}{{ else }}PBW_POSTGRES_CONN_STRING{{ end }}
             - name: PBW_LISTEN_HOST
               value: {{ .Values.server.host | quote }}
             - name: PBW_LISTEN_PORT

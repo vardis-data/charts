@@ -42,24 +42,24 @@ spec:
               containerPort: {{ .Values.server.port }}
               protocol: TCP
           env:
-            {{- if and .Values.database.host .Values.database.name }}
+            {{- if or (and .Values.database.host .Values.database.name) .Values.existingSecret.enabled }}
             - name: PGWEB_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "pgweb.fullname" . }}
-                  key: DATABASE_URL
+                  name: {{ include "pgweb.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.databaseUrl }}{{ else }}DATABASE_URL{{ end }}
             {{- end }}
-            {{- if .Values.auth.enabled }}
+            {{- if or .Values.auth.enabled .Values.existingSecret.enabled }}
             - name: PGWEB_AUTH_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "pgweb.fullname" . }}
-                  key: AUTH_USER
+                  name: {{ include "pgweb.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.authUser }}{{ else }}AUTH_USER{{ end }}
             - name: PGWEB_AUTH_PASS
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "pgweb.fullname" . }}
-                  key: AUTH_PASS
+                  name: {{ include "pgweb.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.authPass }}{{ else }}AUTH_PASS{{ end }}
             {{- end }}
           livenessProbe:
             httpGet:

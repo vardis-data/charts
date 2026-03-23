@@ -78,3 +78,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "pgbackweb.databaseUrl" -}}
 postgresql://{{ include "pgbackweb.databaseUser" . }}:{{ include "pgbackweb.databasePassword" . }}@{{ include "pgbackweb.databaseHost" . }}:{{ include "pgbackweb.databasePort" . }}/{{ include "pgbackweb.databaseName" . }}?sslmode={{ include "pgbackweb.databaseSslMode" . }}
 {{- end }}
+
+{{- define "pgbackweb.secretName" -}}
+{{- if .Values.existingSecret.enabled }}
+{{- .Values.existingSecret.name }}
+{{- else }}
+{{- include "pgbackweb.fullname" . }}
+{{- end }}
+{{- end }}

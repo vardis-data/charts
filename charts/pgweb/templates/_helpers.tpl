@@ -30,3 +30,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "pgweb.databaseUrl" -}}
 postgres://{{ .Values.database.user }}:{{ .Values.database.password }}@{{ .Values.database.host }}:{{ .Values.database.port }}/{{ .Values.database.name }}?sslmode={{ .Values.database.sslMode }}
 {{- end }}
+
+{{- define "pgweb.secretName" -}}
+{{- if .Values.existingSecret.enabled }}
+{{- .Values.existingSecret.name }}
+{{- else }}
+{{- include "pgweb.fullname" . }}
+{{- end }}
+{{- end }}

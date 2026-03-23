@@ -1,63 +1,44 @@
-# -- Image configuration
 image:
-  # -- pgweb image repository
   repository: sosedoff/pgweb
-  # -- Image tag
   # renovate: datasource=docker depName=sosedoff/pgweb
   tag: "0.17.0"
-  # -- Image pull policy
   pullPolicy: IfNotPresent
 
-# -- Number of replicas
 replicaCount: 1
 
-# -- Database connection configuration
-database:
-  # -- PostgreSQL host
-  host: ""
-  # -- PostgreSQL port
-  port: 5432
-  # -- Database name
+existingSecret:
+  enabled: false
   name: ""
-  # -- Database user
+  keys:
+    databaseUrl: "databaseUrl"
+    authUser: "authUser"
+    authPass: "authPass"
+
+database:
+  host: ""
+  port: 5432
+  name: ""
   user: ""
-  # -- Database password
   password: ""
-  # -- SSL mode (disable, require, verify-ca, verify-full)
   sslMode: disable
 
-# -- Server configuration
 server:
-  # -- Listen host
   host: "0.0.0.0"
-  # -- Listen port
   port: 8081
-  # -- Enable read-only mode (no data modifications allowed)
   readOnly: false
-  # -- Enable multiple database sessions
   sessions: true
-  # -- Lock session to single database (only works when sessions is false)
   lockSession: false
-  # -- URL prefix for pgweb (e.g., /pgweb)
   prefix: ""
 
-# -- Authentication configuration
 auth:
-  # -- Enable basic authentication
   enabled: false
-  # -- Basic auth username
   user: ""
-  # -- Basic auth password
   pass: ""
 
-# -- Service configuration
 service:
-  # -- Service type
   type: ClusterIP
-  # -- Service port
   port: 8081
 
-# -- Resource limits and requests
 resources:
   requests:
     cpu: 50m
@@ -66,6 +47,5 @@ resources:
     cpu: 200m
     memory: 128Mi
 
-# -- Enable reloader annotation for automatic restarts on secret changes
 reloader:
   enabled: true

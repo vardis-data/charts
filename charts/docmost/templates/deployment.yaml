@@ -28,31 +28,31 @@ spec:
             - name: APP_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "docmost.fullname" . }}
-                  key: APP_SECRET
+                  name: {{ include "docmost.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.appSecret }}{{ else }}APP_SECRET{{ end }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "docmost.fullname" . }}
-                  key: DATABASE_URL
+                  name: {{ include "docmost.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.databasePassword }}{{ else }}DATABASE_URL{{ end }}
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "docmost.fullname" . }}
-                  key: REDIS_URL
+                  name: {{ include "docmost.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.redisPassword }}{{ else }}REDIS_URL{{ end }}
             {{- if .Values.s3.enabled }}
             - name: STORAGE_DRIVER
               value: "s3"
             - name: AWS_S3_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "docmost.fullname" . }}
-                  key: AWS_S3_ACCESS_KEY_ID
+                  name: {{ include "docmost.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.s3AccessKeyId }}{{ else }}AWS_S3_ACCESS_KEY_ID{{ end }}
             - name: AWS_S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "docmost.fullname" . }}
-                  key: AWS_S3_SECRET_ACCESS_KEY
+                  name: {{ include "docmost.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.s3SecretAccessKey }}{{ else }}AWS_S3_SECRET_ACCESS_KEY{{ end }}
             - name: AWS_S3_REGION
               value: {{ .Values.s3.region | quote }}
             - name: AWS_S3_BUCKET
@@ -74,8 +74,8 @@ spec:
             - name: SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "docmost.fullname" . }}
-                  key: SMTP_PASSWORD
+                  name: {{ include "docmost.secretName" . }}
+                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.smtpPassword }}{{ else }}SMTP_PASSWORD{{ end }}
             - name: SMTP_SECURE
               value: {{ .Values.smtp.secure | quote }}
             - name: MAIL_FROM_ADDRESS

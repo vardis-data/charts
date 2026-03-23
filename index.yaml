@@ -3,6 +3,32 @@ entries:
   docmost:
   - apiVersion: v2
     appVersion: 0.8.2
+    created: "2026-03-23T22:59:00.79129772Z"
+    dependencies:
+    - condition: postgres.enabled
+      name: postgres
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.18.3
+    - condition: valkey.enabled
+      name: valkey
+      repository: https://valkey.io/valkey-helm
+      version: 0.9.3
+    description: Open-source collaborative documentation and wiki software
+    digest: 6dcdfe65de69b741ae083753f5f65777d06b49566046a9bb59489206cf5c36d2
+    home: https://docmost.com
+    keywords:
+    - documentation
+    - wiki
+    - collaboration
+    name: docmost
+    sources:
+    - https://github.com/docmost/docmost
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/docmost-1.2.0/docmost-1.2.0.tgz
+    version: 1.2.0
+  - apiVersion: v2
+    appVersion: 0.8.2
     created: "2026-03-22T23:56:15.706232233Z"
     dependencies:
     - condition: postgres.enabled
@@ -58,6 +84,28 @@ entries:
     - https://github.com/vardis-data/charts/releases/download/docmost-0.1.0/docmost-0.1.0.tgz
     version: 0.1.0
   kan:
+  - apiVersion: v2
+    appVersion: 0.8.1
+    created: "2026-03-23T22:59:01.012673977Z"
+    dependencies:
+    - condition: postgres.enabled
+      name: postgres
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.18.3
+    description: Open-source Kanban board for project management
+    digest: b8cfe7ed374f64267ce148471595f7684fda3b392234c27ea4c16d620157b721
+    home: https://github.com/kanbn/kan
+    keywords:
+    - kanban
+    - project-management
+    - tasks
+    name: kan
+    sources:
+    - https://github.com/kanbn/kan
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/kan-1.2.0/kan-1.2.0.tgz
+    version: 1.2.0
   - apiVersion: v2
     appVersion: 0.8.1
     created: "2026-03-22T23:56:15.992582091Z"
@@ -117,6 +165,29 @@ entries:
   pgbackweb:
   - apiVersion: v2
     appVersion: 0.5.1
+    created: "2026-03-23T22:59:01.234964988Z"
+    dependencies:
+    - condition: postgres.enabled
+      name: postgres
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.18.3
+    description: Web UI for PostgreSQL backups with S3 storage support
+    digest: e40a4a2a47cebf298ec540b15855050983f5671ea90670980b4b0ef148e2502e
+    home: https://github.com/eduardolat/pgbackweb
+    keywords:
+    - postgresql
+    - backup
+    - s3
+    - database
+    name: pgbackweb
+    sources:
+    - https://github.com/eduardolat/pgbackweb
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/pgbackweb-1.1.0/pgbackweb-1.1.0.tgz
+    version: 1.1.0
+  - apiVersion: v2
+    appVersion: 0.5.1
     created: "2026-03-22T23:56:16.152616424Z"
     dependencies:
     - condition: postgres.enabled
@@ -139,6 +210,24 @@ entries:
     - https://github.com/vardis-data/charts/releases/download/pgbackweb-1.0.0/pgbackweb-1.0.0.tgz
     version: 1.0.0
   pgweb:
+  - apiVersion: v2
+    appVersion: 0.17.0
+    created: "2026-03-23T22:59:01.446435869Z"
+    description: Web-based PostgreSQL database browser
+    digest: e61ff9a079afdf004af03ce7a68429750ce0e07decef845f4a4e41cdef7cbbb0
+    home: https://github.com/sosedoff/pgweb
+    keywords:
+    - postgresql
+    - database
+    - browser
+    - admin
+    name: pgweb
+    sources:
+    - https://github.com/sosedoff/pgweb
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/pgweb-1.1.0/pgweb-1.1.0.tgz
+    version: 1.1.0
   - apiVersion: v2
     appVersion: 0.17.0
     created: "2026-03-22T23:56:16.309274639Z"
@@ -196,4 +285,4 @@ entries:
     urls:
     - https://github.com/vardis-data/charts/releases/download/system-upgrade-controller-0.1.1/system-upgrade-controller-0.1.1.tgz
     version: 0.1.1
-generated: "2026-03-22T23:56:16.309301299Z"
+generated: "2026-03-23T22:59:01.44647876Z"

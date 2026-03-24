@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "pipeline.name" . }}-submit
+  name: {{ include "pipeline.jobName" . }}
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "pipeline.labels" . | nindent 4 }}

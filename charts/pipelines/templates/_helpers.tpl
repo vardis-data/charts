@@ -10,12 +10,16 @@
 {{- end }}
 {{- end }}
 
-{{- define "pipeline.fullname" -}}
-{{- include "pipeline.name" . }}
+{{- define "pipeline.releaseName" -}}
+{{- .Release.Name }}
 {{- end }}
 
 {{- define "pipeline.configmapName" -}}
-pipeline-{{ include "pipeline.name" . }}-variables
+pipeline-{{ include "pipeline.releaseName" . }}-variables
+{{- end }}
+
+{{- define "pipeline.jobName" -}}
+{{- include "pipeline.releaseName" . }}-submit
 {{- end }}
 
 {{- define "pipeline.imageName" -}}

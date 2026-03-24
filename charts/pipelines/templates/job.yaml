@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "pipeline.name" . }}-submit
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pipeline.labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: workflow-submitter
+          image: {{ include "pipeline.imageName" . }}
+          command:
+            - "uv"
+            - "run"
+            - "--no-dev"
+            - "--package"
+            - {{ include "pipeline.packageName" . | quote }}
+            - "{{ include "pipeline.workdir" . }}/main.py"
+          env:
+            - name: DATASET_NAME
+              value: {{ include "pipeline.datasetName" . | quote }}
+            - name: PIPELINE_SCHEDULE_CRON
+              value: {{ .Values.pipeline.schedule | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.sharedConfigMap }}
+            - secretRef:
+                name: {{ .Values.sharedSecret }}

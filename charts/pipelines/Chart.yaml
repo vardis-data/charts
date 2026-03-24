@@ -1,0 +1,13 @@
+apiVersion: v2
+name: pipelines
+description: Generate Kubernetes manifests for vardis data pipelines
+type: application
+version: 0.1.0
+appVersion: 1.0.0
+home: https://github.com/vardis-data/pipelines
+sources:
+  - https://github.com/vardis-data/pipelines
+keywords:
+  - pipeline
+  - argo-workflows
+  - data-engineering

@@ -1,0 +1,32 @@
+pipeline:
+  name: ""
+  description: ""
+
+  schedule: "0 0 * * 1"
+  baseUrl: ""
+  datasetFileExtension: ".zip"
+
+  image:
+    repository: ghcr.io/vardis-data/pipelines
+    tag: latest
+    pullPolicy: Always
+
+  resources:
+    parallelism: 2
+    batchSize: 50
+    multiprocessingWorkers: 2
+    retryLimit: 3
+
+  logging:
+    level: INFO
+
+  storage:
+    overwriteParquetFiles: false
+
+namespace: pipelines
+
+imagePullSecrets:
+  - name: ghcr-secret
+
+sharedConfigMap: pipelines-variables
+sharedSecret: pipelines-secrets

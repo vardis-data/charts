@@ -1,0 +1,119 @@
+suite: job tests
+templates:
+  - templates/job.yaml
+tests:
+  - it: should render job
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - isKind:
+          of: Job
+
+  - it: should have correct name format
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-pipeline-submit
+
+  - it: should use correct image
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+        image:
+          repository: ghcr.io/vardis-data/pipelines
+          tag: v1.0.0
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/vardis-data/pipelines/test-pipeline:v1.0.0"
+
+  - it: should use correct package name
+    set:
+      pipeline:
+        name: my-test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].command
+          content: "my-test-pipeline"
+
+  - it: should use correct workdir
+    set:
+      pipeline:
+        name: my-test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].command
+          content: "/opt/pipelines/my_test_pipeline/main.py"
+
+  - it: should have dataset name env var
+    set:
+      pipeline:
+        name: my-test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATASET_NAME
+            value: "my_test_pipeline"
+
+  - it: should have schedule env var
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+        schedule: "0 12 * * *"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PIPELINE_SCHEDULE_CRON
+            value: "0 12 * * *"
+
+  - it: should have image pull secrets
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+      imagePullSecrets:
+        - name: my-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: my-secret
+
+  - it: should reference shared configmap
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+      sharedConfigMap: my-shared-config
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: my-shared-config
+
+  - it: should reference shared secret
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+      sharedSecret: my-shared-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: my-shared-secret

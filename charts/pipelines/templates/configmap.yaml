@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "pipeline.configmapName" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pipeline.labels" . | nindent 4 }}
+data:
+  BASE_URL: {{ required "pipeline.baseUrl is required" .Values.pipeline.baseUrl | quote }}
+  DATASET_FILE_EXTENSION: {{ .Values.pipeline.datasetFileExtension | quote }}
+  DATASET_NAME: {{ include "pipeline.datasetName" . | quote }}
+  IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}
+  LOG_LEVEL: {{ .Values.pipeline.logging.level | quote }}
+  MULTIPROCESSING_WORKERS: {{ .Values.pipeline.resources.multiprocessingWorkers | quote }}
+  OVERWRITE_PARQUET_FILES: {{ include "pipeline.overwriteParquetFiles" . | quote }}
+  PIPELINE_BATCH_SIZE: {{ .Values.pipeline.resources.batchSize | quote }}
+  PIPELINE_DEFAULT_IMAGE: {{ include "pipeline.imageName" . | quote }}
+  PIPELINE_PARALLELISM: {{ .Values.pipeline.resources.parallelism | quote }}
+  PIPELINE_SCHEDULE_CRON: {{ .Values.pipeline.schedule | quote }}
+  RETRY_LIMIT: {{ .Values.pipeline.resources.retryLimit | quote }}

@@ -1,0 +1,130 @@
+suite: configmap tests
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should render configmap
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+  - it: should have correct name format
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pipeline-test-pipeline-variables
+
+  - it: should convert underscores to hyphens in name
+    set:
+      pipeline:
+        name: my_test_pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pipeline-my-test-pipeline-variables
+
+  - it: should set dataset name with underscores
+    set:
+      pipeline:
+        name: my-test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - equal:
+          path: data.DATASET_NAME
+          value: "my_test_pipeline"
+
+  - it: should fail without pipeline name
+    asserts:
+      - failedTemplate:
+          errorMessage: "pipeline.name is required"
+
+  - it: should fail without base URL
+    set:
+      pipeline:
+        name: test-pipeline
+    asserts:
+      - failedTemplate:
+          errorMessage: "pipeline.baseUrl is required"
+
+  - it: should set all config values
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+        schedule: "0 5 * * 1"
+        datasetFileExtension: ".ods"
+        resources:
+          parallelism: 5
+          batchSize: 100
+          multiprocessingWorkers: 4
+          retryLimit: 10
+        logging:
+          level: DEBUG
+    asserts:
+      - equal:
+          path: data.BASE_URL
+          value: "https://example.com/data"
+      - equal:
+          path: data.PIPELINE_SCHEDULE_CRON
+          value: "0 5 * * 1"
+      - equal:
+          path: data.DATASET_FILE_EXTENSION
+          value: ".ods"
+      - equal:
+          path: data.PIPELINE_PARALLELISM
+          value: "5"
+      - equal:
+          path: data.PIPELINE_BATCH_SIZE
+          value: "100"
+      - equal:
+          path: data.MULTIPROCESSING_WORKERS
+          value: "4"
+      - equal:
+          path: data.RETRY_LIMIT
+          value: "10"
+      - equal:
+          path: data.LOG_LEVEL
+          value: "DEBUG"
+
+  - it: should set overwrite parquet files to 1 when enabled
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+        storage:
+          overwriteParquetFiles: true
+    asserts:
+      - equal:
+          path: data.OVERWRITE_PARQUET_FILES
+          value: "1"
+
+  - it: should set overwrite parquet files to 0 when disabled
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+        storage:
+          overwriteParquetFiles: false
+    asserts:
+      - equal:
+          path: data.OVERWRITE_PARQUET_FILES
+          value: "0"
+
+  - it: should use custom namespace
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+      namespace: custom-namespace
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-namespace

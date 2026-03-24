@@ -3,7 +3,11 @@
 {{- end }}
 
 {{- define "pipeline.datasetName" -}}
+{{- if .Values.pipeline.datasetName }}
+{{- .Values.pipeline.datasetName }}
+{{- else }}
 {{- .Values.pipeline.name | replace "-" "_" }}
+{{- end }}
 {{- end }}
 
 {{- define "pipeline.fullname" -}}

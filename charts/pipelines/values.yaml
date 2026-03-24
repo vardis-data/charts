@@ -10,8 +10,8 @@ pipeline:
   schedule: "0 0 * * 1"
   # -- (required) Base URL for data source
   baseUrl: ""
-  # -- File extension to filter when scraping URLs
-  datasetFileExtension: ".zip"
+  # -- (required) File extension to filter when scraping URLs (e.g., ".zip", ".ods")
+  datasetFileExtension: ""
 
   # -- Container image configuration
   image:

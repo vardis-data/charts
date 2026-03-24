@@ -7,7 +7,7 @@ metadata:
     {{- include "pipeline.labels" . | nindent 4 }}
 data:
   BASE_URL: {{ required "pipeline.baseUrl is required" .Values.pipeline.baseUrl | quote }}
-  DATASET_FILE_EXTENSION: {{ .Values.pipeline.datasetFileExtension | quote }}
+  DATASET_FILE_EXTENSION: {{ required "pipeline.datasetFileExtension is required" .Values.pipeline.datasetFileExtension | quote }}
   DATASET_NAME: {{ include "pipeline.datasetName" . | quote }}
   IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}
   LOG_LEVEL: {{ .Values.pipeline.logging.level | quote }}

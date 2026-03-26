@@ -121,3 +121,12 @@ tests:
       - equal:
           path: rules[0].resources[0]
           value: "customresourcedefinitions"
+
+  - it: should have events create permission for logging
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["events"]
+            verbs: ["create", "patch"]

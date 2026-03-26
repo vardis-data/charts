@@ -26,16 +26,12 @@ pipeline-{{ include "pipeline.releaseName" . }}-variables
 {{- include "pipeline.releaseName" . }}-submit
 {{- end }}
 
-{{- define "pipeline.imagePackageName" -}}
-{{- if .Values.pipeline.imagePackageName }}
-{{- .Values.pipeline.imagePackageName }}
-{{- else }}
-{{- include "pipeline.packageName" . }}
-{{- end }}
-{{- end }}
-
 {{- define "pipeline.imageName" -}}
-{{- .Values.pipeline.image.repository }}/{{ include "pipeline.imagePackageName" . }}:{{ .Values.pipeline.image.tag }}
+{{- if .Values.pipeline.imageName }}
+{{- .Values.pipeline.image.repository }}/{{ .Values.pipeline.imageName }}:{{ .Values.pipeline.image.tag }}
+{{- else }}
+{{- .Values.pipeline.image.repository }}/{{ include "pipeline.packageName" . }}:{{ .Values.pipeline.image.tag }}
+{{- end }}
 {{- end }}
 
 {{- define "pipeline.workdir" -}}

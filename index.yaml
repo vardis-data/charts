@@ -315,6 +315,23 @@ entries:
   pipelines:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-03-26T15:31:40.555018977Z"
+    description: Generate Kubernetes manifests for vardis data pipelines
+    digest: 2710f9d581fcb009c03fb01e4bc0d99bc8e11318637647f392b7acbaf901617a
+    home: https://github.com/vardis-data/pipelines
+    keywords:
+    - pipeline
+    - argo-workflows
+    - data-engineering
+    name: pipelines
+    sources:
+    - https://github.com/vardis-data/pipelines
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/pipelines-1.2.5/pipelines-1.2.5.tgz
+    version: 1.2.5
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-03-26T11:16:19.470101915Z"
     description: Generate Kubernetes manifests for vardis data pipelines
     digest: b23a22b20438c4bb9e92be22d696cb24e5662b7b495eba077d907b742fd3bc44
@@ -526,4 +543,4 @@ entries:
     urls:
     - https://github.com/vardis-data/charts/releases/download/system-upgrade-controller-0.1.1/system-upgrade-controller-0.1.1.tgz
     version: 0.1.1
-generated: "2026-03-26T11:16:19.470193105Z"
+generated: "2026-03-26T15:31:40.555113465Z"

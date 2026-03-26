@@ -128,3 +128,47 @@ tests:
           content:
             secretRef:
               name: my-shared-secret
+
+  - it: should use imageName when provided (shared image scenario)
+    set:
+      pipeline:
+        name: ans-procedimentos-ambulatoriais-uf
+        imageName: ans_procedimentos_uf
+        image:
+          repository: ghcr.io/vardis-data/pipelines
+          tag: latest
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/vardis-data/pipelines/ans_procedimentos_uf:latest"
+
+  - it: should derive image from pipeline.name when imageName not provided
+    set:
+      pipeline:
+        name: ans-dicionario-de-variaveis
+        image:
+          repository: ghcr.io/vardis-data/pipelines
+          tag: latest
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/vardis-data/pipelines/ans_dicionario_de_variaveis:latest"
+
+  - it: should use imageName with custom datasetName for multi-workflow pipeline
+    set:
+      pipeline:
+        name: ans-procedimentos-hospitalares-uf
+        imageName: ans_procedimentos_uf
+        datasetName: hospitalares
+        image:
+          repository: ghcr.io/vardis-data/pipelines
+          tag: latest
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/vardis-data/pipelines/ans_procedimentos_uf:latest"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATASET_NAME
+            value: "hospitalares"

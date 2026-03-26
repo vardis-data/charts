@@ -62,14 +62,12 @@ spec:
                   key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.authPass }}{{ else }}AUTH_PASS{{ end }}
             {{- end }}
           livenessProbe:
-            httpGet:
-              path: {{ .Values.server.prefix }}/
+            tcpSocket:
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
-            httpGet:
-              path: {{ .Values.server.prefix }}/
+            tcpSocket:
               port: http
             initialDelaySeconds: 3
             periodSeconds: 5

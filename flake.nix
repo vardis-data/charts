@@ -3,16 +3,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
-    {
-      nixpkgs,
-      flake-utils,
-      ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
+    { nixpkgs, utils, ... }:
+    utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -20,15 +16,16 @@
           plugins = [ pkgs.kubernetes-helmPlugins.helm-unittest ];
         };
       in
+      with pkgs;
       {
-        devShells.default =
-          with pkgs;
-          mkShell {
-            buildInputs = [
-              helm
-              just
-            ];
-          };
+        formatter = nixfmt-rfc-style;
+
+        devShells.default = mkShell {
+          buildInputs = [
+            helm
+            just
+          ];
+        };
       }
     );
 }

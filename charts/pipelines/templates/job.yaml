@@ -30,6 +30,30 @@ spec:
               value: {{ include "pipeline.datasetName" . | quote }}
             - name: PIPELINE_SCHEDULE_CRON
               value: {{ .Values.pipeline.schedule | quote }}
+            - name: PIPELINE_DEFAULT_IMAGE
+              value: {{ include "pipeline.imageName" . | quote }}
+            - name: IMAGE_PULL_POLICY
+              value: {{ .Values.pipeline.image.pullPolicy | quote }}
+            - name: PIPELINE_PARALLELISM
+              value: {{ .Values.pipeline.resources.parallelism | quote }}
+            - name: PIPELINE_BATCH_SIZE
+              value: {{ .Values.pipeline.resources.batchSize | quote }}
+            - name: MULTIPROCESSING_WORKERS
+              value: {{ .Values.pipeline.resources.multiprocessingWorkers | quote }}
+            - name: RETRY_LIMIT
+              value: {{ .Values.pipeline.resources.retryLimit | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.pipeline.logging.level | quote }}
+            - name: OVERWRITE_PARQUET_FILES
+              value: {{ .Values.pipeline.storage.overwriteParquetFiles | quote }}
+            {{- if .Values.pipeline.baseUrl }}
+            - name: BASE_URL
+              value: {{ .Values.pipeline.baseUrl | quote }}
+            {{- end }}
+            {{- if .Values.pipeline.datasetFileExtension }}
+            - name: DATASET_FILE_EXTENSION
+              value: {{ .Values.pipeline.datasetFileExtension | quote }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ .Values.sharedConfigMap }}

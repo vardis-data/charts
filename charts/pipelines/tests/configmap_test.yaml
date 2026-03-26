@@ -39,13 +39,17 @@ tests:
       - failedTemplate:
           errorMessage: "pipeline.name is required"
 
-  - it: should fail without base URL
+  - it: should render without baseUrl for non-scraping pipelines
     set:
       pipeline:
         name: test-pipeline
     asserts:
-      - failedTemplate:
-          errorMessage: "pipeline.baseUrl is required"
+      - isKind:
+          of: ConfigMap
+      - notExists:
+          path: data.BASE_URL
+      - notExists:
+          path: data.DATASET_FILE_EXTENSION
 
   - it: should set all config values
     set:
@@ -125,11 +129,14 @@ tests:
           path: metadata.namespace
           value: custom-namespace
 
-  - it: should fail without datasetFileExtension
+  - it: should render baseUrl only when provided
     set:
       pipeline:
         name: test-pipeline
         baseUrl: https://example.com/data
     asserts:
-      - failedTemplate:
-          errorMessage: "pipeline.datasetFileExtension is required"
+      - equal:
+          path: data.BASE_URL
+          value: "https://example.com/data"
+      - notExists:
+          path: data.DATASET_FILE_EXTENSION

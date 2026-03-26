@@ -8,9 +8,9 @@ pipeline:
 
   # -- Cron schedule for the workflow (k8s cron format)
   schedule: "0 0 * * 1"
-  # -- (required) Base URL for data source
+  # -- Base URL for data source (required for scraping pipelines)
   baseUrl: ""
-  # -- (required) File extension to filter when scraping URLs (e.g., ".zip", ".ods")
+  # -- File extension to filter when scraping URLs (e.g., ".zip", ".ods")
   datasetFileExtension: ""
 
   # -- Container image configuration

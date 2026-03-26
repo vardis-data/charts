@@ -9,6 +9,9 @@ metadata:
     {{- include "pipeline.labels" . | nindent 4 }}
 spec:
   template:
+    metadata:
+      labels:
+        {{- include "pipeline.selectorLabels" . | nindent 8 }}
     spec:
       restartPolicy: OnFailure
       {{- with .Values.imagePullSecrets }}

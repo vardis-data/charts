@@ -3,7 +3,11 @@
 {{- end }}
 
 {{- define "pipeline.packageName" -}}
+{{- if .Values.pipeline.imageName }}
+{{- .Values.pipeline.imageName }}
+{{- else }}
 {{- .Values.pipeline.name | replace "-" "_" }}
+{{- end }}
 {{- end }}
 
 {{- define "pipeline.datasetName" -}}

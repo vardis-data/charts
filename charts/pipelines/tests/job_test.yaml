@@ -195,3 +195,16 @@ tests:
       - equal:
           path: metadata.annotations["argocd.argoproj.io/sync-options"]
           value: Delete=true
+
+  - it: should use imageName for package name when provided (shared image multi-workflow)
+    set:
+      pipeline:
+        name: ans-procedimentos-ambulatoriais-uf
+        imageName: ans_procedimentos_uf
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].command
+          content: "ans_procedimentos_uf"
+      - contains:
+          path: spec.template.spec.containers[0].command
+          content: "ans_procedimentos_uf.main"

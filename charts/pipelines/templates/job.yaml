@@ -4,7 +4,7 @@ metadata:
   name: {{ include "pipeline.jobName" . }}
   namespace: {{ .Values.namespace }}
   annotations:
-    argocd.argoproj.io/sync-options: Replace=true
+    argocd.argoproj.io/sync-options: Delete=true
   labels:
     {{- include "pipeline.labels" . | nindent 4 }}
 spec:

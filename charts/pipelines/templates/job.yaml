@@ -21,7 +21,7 @@ spec:
       {{- end }}
       containers:
         - name: workflow-submitter
-          image: {{ include "pipeline.imageName" . }}
+          image: {{ include "pipeline.fullImageName" . }}
           command:
             - "uv"
             - "run"
@@ -34,10 +34,12 @@ spec:
           env:
             - name: DATASET_NAME
               value: {{ include "pipeline.datasetName" . | quote }}
+            - name: PIPELINE_NAME
+              value: {{ include "pipeline.name" . | quote }}
             - name: PIPELINE_SCHEDULE_CRON
               value: {{ .Values.pipeline.schedule | quote }}
             - name: PIPELINE_DEFAULT_IMAGE
-              value: {{ include "pipeline.imageName" . | quote }}
+              value: {{ include "pipeline.fullImageName" . | quote }}
             - name: IMAGE_PULL_POLICY
               value: {{ .Values.pipeline.image.pullPolicy | quote }}
             - name: PIPELINE_PARALLELISM
@@ -52,13 +54,9 @@ spec:
               value: {{ .Values.pipeline.logging.level | quote }}
             - name: OVERWRITE_PARQUET_FILES
               value: {{ .Values.pipeline.storage.overwriteParquetFiles | quote }}
-            {{- if .Values.pipeline.baseUrl }}
-            - name: BASE_URL
-              value: {{ .Values.pipeline.baseUrl | quote }}
-            {{- end }}
-            {{- if .Values.pipeline.datasetFileExtension }}
-            - name: DATASET_FILE_EXTENSION
-              value: {{ .Values.pipeline.datasetFileExtension | quote }}
+            {{- range $key, $value := .Values.pipeline.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
             {{- end }}
           envFrom:
             - configMapRef:

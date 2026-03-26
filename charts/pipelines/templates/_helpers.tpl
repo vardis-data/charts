@@ -3,8 +3,8 @@
 {{- end }}
 
 {{- define "pipeline.packageName" -}}
-{{- if .Values.pipeline.imageName }}
-{{- .Values.pipeline.imageName }}
+{{- if .Values.pipeline.image.name }}
+{{- .Values.pipeline.image.name }}
 {{- else }}
 {{- .Values.pipeline.name | replace "-" "_" }}
 {{- end }}
@@ -30,12 +30,16 @@ pipeline-{{ include "pipeline.releaseName" . }}-variables
 {{- include "pipeline.releaseName" . }}-submit
 {{- end }}
 
-{{- define "pipeline.imageName" -}}
-{{- if .Values.pipeline.imageName }}
-{{- .Values.pipeline.image.repository }}/{{ .Values.pipeline.imageName }}:{{ .Values.pipeline.image.tag }}
+{{- define "pipeline.imageTag" -}}
+{{- if .Values.pipeline.image.tag }}
+{{- .Values.pipeline.image.tag }}
 {{- else }}
-{{- .Values.pipeline.image.repository }}/{{ include "pipeline.packageName" . }}:{{ .Values.pipeline.image.tag }}
+{{- "latest" }}
 {{- end }}
+{{- end }}
+
+{{- define "pipeline.fullImageName" -}}
+{{- .Values.pipeline.image.repository }}/{{ include "pipeline.packageName" . }}:{{ include "pipeline.imageTag" . }}
 {{- end }}
 
 {{- define "pipeline.workdir" -}}

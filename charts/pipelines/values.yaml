@@ -5,23 +5,26 @@ pipeline:
   # -- Override dataset name if different from pipeline name (for multi-dataset pipelines)
   # If empty, derived from pipeline.name
   datasetName: ""
-  # -- Override image name if different from pipeline name (for shared images)
-  # If empty, derived from pipeline.name (with dashes converted to underscores)
-  imageName: ""
 
   # -- Cron schedule for the workflow (k8s cron format)
   schedule: "0 0 * * 1"
-  # -- Base URL for data source (required for scraping pipelines)
-  baseUrl: ""
-  # -- File extension to filter when scraping URLs (e.g., ".zip", ".ods")
-  datasetFileExtension: ""
+
+  # -- Pipeline-specific environment variables (passed directly to the container)
+  # Use this for domain-specific configuration like baseUrl, datasetFileExtension, etc.
+  env: {}
+  # Example:
+  #   BASE_URL: "https://example.com/data/"
+  #   DATASET_FILE_EXTENSION: ".zip"
 
   # -- Container image configuration
   image:
-    # -- Image repository (pipeline name is appended)
+    # -- Image repository
     repository: ghcr.io/vardis-data/pipelines
-    # -- Image tag
-    tag: latest
+    # -- Override image name if different from pipeline name (for shared images)
+    # If empty, derived from pipeline.name (with dashes converted to underscores)
+    name: ""
+    # -- Image tag (optional, defaults to "latest")
+    tag: ""
     # -- Image pull policy
     pullPolicy: Always
 

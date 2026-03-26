@@ -6,19 +6,17 @@ metadata:
   labels:
     {{- include "pipeline.labels" . | nindent 4 }}
 data:
-  {{- if .Values.pipeline.baseUrl }}
-  BASE_URL: {{ .Values.pipeline.baseUrl | quote }}
-  {{- end }}
-  {{- if .Values.pipeline.datasetFileExtension }}
-  DATASET_FILE_EXTENSION: {{ .Values.pipeline.datasetFileExtension | quote }}
-  {{- end }}
   DATASET_NAME: {{ include "pipeline.datasetName" . | quote }}
   IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}
   LOG_LEVEL: {{ .Values.pipeline.logging.level | quote }}
   MULTIPROCESSING_WORKERS: {{ .Values.pipeline.resources.multiprocessingWorkers | quote }}
   OVERWRITE_PARQUET_FILES: {{ include "pipeline.overwriteParquetFiles" . | quote }}
   PIPELINE_BATCH_SIZE: {{ .Values.pipeline.resources.batchSize | quote }}
-  PIPELINE_DEFAULT_IMAGE: {{ include "pipeline.imageName" . | quote }}
+  PIPELINE_DEFAULT_IMAGE: {{ include "pipeline.fullImageName" . | quote }}
+  PIPELINE_NAME: {{ include "pipeline.name" . | quote }}
   PIPELINE_PARALLELISM: {{ .Values.pipeline.resources.parallelism | quote }}
   PIPELINE_SCHEDULE_CRON: {{ .Values.pipeline.schedule | quote }}
   RETRY_LIMIT: {{ .Values.pipeline.resources.retryLimit | quote }}
+  {{- range $key, $value := .Values.pipeline.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

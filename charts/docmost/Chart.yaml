@@ -2,7 +2,7 @@ apiVersion: v2
 name: docmost
 description: Open-source collaborative documentation and wiki software
 type: application
-version: 1.2.0
+version: 1.2.1
 appVersion: 0.8.2
 home: https://docmost.com
 sources:

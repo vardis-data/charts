@@ -96,12 +96,12 @@ postgresql://{{ include "docmost.databaseUser" . }}:{{ include "docmost.database
 {{- end }}
 
 {{- define "docmost.redisUrl" -}}
-{{- $password := include "docmost.redisPassword" . }}
-{{- if $password }}
+{{- $password := include "docmost.redisPassword" . -}}
+{{- if $password -}}
 redis://default:{{ $password }}@{{ include "docmost.redisHost" . }}:{{ include "docmost.redisPort" . }}
-{{- else }}
+{{- else -}}
 redis://{{ include "docmost.redisHost" . }}:{{ include "docmost.redisPort" . }}
-{{- end }}
+{{- end -}}
 {{- end }}
 
 {{- define "docmost.secretName" -}}

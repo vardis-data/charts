@@ -22,7 +22,9 @@ spec:
             - "--no-dev"
             - "--package"
             - {{ include "pipeline.packageName" . | quote }}
-            - "{{ include "pipeline.workdir" . }}/main.py"
+            - "python"
+            - "-m"
+            - {{ printf "%s.main" (include "pipeline.packageName" .) | quote }}
           env:
             - name: DATASET_NAME
               value: {{ include "pipeline.datasetName" . | quote }}

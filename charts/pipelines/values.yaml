@@ -5,6 +5,9 @@ pipeline:
   # -- Override dataset name if different from pipeline name (underscores)
   # If empty, derived from pipeline.name by replacing hyphens with underscores
   datasetName: ""
+  # -- Python package name (directory name with underscores), used for image name and module path
+  # If empty, derived from datasetName
+  pythonPackage: ""
 
   # -- Cron schedule for the workflow (k8s cron format)
   schedule: "0 0 * * 1"

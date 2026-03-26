@@ -10,6 +10,14 @@
 {{- end }}
 {{- end }}
 
+{{- define "pipeline.pythonPackage" -}}
+{{- if .Values.pipeline.pythonPackage }}
+{{- .Values.pipeline.pythonPackage }}
+{{- else }}
+{{- include "pipeline.datasetName" . }}
+{{- end }}
+{{- end }}
+
 {{- define "pipeline.releaseName" -}}
 {{- .Release.Name }}
 {{- end }}
@@ -23,15 +31,15 @@ pipeline-{{ include "pipeline.releaseName" . }}-variables
 {{- end }}
 
 {{- define "pipeline.imageName" -}}
-{{- .Values.pipeline.image.repository }}/{{ include "pipeline.datasetName" . }}:{{ .Values.pipeline.image.tag }}
+{{- .Values.pipeline.image.repository }}/{{ include "pipeline.pythonPackage" . }}:{{ .Values.pipeline.image.tag }}
 {{- end }}
 
 {{- define "pipeline.packageName" -}}
-{{- include "pipeline.name" . }}
+{{- include "pipeline.pythonPackage" . }}
 {{- end }}
 
 {{- define "pipeline.workdir" -}}
-/opt/pipelines/{{ include "pipeline.datasetName" . }}
+/opt/pipelines/{{ include "pipeline.pythonPackage" . }}
 {{- end }}
 
 {{- define "pipeline.labels" -}}

@@ -38,16 +38,30 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.containers[0].command
-          content: "my-test-pipeline"
+          content: "my_test_pipeline"
 
-  - it: should use correct workdir
+  - it: should use pythonPackage for module path
     set:
       pipeline:
         name: my-test-pipeline
     asserts:
       - contains:
           path: spec.template.spec.containers[0].command
-          content: "/opt/pipelines/my_test_pipeline/main.py"
+          content: "my_test_pipeline.main"
+
+  - it: should use custom pythonPackage when set
+    set:
+      pipeline:
+        name: my-test-pipeline
+        datasetName: custom_dataset
+        pythonPackage: actual_package
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].command
+          content: "actual_package"
+      - contains:
+          path: spec.template.spec.containers[0].command
+          content: "actual_package.main"
 
   - it: should have dataset name env var
     set:

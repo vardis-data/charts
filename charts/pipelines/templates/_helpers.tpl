@@ -23,7 +23,7 @@ pipeline-{{ include "pipeline.releaseName" . }}-variables
 {{- end }}
 
 {{- define "pipeline.imageName" -}}
-{{- .Values.pipeline.image.repository }}/{{ include "pipeline.name" . }}:{{ .Values.pipeline.image.tag }}
+{{- .Values.pipeline.image.repository }}/{{ include "pipeline.datasetName" . }}:{{ .Values.pipeline.image.tag }}
 {{- end }}
 
 {{- define "pipeline.packageName" -}}

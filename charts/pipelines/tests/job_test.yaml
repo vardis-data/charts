@@ -19,58 +19,67 @@ tests:
           path: metadata.name
           value: RELEASE-NAME-submit
 
-  - it: should use correct image with underscores
+  - it: should convert dashes to underscores in image name
     set:
       pipeline:
-        name: test-pipeline
+        name: ans-dicionario-de-variaveis
         image:
           repository: ghcr.io/vardis-data/pipelines
-          tag: v1.0.0
+          tag: latest
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: "ghcr.io/vardis-data/pipelines/test_pipeline:v1.0.0"
+          value: "ghcr.io/vardis-data/pipelines/ans_dicionario_de_variaveis:latest"
 
-  - it: should use package name derived from pipeline name
+  - it: should convert dashes to underscores in package name
     set:
       pipeline:
-        name: my-test-pipeline
+        name: ans-procedimentos-uf
     asserts:
       - contains:
           path: spec.template.spec.containers[0].command
-          content: "my_test_pipeline"
+          content: "ans_procedimentos_uf"
       - contains:
           path: spec.template.spec.containers[0].command
-          content: "my_test_pipeline.main"
+          content: "ans_procedimentos_uf.main"
 
-  - it: should use datasetName only for env var not image
+  - it: should convert dashes to underscores in workdir
     set:
       pipeline:
-        name: my-test-pipeline
-        datasetName: custom_dataset
+        name: ans-procedimentos-uf
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].command
+          content: "--package"
+
+  - it: multi-dataset pipeline should use custom datasetName for env var but derive image from pipeline name
+    set:
+      pipeline:
+        name: ans-procedimentos-uf
+        datasetName: ans_amb
         image:
-          repository: ghcr.io/test
-          tag: v1
+          repository: ghcr.io/vardis-data/pipelines
+          tag: latest
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: "ghcr.io/test/my_test_pipeline:v1"
+          value: "ghcr.io/vardis-data/pipelines/ans_procedimentos_uf:latest"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
             name: DATASET_NAME
-            value: "custom_dataset"
+            value: "ans_amb"
 
-  - it: should have dataset name env var
+  - it: single-dataset pipeline should derive datasetName from pipeline name
     set:
       pipeline:
-        name: my-test-pipeline
+        name: ans-dicionario-de-variaveis
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
             name: DATASET_NAME
-            value: "my_test_pipeline"
+            value: "ans_dicionario_de_variaveis"
 
   - it: should have schedule env var
     set:

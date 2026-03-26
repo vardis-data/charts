@@ -1,13 +1,10 @@
 # -- Pipeline configuration
 pipeline:
-  # -- (required) Pipeline name, used for k8s resource naming (hyphens)
+  # -- (required) Pipeline name, used for k8s resource naming and image name
   name: ""
-  # -- Override dataset name if different from pipeline name (underscores)
-  # If empty, derived from pipeline.name by replacing hyphens with underscores
+  # -- Override dataset name if different from pipeline name (for multi-dataset pipelines)
+  # If empty, derived from pipeline.name
   datasetName: ""
-  # -- Python package name (directory name with underscores), used for image name and module path
-  # If empty, derived from datasetName
-  pythonPackage: ""
 
   # -- Cron schedule for the workflow (k8s cron format)
   schedule: "0 0 * * 1"

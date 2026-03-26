@@ -31,7 +31,7 @@ tests:
           path: spec.template.spec.containers[0].image
           value: "ghcr.io/vardis-data/pipelines/test_pipeline:v1.0.0"
 
-  - it: should use correct package name
+  - it: should use package name derived from pipeline name
     set:
       pipeline:
         name: my-test-pipeline
@@ -39,29 +39,27 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].command
           content: "my_test_pipeline"
-
-  - it: should use pythonPackage for module path
-    set:
-      pipeline:
-        name: my-test-pipeline
-    asserts:
       - contains:
           path: spec.template.spec.containers[0].command
           content: "my_test_pipeline.main"
 
-  - it: should use custom pythonPackage when set
+  - it: should use datasetName only for env var not image
     set:
       pipeline:
         name: my-test-pipeline
         datasetName: custom_dataset
-        pythonPackage: actual_package
+        image:
+          repository: ghcr.io/test
+          tag: v1
     asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/test/my_test_pipeline:v1"
       - contains:
-          path: spec.template.spec.containers[0].command
-          content: "actual_package"
-      - contains:
-          path: spec.template.spec.containers[0].command
-          content: "actual_package.main"
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATASET_NAME
+            value: "custom_dataset"
 
   - it: should have dataset name env var
     set:

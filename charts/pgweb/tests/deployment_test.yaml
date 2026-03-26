@@ -75,6 +75,26 @@ tests:
       - exists:
           path: spec.template.spec.containers[0].readinessProbe
 
+  - it: should use TCP probes to avoid 401 errors when auth is enabled
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket.port
+          value: http
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket.port
+          value: http
+
+  - it: should not use HTTP probes that fail with auth
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet
+
   - it: should set database URL env when database configured
     set:
       database:

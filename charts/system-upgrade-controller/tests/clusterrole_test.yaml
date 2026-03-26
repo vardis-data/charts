@@ -103,3 +103,21 @@ tests:
             apiGroups: ["coordination.k8s.io"]
             resources: ["leases"]
             verbs: ["*"]
+
+  - it: should have CRD permissions for embedded CRD creation
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["apiextensions.k8s.io"]
+            resources: ["customresourcedefinitions"]
+            verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+  - it: should have CRD permissions as first rule for controller startup
+    asserts:
+      - equal:
+          path: rules[0].apiGroups[0]
+          value: "apiextensions.k8s.io"
+      - equal:
+          path: rules[0].resources[0]
+          value: "customresourcedefinitions"

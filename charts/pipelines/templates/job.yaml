@@ -4,7 +4,8 @@ metadata:
   name: {{ include "pipeline.jobName" . }}
   namespace: {{ .Values.namespace }}
   annotations:
-    argocd.argoproj.io/sync-options: Delete=true
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
   labels:
     {{- include "pipeline.labels" . | nindent 4 }}
 spec:

@@ -187,14 +187,17 @@ tests:
           path: spec.template.metadata.labels["app.kubernetes.io/instance"]
           value: RELEASE-NAME
 
-  - it: should have ArgoCD Delete sync option annotation
+  - it: should have ArgoCD hook annotations for job recreation
     set:
       pipeline:
         name: test-pipeline
     asserts:
       - equal:
-          path: metadata.annotations["argocd.argoproj.io/sync-options"]
-          value: Delete=true
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: Sync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+          value: BeforeHookCreation
 
   - it: should use imageName for package name when provided (shared image multi-workflow)
     set:

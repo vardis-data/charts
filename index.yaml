@@ -85,6 +85,28 @@ entries:
     version: 0.1.0
   kan:
   - apiVersion: v2
+    appVersion: latest
+    created: "2026-03-26T04:06:18.463785404Z"
+    dependencies:
+    - condition: postgres.enabled
+      name: postgres
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.18.3
+    description: Open-source Kanban board for project management
+    digest: 6c149ae2bc5b7d80337f655207ba3a0e4d1f1fbca90a01d2f8b8bb291c77951a
+    home: https://github.com/kanbn/kan
+    keywords:
+    - kanban
+    - project-management
+    - tasks
+    name: kan
+    sources:
+    - https://github.com/kanbn/kan
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/kan-1.2.1/kan-1.2.1.tgz
+    version: 1.2.1
+  - apiVersion: v2
     appVersion: 0.8.1
     created: "2026-03-23T22:59:01.012673977Z"
     dependencies:
@@ -212,6 +234,24 @@ entries:
   pgweb:
   - apiVersion: v2
     appVersion: 0.17.0
+    created: "2026-03-26T04:06:18.592628154Z"
+    description: Web-based PostgreSQL database browser
+    digest: 556184b78cd50dc9c1d0d8e721a6ff95afa5006a9784ca9a4118392dc00fd420
+    home: https://github.com/sosedoff/pgweb
+    keywords:
+    - postgresql
+    - database
+    - browser
+    - admin
+    name: pgweb
+    sources:
+    - https://github.com/sosedoff/pgweb
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/pgweb-1.1.1/pgweb-1.1.1.tgz
+    version: 1.1.1
+  - apiVersion: v2
+    appVersion: 0.17.0
     created: "2026-03-23T22:59:01.446435869Z"
     description: Web-based PostgreSQL database browser
     digest: e61ff9a079afdf004af03ce7a68429750ce0e07decef845f4a4e41cdef7cbbb0
@@ -267,6 +307,25 @@ entries:
   system-upgrade-controller:
   - apiVersion: v2
     appVersion: v0.19.0
+    created: "2026-03-26T04:06:18.714104307Z"
+    description: Kubernetes-native upgrade controller for nodes using declarative
+      Plans
+    digest: 192204e899ee1189cc0bcf9b712b35dc681e3583d4cf1c67efd840eabf0e7e88
+    home: https://github.com/rancher/system-upgrade-controller
+    keywords:
+    - kubernetes
+    - upgrades
+    - k3s
+    - system-upgrade
+    name: system-upgrade-controller
+    sources:
+    - https://github.com/rancher/system-upgrade-controller
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/system-upgrade-controller-1.0.1/system-upgrade-controller-1.0.1.tgz
+    version: 1.0.1
+  - apiVersion: v2
+    appVersion: v0.19.0
     created: "2026-03-22T18:03:22.602502378Z"
     description: Kubernetes-native upgrade controller for nodes using declarative
       Plans
@@ -303,4 +362,4 @@ entries:
     urls:
     - https://github.com/vardis-data/charts/releases/download/system-upgrade-controller-0.1.1/system-upgrade-controller-0.1.1.tgz
     version: 0.1.1
-generated: "2026-03-24T15:43:59.174758132Z"
+generated: "2026-03-26T04:06:18.714174791Z"

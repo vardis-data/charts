@@ -1,10 +1,13 @@
 # -- Pipeline configuration
 pipeline:
-  # -- (required) Pipeline name, used for k8s resource naming and image name
+  # -- (required) Pipeline name, used for k8s resource naming
   name: ""
   # -- Override dataset name if different from pipeline name (for multi-dataset pipelines)
   # If empty, derived from pipeline.name
   datasetName: ""
+  # -- Override image package name if different from pipeline name (for shared images)
+  # If empty, derived from pipeline.name
+  imagePackageName: ""
 
   # -- Cron schedule for the workflow (k8s cron format)
   schedule: "0 0 * * 1"

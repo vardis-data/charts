@@ -18,7 +18,7 @@
       in
       with pkgs;
       {
-        formatter = nixfmt-rfc-style;
+        formatter = nixfmt;
 
         devShells.default = mkShell {
           buildInputs = [

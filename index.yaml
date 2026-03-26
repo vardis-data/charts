@@ -3,6 +3,32 @@ entries:
   docmost:
   - apiVersion: v2
     appVersion: 0.8.2
+    created: "2026-03-26T04:27:40.441507258Z"
+    dependencies:
+    - condition: postgres.enabled
+      name: postgres
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.18.3
+    - condition: valkey.enabled
+      name: valkey
+      repository: https://valkey.io/valkey-helm
+      version: 0.9.3
+    description: Open-source collaborative documentation and wiki software
+    digest: bd4f56a0896d62bdb8e8a33f3977c0c73e2ff40cb6304117c3917c17969907d0
+    home: https://docmost.com
+    keywords:
+    - documentation
+    - wiki
+    - collaboration
+    name: docmost
+    sources:
+    - https://github.com/docmost/docmost
+    type: application
+    urls:
+    - https://github.com/vardis-data/charts/releases/download/docmost-1.2.1/docmost-1.2.1.tgz
+    version: 1.2.1
+  - apiVersion: v2
+    appVersion: 0.8.2
     created: "2026-03-23T22:59:00.79129772Z"
     dependencies:
     - condition: postgres.enabled
@@ -362,4 +388,4 @@ entries:
     urls:
     - https://github.com/vardis-data/charts/releases/download/system-upgrade-controller-0.1.1/system-upgrade-controller-0.1.1.tgz
     version: 0.1.1
-generated: "2026-03-26T04:06:18.714174791Z"
+generated: "2026-03-26T04:27:41.07439491Z"

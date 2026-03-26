@@ -7,6 +7,7 @@ tests:
       pipeline:
         name: test-pipeline
         baseUrl: https://example.com/data
+        datasetFileExtension: ".csv"
     asserts:
       - isKind:
           of: ConfigMap
@@ -16,6 +17,7 @@ tests:
       pipeline:
         name: test-pipeline
         baseUrl: https://example.com/data
+        datasetFileExtension: ".csv"
     asserts:
       - equal:
           path: metadata.name
@@ -26,6 +28,7 @@ tests:
       pipeline:
         name: my-test-pipeline
         baseUrl: https://example.com/data
+        datasetFileExtension: ".csv"
     asserts:
       - equal:
           path: data.DATASET_NAME
@@ -89,6 +92,7 @@ tests:
       pipeline:
         name: test-pipeline
         baseUrl: https://example.com/data
+        datasetFileExtension: ".csv"
         storage:
           overwriteParquetFiles: true
     asserts:
@@ -101,6 +105,7 @@ tests:
       pipeline:
         name: test-pipeline
         baseUrl: https://example.com/data
+        datasetFileExtension: ".csv"
         storage:
           overwriteParquetFiles: false
     asserts:
@@ -113,8 +118,18 @@ tests:
       pipeline:
         name: test-pipeline
         baseUrl: https://example.com/data
+        datasetFileExtension: ".csv"
       namespace: custom-namespace
     asserts:
       - equal:
           path: metadata.namespace
           value: custom-namespace
+
+  - it: should fail without datasetFileExtension
+    set:
+      pipeline:
+        name: test-pipeline
+        baseUrl: https://example.com/data
+    asserts:
+      - failedTemplate:
+          errorMessage: "pipeline.datasetFileExtension is required"

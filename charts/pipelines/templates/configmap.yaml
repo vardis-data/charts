@@ -7,8 +7,14 @@ metadata:
     {{- include "pipeline.labels" . | nindent 4 }}
 data:
   {{- $env := .Values.pipeline.env | default dict }}
+  {{- if and .Values.pipeline.baseUrl (not (hasKey $env "BASE_URL")) }}
+  BASE_URL: {{ .Values.pipeline.baseUrl | quote }}
+  {{- end }}
   {{- if not (hasKey $env "DATASET_NAME") }}
   DATASET_NAME: {{ include "pipeline.datasetName" . | quote }}
+  {{- end }}
+  {{- if and .Values.pipeline.datasetFileExtension (not (hasKey $env "DATASET_FILE_EXTENSION")) }}
+  DATASET_FILE_EXTENSION: {{ .Values.pipeline.datasetFileExtension | quote }}
   {{- end }}
   {{- if not (hasKey $env "IMAGE_PULL_POLICY") }}
   IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}

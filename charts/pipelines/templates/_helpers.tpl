@@ -3,8 +3,8 @@
 {{- end }}
 
 {{- define "pipeline.packageName" -}}
-{{- if .Values.pipeline.image.name }}
-{{- .Values.pipeline.image.name }}
+{{- if .Values.pipeline.imageName }}
+{{- .Values.pipeline.imageName }}
 {{- else }}
 {{- .Values.pipeline.name | replace "-" "_" }}
 {{- end }}

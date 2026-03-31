@@ -67,7 +67,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DATASET_NAME
+            name: PIPELINE_DATASET_NAME
             value: "ans_amb"
 
   - it: single-dataset pipeline should derive datasetName from pipeline name
@@ -78,7 +78,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DATASET_NAME
+            name: PIPELINE_DATASET_NAME
             value: "ans_dicionario_de_variaveis"
 
   - it: should have schedule env var
@@ -129,12 +129,12 @@ tests:
             secretRef:
               name: my-shared-secret
 
-  - it: should use imageName when provided (shared image scenario)
+  - it: should use image.name when provided (shared image scenario)
     set:
       pipeline:
         name: ans-procedimentos-ambulatoriais-uf
-        imageName: ans_procedimentos_uf
         image:
+          name: ans_procedimentos_uf
           repository: ghcr.io/vardis-data/pipelines
           tag: latest
     asserts:
@@ -142,7 +142,7 @@ tests:
           path: spec.template.spec.containers[0].image
           value: "ghcr.io/vardis-data/pipelines/ans_procedimentos_uf:latest"
 
-  - it: should derive image from pipeline.name when imageName not provided
+  - it: should derive image from pipeline.name when image.name not provided
     set:
       pipeline:
         name: ans-dicionario-de-variaveis
@@ -154,13 +154,13 @@ tests:
           path: spec.template.spec.containers[0].image
           value: "ghcr.io/vardis-data/pipelines/ans_dicionario_de_variaveis:latest"
 
-  - it: should use imageName with custom datasetName for multi-workflow pipeline
+  - it: should use image.name with custom datasetName for multi-workflow pipeline
     set:
       pipeline:
         name: ans-procedimentos-hospitalares-uf
-        imageName: ans_procedimentos_uf
         datasetName: hospitalares
         image:
+          name: ans_procedimentos_uf
           repository: ghcr.io/vardis-data/pipelines
           tag: latest
     asserts:
@@ -170,7 +170,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DATASET_NAME
+            name: PIPELINE_DATASET_NAME
             value: "hospitalares"
 
   - it: should have template metadata labels for Job replacement compatibility
@@ -197,13 +197,14 @@ tests:
           value: Sync
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
-          value: BeforeHookCreation
+          value: BeforeHookCreation,HookSucceeded
 
-  - it: should use imageName for package name when provided (shared image multi-workflow)
+  - it: should use image.name for package name when provided (shared image multi-workflow)
     set:
       pipeline:
         name: ans-procedimentos-ambulatoriais-uf
-        imageName: ans_procedimentos_uf
+        image:
+          name: ans_procedimentos_uf
     asserts:
       - contains:
           path: spec.template.spec.containers[0].command
@@ -211,3 +212,15 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].command
           content: "ans_procedimentos_uf.main"
+
+  - it: should use local image when repository is empty
+    set:
+      pipeline:
+        name: ans-procedimentos
+        image:
+          repository: ""
+          tag: local
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ans_procedimentos:local"

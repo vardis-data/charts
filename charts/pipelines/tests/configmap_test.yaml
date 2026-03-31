@@ -6,8 +6,6 @@ tests:
     set:
       pipeline:
         name: test-pipeline
-        baseUrl: https://example.com/data
-        datasetFileExtension: ".csv"
     asserts:
       - isKind:
           of: ConfigMap
@@ -16,65 +14,31 @@ tests:
     set:
       pipeline:
         name: test-pipeline
-        baseUrl: https://example.com/data
-        datasetFileExtension: ".csv"
     asserts:
       - equal:
           path: metadata.name
           value: pipeline-RELEASE-NAME-variables
-
-  - it: should set dataset name with underscores
-    set:
-      pipeline:
-        name: my-test-pipeline
-        baseUrl: https://example.com/data
-        datasetFileExtension: ".csv"
-    asserts:
-      - equal:
-          path: data.DATASET_NAME
-          value: "my_test_pipeline"
 
   - it: should fail without pipeline name
     asserts:
       - failedTemplate:
           errorMessage: "pipeline.name is required"
 
-  - it: should render without baseUrl for non-scraping pipelines
+  - it: should set all config values from resources
     set:
       pipeline:
         name: test-pipeline
-    asserts:
-      - isKind:
-          of: ConfigMap
-      - notExists:
-          path: data.BASE_URL
-      - notExists:
-          path: data.DATASET_FILE_EXTENSION
-
-  - it: should set all config values
-    set:
-      pipeline:
-        name: test-pipeline
-        baseUrl: https://example.com/data
         schedule: "0 5 * * 1"
-        datasetFileExtension: ".ods"
         resources:
           parallelism: 5
           batchSize: 100
-          multiprocessingWorkers: 4
           retryLimit: 10
-        logging:
-          level: DEBUG
+        image:
+          pullPolicy: Never
     asserts:
-      - equal:
-          path: data.BASE_URL
-          value: "https://example.com/data"
       - equal:
           path: data.PIPELINE_SCHEDULE_CRON
           value: "0 5 * * 1"
-      - equal:
-          path: data.DATASET_FILE_EXTENSION
-          value: ".ods"
       - equal:
           path: data.PIPELINE_PARALLELISM
           value: "5"
@@ -82,61 +46,55 @@ tests:
           path: data.PIPELINE_BATCH_SIZE
           value: "100"
       - equal:
-          path: data.MULTIPROCESSING_WORKERS
-          value: "4"
-      - equal:
-          path: data.RETRY_LIMIT
+          path: data.PIPELINE_RETRY_LIMIT
           value: "10"
       - equal:
-          path: data.LOG_LEVEL
-          value: "DEBUG"
+          path: data.K8S_IMAGE_PULL_POLICY
+          value: "Never"
 
   - it: should set overwrite parquet files to 1 when enabled
     set:
       pipeline:
         name: test-pipeline
-        baseUrl: https://example.com/data
-        datasetFileExtension: ".csv"
         storage:
           overwriteParquetFiles: true
     asserts:
       - equal:
-          path: data.OVERWRITE_PARQUET_FILES
+          path: data.PIPELINE_OVERWRITE_PARQUET_FILES
           value: "1"
 
   - it: should set overwrite parquet files to 0 when disabled
     set:
       pipeline:
         name: test-pipeline
-        baseUrl: https://example.com/data
-        datasetFileExtension: ".csv"
         storage:
           overwriteParquetFiles: false
     asserts:
       - equal:
-          path: data.OVERWRITE_PARQUET_FILES
+          path: data.PIPELINE_OVERWRITE_PARQUET_FILES
           value: "0"
 
   - it: should use custom namespace
     set:
       pipeline:
         name: test-pipeline
-        baseUrl: https://example.com/data
-        datasetFileExtension: ".csv"
       namespace: custom-namespace
     asserts:
       - equal:
           path: metadata.namespace
           value: custom-namespace
 
-  - it: should render baseUrl only when provided
+  - it: should pass through custom env vars
     set:
       pipeline:
         name: test-pipeline
-        baseUrl: https://example.com/data
+        env:
+          PIPELINE_BASE_URL: "https://example.com/data"
+          PIPELINE_DATASET_FILE_EXTENSION: ".csv"
     asserts:
       - equal:
-          path: data.BASE_URL
+          path: data.PIPELINE_BASE_URL
           value: "https://example.com/data"
-      - notExists:
-          path: data.DATASET_FILE_EXTENSION
+      - equal:
+          path: data.PIPELINE_DATASET_FILE_EXTENSION
+          value: ".csv"

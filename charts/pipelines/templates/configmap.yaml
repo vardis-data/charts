@@ -19,6 +19,9 @@ data:
   {{- if not (hasKey $env "PIPELINE_NAME") }}
   PIPELINE_NAME: {{ include "pipeline.name" . | quote }}
   {{- end }}
+  {{- if not (hasKey $env "PIPELINE_DATASET_NAME") }}
+  PIPELINE_DATASET_NAME: {{ include "pipeline.datasetName" . | quote }}
+  {{- end }}
   {{- if not (hasKey $env "PIPELINE_OVERWRITE_PARQUET_FILES") }}
   PIPELINE_OVERWRITE_PARQUET_FILES: {{ include "pipeline.overwriteParquetFiles" . | quote }}
   {{- end }}

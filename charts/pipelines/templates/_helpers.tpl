@@ -39,7 +39,11 @@ pipeline-{{ include "pipeline.releaseName" . }}-variables
 {{- end }}
 
 {{- define "pipeline.fullImageName" -}}
+{{- if .Values.pipeline.image.repository }}
 {{- .Values.pipeline.image.repository }}/{{ include "pipeline.packageName" . }}:{{ include "pipeline.imageTag" . }}
+{{- else }}
+{{- include "pipeline.packageName" . }}:{{ include "pipeline.imageTag" . }}
+{{- end }}
 {{- end }}
 
 {{- define "pipeline.workdir" -}}

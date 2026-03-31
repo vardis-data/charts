@@ -32,7 +32,7 @@ spec:
             - "-m"
             - {{ printf "%s.main" (include "pipeline.packageName" .) | quote }}
           env:
-            - name: DATASET_NAME
+            - name: PIPELINE_DATASET_NAME
               value: {{ include "pipeline.datasetName" . | quote }}
             - name: PIPELINE_NAME
               value: {{ include "pipeline.name" . | quote }}
@@ -40,19 +40,19 @@ spec:
               value: {{ .Values.pipeline.schedule | quote }}
             - name: PIPELINE_DEFAULT_IMAGE
               value: {{ include "pipeline.fullImageName" . | quote }}
-            - name: IMAGE_PULL_POLICY
+            - name: K8S_IMAGE_PULL_POLICY
               value: {{ .Values.pipeline.image.pullPolicy | quote }}
             - name: PIPELINE_PARALLELISM
               value: {{ .Values.pipeline.resources.parallelism | quote }}
             - name: PIPELINE_BATCH_SIZE
               value: {{ .Values.pipeline.resources.batchSize | quote }}
-            - name: MULTIPROCESSING_WORKERS
+            - name: PIPELINE_MULTIPROCESSING_WORKERS
               value: {{ .Values.pipeline.resources.multiprocessingWorkers | quote }}
-            - name: RETRY_LIMIT
+            - name: PIPELINE_RETRY_LIMIT
               value: {{ .Values.pipeline.resources.retryLimit | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.pipeline.logging.level | quote }}
-            - name: OVERWRITE_PARQUET_FILES
+            - name: PIPELINE_OVERWRITE_PARQUET_FILES
               value: {{ .Values.pipeline.storage.overwriteParquetFiles | quote }}
             {{- range $key, $value := .Values.pipeline.env }}
             - name: {{ $key }}

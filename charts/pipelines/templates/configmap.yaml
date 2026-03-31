@@ -7,26 +7,8 @@ metadata:
     {{- include "pipeline.labels" . | nindent 4 }}
 data:
   {{- $env := .Values.pipeline.env | default dict }}
-  {{- if and .Values.pipeline.baseUrl (not (hasKey $env "BASE_URL")) }}
-  BASE_URL: {{ .Values.pipeline.baseUrl | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "DATASET_NAME") }}
-  DATASET_NAME: {{ include "pipeline.datasetName" . | quote }}
-  {{- end }}
-  {{- if and .Values.pipeline.datasetFileExtension (not (hasKey $env "DATASET_FILE_EXTENSION")) }}
-  DATASET_FILE_EXTENSION: {{ .Values.pipeline.datasetFileExtension | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "IMAGE_PULL_POLICY") }}
-  IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "LOG_LEVEL") }}
-  LOG_LEVEL: {{ .Values.pipeline.logging.level | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "MULTIPROCESSING_WORKERS") }}
-  MULTIPROCESSING_WORKERS: {{ .Values.pipeline.resources.multiprocessingWorkers | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "OVERWRITE_PARQUET_FILES") }}
-  OVERWRITE_PARQUET_FILES: {{ include "pipeline.overwriteParquetFiles" . | quote }}
+  {{- if not (hasKey $env "K8S_IMAGE_PULL_POLICY") }}
+  K8S_IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}
   {{- end }}
   {{- if not (hasKey $env "PIPELINE_BATCH_SIZE") }}
   PIPELINE_BATCH_SIZE: {{ .Values.pipeline.resources.batchSize | quote }}
@@ -37,14 +19,17 @@ data:
   {{- if not (hasKey $env "PIPELINE_NAME") }}
   PIPELINE_NAME: {{ include "pipeline.name" . | quote }}
   {{- end }}
+  {{- if not (hasKey $env "PIPELINE_OVERWRITE_PARQUET_FILES") }}
+  PIPELINE_OVERWRITE_PARQUET_FILES: {{ include "pipeline.overwriteParquetFiles" . | quote }}
+  {{- end }}
   {{- if not (hasKey $env "PIPELINE_PARALLELISM") }}
   PIPELINE_PARALLELISM: {{ .Values.pipeline.resources.parallelism | quote }}
   {{- end }}
+  {{- if not (hasKey $env "PIPELINE_RETRY_LIMIT") }}
+  PIPELINE_RETRY_LIMIT: {{ .Values.pipeline.resources.retryLimit | quote }}
+  {{- end }}
   {{- if not (hasKey $env "PIPELINE_SCHEDULE_CRON") }}
   PIPELINE_SCHEDULE_CRON: {{ .Values.pipeline.schedule | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "RETRY_LIMIT") }}
-  RETRY_LIMIT: {{ .Values.pipeline.resources.retryLimit | quote }}
   {{- end }}
   {{- range $key, $value := $env }}
   {{ $key }}: {{ $value | quote }}

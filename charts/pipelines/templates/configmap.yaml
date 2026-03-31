@@ -34,6 +34,12 @@ data:
   {{- if not (hasKey $env "PIPELINE_SCHEDULE_CRON") }}
   PIPELINE_SCHEDULE_CRON: {{ .Values.pipeline.schedule | quote }}
   {{- end }}
+  {{- if .Values.pipeline.nodeSelector }}
+  K8S_NODE_SELECTOR: {{ .Values.pipeline.nodeSelector | toJson | quote }}
+  {{- end }}
+  {{- if .Values.pipeline.tolerations }}
+  K8S_TOLERATIONS: {{ .Values.pipeline.tolerations | toJson | quote }}
+  {{- end }}
   {{- range $key, $value := $env }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}

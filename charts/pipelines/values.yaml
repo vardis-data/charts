@@ -16,6 +16,17 @@ pipeline:
   #   BASE_URL: "https://example.com/data/"
   #   DATASET_FILE_EXTENSION: ".zip"
 
+  # -- Node selector for workflow pods (JSON format for env var)
+  nodeSelector:
+    workload-type: jobs
+
+  # -- Tolerations for workflow pods (JSON format for env var)
+  tolerations:
+    - key: workload-type
+      operator: Equal
+      value: jobs
+      effect: NoSchedule
+
   # -- Container image configuration
   image:
     # -- Image repository

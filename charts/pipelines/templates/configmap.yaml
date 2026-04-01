@@ -8,8 +8,19 @@ metadata:
 data:
   PIPELINE_NAME: {{ include "pipeline.name" . | quote }}
   PIPELINE_DATASET_NAME: {{ include "pipeline.datasetName" . | quote }}
+  PIPELINE_SCHEDULE_CRON: {{ .Values.pipeline.schedule | quote }}
+  PIPELINE_DEFAULT_IMAGE: {{ include "pipeline.fullImageName" . | quote }}
+  K8S_IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}
+  PIPELINE_PARALLELISM: {{ .Values.pipeline.resources.parallelism | quote }}
+  PIPELINE_RETRY_LIMIT: {{ .Values.pipeline.resources.retryLimit | quote }}
   PIPELINE_OVERWRITE_PARQUET_FILES: {{ .Values.pipeline.storage.overwriteParquetFiles | quote }}
   LOG_LEVEL: {{ .Values.pipeline.logging.level | quote }}
+  {{- if .Values.pipeline.nodeSelector }}
+  K8S_NODE_SELECTOR: {{ .Values.pipeline.nodeSelector | toJson | quote }}
+  {{- end }}
+  {{- if .Values.pipeline.tolerations }}
+  K8S_TOLERATIONS: {{ .Values.pipeline.tolerations | toJson | quote }}
+  {{- end }}
   {{- range $key, $value := .Values.pipeline.env }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}

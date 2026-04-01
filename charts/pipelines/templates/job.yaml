@@ -38,22 +38,3 @@ spec:
                 name: {{ include "pipeline.configmapName" . }}
             - secretRef:
                 name: {{ .Values.sharedSecret }}
-          env:
-            - name: PIPELINE_SCHEDULE_CRON
-              value: {{ .Values.pipeline.schedule | quote }}
-            - name: PIPELINE_DEFAULT_IMAGE
-              value: {{ include "pipeline.fullImageName" . | quote }}
-            - name: K8S_IMAGE_PULL_POLICY
-              value: {{ .Values.pipeline.image.pullPolicy | quote }}
-            - name: PIPELINE_PARALLELISM
-              value: {{ .Values.pipeline.resources.parallelism | quote }}
-            - name: PIPELINE_RETRY_LIMIT
-              value: {{ .Values.pipeline.resources.retryLimit | quote }}
-            {{- if .Values.pipeline.nodeSelector }}
-            - name: K8S_NODE_SELECTOR
-              value: {{ .Values.pipeline.nodeSelector | toJson | quote }}
-            {{- end }}
-            {{- if .Values.pipeline.tolerations }}
-            - name: K8S_TOLERATIONS
-              value: {{ .Values.pipeline.tolerations | toJson | quote }}
-            {{- end }}

@@ -4,6 +4,7 @@ metadata:
   name: {{ include "pipeline.jobName" . }}
   namespace: {{ .Values.namespace }}
   annotations:
+    argocd.argoproj.io/sync-wave: "0"
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
   labels:

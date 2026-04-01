@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: {{ include "pipeline.configmapName" . }}
   namespace: {{ .Values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
   labels:
     {{- include "pipeline.labels" . | nindent 4 }}
 data:

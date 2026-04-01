@@ -6,40 +6,10 @@ metadata:
   labels:
     {{- include "pipeline.labels" . | nindent 4 }}
 data:
-  {{- $env := .Values.pipeline.env | default dict }}
-  {{- if not (hasKey $env "K8S_IMAGE_PULL_POLICY") }}
-  K8S_IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "PIPELINE_BATCH_SIZE") }}
-  PIPELINE_BATCH_SIZE: {{ .Values.pipeline.resources.batchSize | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "PIPELINE_DEFAULT_IMAGE") }}
-  PIPELINE_DEFAULT_IMAGE: {{ include "pipeline.fullImageName" . | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "PIPELINE_NAME") }}
   PIPELINE_NAME: {{ include "pipeline.name" . | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "PIPELINE_DATASET_NAME") }}
   PIPELINE_DATASET_NAME: {{ include "pipeline.datasetName" . | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "PIPELINE_OVERWRITE_PARQUET_FILES") }}
-  PIPELINE_OVERWRITE_PARQUET_FILES: {{ include "pipeline.overwriteParquetFiles" . | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "PIPELINE_PARALLELISM") }}
-  PIPELINE_PARALLELISM: {{ .Values.pipeline.resources.parallelism | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "PIPELINE_RETRY_LIMIT") }}
-  PIPELINE_RETRY_LIMIT: {{ .Values.pipeline.resources.retryLimit | quote }}
-  {{- end }}
-  {{- if not (hasKey $env "PIPELINE_SCHEDULE_CRON") }}
-  PIPELINE_SCHEDULE_CRON: {{ .Values.pipeline.schedule | quote }}
-  {{- end }}
-  {{- if .Values.pipeline.nodeSelector }}
-  K8S_NODE_SELECTOR: {{ .Values.pipeline.nodeSelector | toJson | quote }}
-  {{- end }}
-  {{- if .Values.pipeline.tolerations }}
-  K8S_TOLERATIONS: {{ .Values.pipeline.tolerations | toJson | quote }}
-  {{- end }}
-  {{- range $key, $value := $env }}
+  PIPELINE_OVERWRITE_PARQUET_FILES: {{ .Values.pipeline.storage.overwriteParquetFiles | quote }}
+  LOG_LEVEL: {{ .Values.pipeline.logging.level | quote }}
+  {{- range $key, $value := .Values.pipeline.env }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}

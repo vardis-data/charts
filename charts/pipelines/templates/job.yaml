@@ -31,11 +31,14 @@ spec:
             - "python"
             - "-m"
             - {{ printf "%s.main" (include "pipeline.packageName" .) | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.sharedConfigMap }}
+            - configMapRef:
+                name: {{ include "pipeline.configmapName" . }}
+            - secretRef:
+                name: {{ .Values.sharedSecret }}
           env:
-            - name: PIPELINE_DATASET_NAME
-              value: {{ include "pipeline.datasetName" . | quote }}
-            - name: PIPELINE_NAME
-              value: {{ include "pipeline.name" . | quote }}
             - name: PIPELINE_SCHEDULE_CRON
               value: {{ .Values.pipeline.schedule | quote }}
             - name: PIPELINE_DEFAULT_IMAGE
@@ -44,22 +47,13 @@ spec:
               value: {{ .Values.pipeline.image.pullPolicy | quote }}
             - name: PIPELINE_PARALLELISM
               value: {{ .Values.pipeline.resources.parallelism | quote }}
-            - name: PIPELINE_BATCH_SIZE
-              value: {{ .Values.pipeline.resources.batchSize | quote }}
-            - name: PIPELINE_MULTIPROCESSING_WORKERS
-              value: {{ .Values.pipeline.resources.multiprocessingWorkers | quote }}
             - name: PIPELINE_RETRY_LIMIT
               value: {{ .Values.pipeline.resources.retryLimit | quote }}
-            - name: LOG_LEVEL
-              value: {{ .Values.pipeline.logging.level | quote }}
-            - name: PIPELINE_OVERWRITE_PARQUET_FILES
-              value: {{ .Values.pipeline.storage.overwriteParquetFiles | quote }}
-            {{- range $key, $value := .Values.pipeline.env }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
+            {{- if .Values.pipeline.nodeSelector }}
+            - name: K8S_NODE_SELECTOR
+              value: {{ .Values.pipeline.nodeSelector | toJson | quote }}
             {{- end }}
-          envFrom:
-            - configMapRef:
-                name: {{ .Values.sharedConfigMap }}
-            - secretRef:
-                name: {{ .Values.sharedSecret }}
+            {{- if .Values.pipeline.tolerations }}
+            - name: K8S_TOLERATIONS
+              value: {{ .Values.pipeline.tolerations | toJson | quote }}
+            {{- end }}

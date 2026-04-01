@@ -1,73 +1,38 @@
-# -- Pipeline configuration
 pipeline:
-  # -- (required) Pipeline name, used for k8s resource naming
   name: ""
-  # -- Override dataset name if different from pipeline name (for multi-dataset pipelines)
-  # If empty, derived from pipeline.name
   datasetName: ""
-
-  # -- Cron schedule for the workflow (k8s cron format)
   schedule: "0 0 * * 1"
-
-  # -- Pipeline-specific environment variables (passed directly to the container)
-  # Use this for domain-specific configuration like baseUrl, datasetFileExtension, etc.
   env: {}
-  # Example:
-  #   BASE_URL: "https://example.com/data/"
-  #   DATASET_FILE_EXTENSION: ".zip"
 
-  # -- Node selector for workflow pods (JSON format for env var)
   nodeSelector:
     workload-type: jobs
 
-  # -- Tolerations for workflow pods (JSON format for env var)
   tolerations:
     - key: workload-type
       operator: Equal
       value: jobs
       effect: NoSchedule
 
-  # -- Container image configuration
   image:
-    # -- Image repository
     repository: ghcr.io/vardis-data/pipelines
-    # -- Override image name if different from pipeline name (for shared images)
-    # If empty, derived from pipeline.name (with dashes converted to underscores)
     name: ""
-    # -- Image tag (optional, defaults to "latest")
     tag: ""
-    # -- Image pull policy
     pullPolicy: Always
 
-  # -- Resource and execution configuration
   resources:
-    # -- Max parallel workflow steps
     parallelism: 2
-    # -- Number of URLs per batch/chunk
-    batchSize: 50
-    # -- Python multiprocessing workers per step
-    multiprocessingWorkers: 2
-    # -- Max retry attempts for failed steps
     retryLimit: 3
 
-  # -- Logging configuration
   logging:
-    # -- Log level (DEBUG, INFO, WARNING, ERROR)
     level: INFO
 
-  # -- Storage configuration
   storage:
-    # -- Overwrite existing parquet files in GCS
     overwriteParquetFiles: false
 
-# -- Kubernetes namespace for pipeline resources
 namespace: pipelines
 
-# -- Image pull secrets for private registries
 imagePullSecrets:
   - name: ghcr-secret
 
-# -- Shared ConfigMap with common pipeline variables
 sharedConfigMap: pipelines-variables
-# -- Shared Secret with credentials (GCS, etc.)
 sharedSecret: pipelines-secrets

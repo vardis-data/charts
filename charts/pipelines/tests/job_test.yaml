@@ -52,7 +52,7 @@ tests:
           path: spec.template.spec.containers[0].command
           content: "--package"
 
-  - it: multi-dataset pipeline should use custom datasetName for env var but derive image from pipeline name
+  - it: multi-dataset pipeline should use custom datasetName and derive image from pipeline name
     set:
       pipeline:
         name: ans-procedimentos-uf
@@ -64,34 +64,17 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].image
           value: "ghcr.io/vardis-data/pipelines/ans_procedimentos_uf:latest"
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: PIPELINE_DATASET_NAME
-            value: "ans_amb"
 
-  - it: single-dataset pipeline should derive datasetName from pipeline name
-    set:
-      pipeline:
-        name: ans-dicionario-de-variaveis
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: PIPELINE_DATASET_NAME
-            value: "ans_dicionario_de_variaveis"
-
-  - it: should have schedule env var
+  - it: should reference pipeline-specific configmap
     set:
       pipeline:
         name: test-pipeline
-        schedule: "0 12 * * *"
     asserts:
       - contains:
-          path: spec.template.spec.containers[0].env
+          path: spec.template.spec.containers[0].envFrom
           content:
-            name: PIPELINE_SCHEDULE_CRON
-            value: "0 12 * * *"
+            configMapRef:
+              name: pipeline-RELEASE-NAME-variables
 
   - it: should have image pull secrets
     set:
@@ -167,11 +150,6 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].image
           value: "ghcr.io/vardis-data/pipelines/ans_procedimentos_uf:latest"
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: PIPELINE_DATASET_NAME
-            value: "hospitalares"
 
   - it: should have template metadata labels for Job replacement compatibility
     set:

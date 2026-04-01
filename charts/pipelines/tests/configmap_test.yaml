@@ -31,7 +31,6 @@ tests:
         schedule: "0 5 * * 1"
         resources:
           parallelism: 5
-          batchSize: 100
           retryLimit: 10
         image:
           pullPolicy: Never
@@ -43,16 +42,13 @@ tests:
           path: data.PIPELINE_PARALLELISM
           value: "5"
       - equal:
-          path: data.PIPELINE_BATCH_SIZE
-          value: "100"
-      - equal:
           path: data.PIPELINE_RETRY_LIMIT
           value: "10"
       - equal:
           path: data.K8S_IMAGE_PULL_POLICY
           value: "Never"
 
-  - it: should set overwrite parquet files to 1 when enabled
+  - it: should set overwrite parquet files to true when enabled
     set:
       pipeline:
         name: test-pipeline
@@ -61,9 +57,9 @@ tests:
     asserts:
       - equal:
           path: data.PIPELINE_OVERWRITE_PARQUET_FILES
-          value: "1"
+          value: "true"
 
-  - it: should set overwrite parquet files to 0 when disabled
+  - it: should set overwrite parquet files to false when disabled
     set:
       pipeline:
         name: test-pipeline
@@ -72,7 +68,7 @@ tests:
     asserts:
       - equal:
           path: data.PIPELINE_OVERWRITE_PARQUET_FILES
-          value: "0"
+          value: "false"
 
   - it: should use custom namespace
     set:

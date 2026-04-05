@@ -11,6 +11,12 @@ spec:
       targetPort: postgres
       protocol: TCP
       name: postgres
+    {{- if .Values.metrics.enabled }}
+    - port: {{ .Values.metrics.port }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+    {{- end }}
   selector:
     {{- include "pg-duckdb.selectorLabels" . | nindent 4 }}
     pg-duckdb/role: primary
@@ -28,6 +34,12 @@ spec:
       targetPort: postgres
       protocol: TCP
       name: postgres
+    {{- if .Values.metrics.enabled }}
+    - port: {{ .Values.metrics.port }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+    {{- end }}
   selector:
     {{- include "pg-duckdb.selectorLabels" . | nindent 4 }}
     pg-duckdb/role: replica

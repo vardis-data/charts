@@ -118,6 +118,24 @@ replicas:
       cpu: 2000m
       memory: 4Gi
 
+# -- Postgres metrics exporter sidecar.
+# -- Exposes pg_stat_* metrics as Prometheus metrics on port 9187.
+# -- Scraped by VictoriaMetrics/Prometheus via annotations or ServiceMonitor.
+metrics:
+  enabled: false
+  image:
+    repository: prometheuscommunity/postgres-exporter
+    # renovate: datasource=docker depName=prometheuscommunity/postgres-exporter
+    tag: "v0.16.0"
+    pullPolicy: IfNotPresent
+  port: 9187
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
 # -- Stakater Reloader annotation for automatic pod restarts on Secret/ConfigMap changes.
 reloader:
   enabled: true

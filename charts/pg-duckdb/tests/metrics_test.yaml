@@ -1,0 +1,33 @@
+suite: metrics tests
+templates:
+  - templates/statefulset.yaml
+tests:
+  - it: should not have exporter sidecar when metrics disabled
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+
+  - it: should have exporter sidecar when metrics enabled
+    set:
+      metrics:
+        enabled: true
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 2
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: postgres-exporter
+
+  - it: should expose metrics port
+    set:
+      metrics:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].ports[0].containerPort
+          value: 9187
+      - equal:
+          path: spec.template.spec.containers[1].ports[0].name
+          value: metrics

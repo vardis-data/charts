@@ -31,3 +31,25 @@ tests:
           path: spec.ports[0].port
           value: 5432
         documentIndex: 1
+
+  - it: should not have metrics port when disabled
+    asserts:
+      - lengthEqual:
+          path: spec.ports
+          count: 1
+        documentIndex: 0
+
+  - it: should have metrics port when enabled
+    set:
+      metrics:
+        enabled: true
+        port: 9187
+    asserts:
+      - equal:
+          path: spec.ports[1].port
+          value: 9187
+        documentIndex: 0
+      - equal:
+          path: spec.ports[1].name
+          value: metrics
+        documentIndex: 0

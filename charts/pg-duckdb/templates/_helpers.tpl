@@ -96,3 +96,27 @@ readinessProbe:
   initialDelaySeconds: 5
   periodSeconds: 5
 {{- end }}
+
+{{- define "pg-duckdb.exporter" -}}
+- name: postgres-exporter
+  image: "{{ .Values.metrics.image.repository }}:{{ .Values.metrics.image.tag }}"
+  imagePullPolicy: {{ .Values.metrics.image.pullPolicy }}
+  ports:
+    - name: metrics
+      containerPort: {{ .Values.metrics.port }}
+      protocol: TCP
+  env:
+    - name: DATA_SOURCE_URI
+      value: "localhost:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}?sslmode=disable"
+    - name: DATA_SOURCE_USER
+      value: {{ .Values.postgres.user | quote }}
+    - name: DATA_SOURCE_PASS
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "pg-duckdb.secretName" . }}
+          key: {{ include "pg-duckdb.passwordKey" . }}
+  {{- with .Values.metrics.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

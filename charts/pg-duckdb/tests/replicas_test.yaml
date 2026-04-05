@@ -13,12 +13,16 @@ tests:
           path: spec.template.metadata.labels["pg-duckdb/role"]
           value: replica
 
-  - it: should have init container for base backup
+  - it: should have wait-for-primary init container first
     asserts:
-      - exists:
-          path: spec.template.spec.initContainers[0]
       - equal:
           path: spec.template.spec.initContainers[0].name
+          value: wait-for-primary
+
+  - it: should have init-replica init container second
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].name
           value: init-replica
 
   - it: should use emptyDir for replica data
@@ -28,3 +32,12 @@ tests:
           content:
             name: data
             emptyDir: {}
+
+  - it: should run as postgres user
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 999
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 999

@@ -21,7 +21,21 @@ spec:
         reloader.stakater.com/auto: "true"
       {{- end }}
     spec:
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
       initContainers:
+        - name: wait-for-primary
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              until pg_isready -h {{ include "pg-duckdb.fullname" . }} -U {{ .Values.postgres.user }}; do
+                echo "Waiting for primary..."
+                sleep 5
+              done
         - name: init-replica
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}

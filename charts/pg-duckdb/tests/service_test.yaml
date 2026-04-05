@@ -1,0 +1,33 @@
+suite: service tests
+templates:
+  - templates/service.yaml
+tests:
+  - it: should render two services
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should select primary role for primary service
+    asserts:
+      - equal:
+          path: spec.selector["pg-duckdb/role"]
+          value: primary
+        documentIndex: 0
+
+  - it: should select replica role for replicas service
+    asserts:
+      - equal:
+          path: spec.selector["pg-duckdb/role"]
+          value: replica
+        documentIndex: 1
+
+  - it: should have correct port on both services
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 5432
+        documentIndex: 0
+      - equal:
+          path: spec.ports[0].port
+          value: 5432
+        documentIndex: 1

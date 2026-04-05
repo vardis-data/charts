@@ -1,0 +1,61 @@
+suite: configmap tests
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should render configmap
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+  - it: should contain pg_duckdb extension
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "CREATE EXTENSION IF NOT EXISTS pg_duckdb"
+
+  - it: should set primary DuckDB memory limit
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.memory_limit = '2GB'"
+
+  - it: should use custom primary memory limit
+    set:
+      duckdb:
+        primary:
+          memoryLimit: 4GB
+          threads: 4
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.memory_limit = '4GB'"
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.threads = 4"
+
+  - it: should include S3 secret setup when credentials configured
+    set:
+      s3:
+        accessKeyId: test-key
+        secretAccessKey: test-secret
+        endpoint: https://s3.example.com
+        region: us-east-1
+    asserts:
+      - exists:
+          path: data["01-s3-secret.sh"]
+      - matchRegex:
+          path: data["01-s3-secret.sh"]
+          pattern: "duckdb.create_simple_secret"
+
+  - it: should not include S3 secret when not configured
+    asserts:
+      - notExists:
+          path: data["01-s3-secret.sh"]
+
+  - it: should always include replication config
+    asserts:
+      - exists:
+          path: data["02-replication.sh"]
+      - matchRegex:
+          path: data["02-replication.sh"]
+          pattern: "wal_level = 'replica'"

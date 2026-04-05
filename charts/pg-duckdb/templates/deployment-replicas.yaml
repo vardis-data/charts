@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pg-duckdb.fullname" . }}-replicas
+  labels:
+    {{- include "pg-duckdb.labels" . | nindent 4 }}
+    pg-duckdb/role: replica
+spec:
+  replicas: {{ .Values.replicas.minReplicas }}
+  selector:
+    matchLabels:
+      {{- include "pg-duckdb.selectorLabels" . | nindent 6 }}
+      pg-duckdb/role: replica
+  template:
+    metadata:
+      labels:
+        {{- include "pg-duckdb.selectorLabels" . | nindent 8 }}
+        pg-duckdb/role: replica
+      {{- if .Values.reloader.enabled }}
+      annotations:
+        reloader.stakater.com/auto: "true"
+      {{- end }}
+    spec:
+      initContainers:
+        - name: init-replica
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              if [ ! -s "$PGDATA/PG_VERSION" ]; then
+                PGPASSWORD="$POSTGRES_PASSWORD" pg_basebackup \
+                  -h {{ include "pg-duckdb.fullname" . }} \
+                  -U {{ .Values.postgres.user }} \
+                  -D "$PGDATA" \
+                  -Fp -Xs -P -R
+              fi
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pg-duckdb.secretName" . }}
+                  key: {{ include "pg-duckdb.passwordKey" . }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            {{- include "pg-duckdb.volumeMounts" . | nindent 12 }}
+      containers:
+        - name: postgres
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["docker-entrypoint.sh", "postgres"]
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.postgres.port }}
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.user | quote }}
+            {{- include "pg-duckdb.env" . | nindent 12 }}
+          volumeMounts:
+            {{- include "pg-duckdb.volumeMounts" . | nindent 12 }}
+          {{- include "pg-duckdb.probes" . | nindent 10 }}
+          {{- with .Values.replicas.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: data
+          emptyDir: {}

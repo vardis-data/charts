@@ -1,0 +1,30 @@
+suite: replicas tests
+templates:
+  - templates/deployment-replicas.yaml
+tests:
+  - it: should render deployment
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should have replica role label
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["pg-duckdb/role"]
+          value: replica
+
+  - it: should have init container for base backup
+    asserts:
+      - exists:
+          path: spec.template.spec.initContainers[0]
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: init-replica
+
+  - it: should use emptyDir for replica data
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            emptyDir: {}

@@ -1,0 +1,36 @@
+suite: hpa tests
+templates:
+  - templates/hpa.yaml
+tests:
+  - it: should render HPA
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+
+  - it: should target replicas deployment
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: RELEASE-NAME-pg-duckdb-replicas
+
+  - it: should have correct min/max replicas
+    set:
+      replicas:
+        minReplicas: 2
+        maxReplicas: 5
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 2
+      - equal:
+          path: spec.maxReplicas
+          value: 5
+
+  - it: should have CPU target
+    set:
+      replicas:
+        targetCPUUtilizationPercentage: 80
+    asserts:
+      - equal:
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 80

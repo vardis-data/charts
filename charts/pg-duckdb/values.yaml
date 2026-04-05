@@ -1,0 +1,123 @@
+# -- PostgreSQL + pg_duckdb container image
+image:
+  repository: pgduckdb/pgduckdb
+  # renovate: datasource=docker depName=pgduckdb/pgduckdb
+  tag: "17-v1.1.1"
+  pullPolicy: IfNotPresent
+
+# -- PostgreSQL configuration for the primary instance
+postgres:
+  # -- Database name created on first boot
+  database: warehouse
+  # -- Superuser name created on first boot
+  user: warehouse
+  # -- Superuser password (ignored when existingSecret.enabled is true)
+  password: ""
+  # -- PostgreSQL listen port
+  port: 5432
+
+# -- DuckDB engine settings applied via init SQL.
+# -- Each connection gets its own DuckDB instance with these limits.
+# -- Primary handles dbt writes (heavier, less concurrent).
+# -- Replicas handle analyst reads (lighter, more concurrent).
+duckdb:
+  primary:
+    # -- Maximum memory per DuckDB instance on the primary (e.g. "2GB", "4GB")
+    memoryLimit: 2GB
+    # -- Maximum threads per DuckDB instance on the primary
+    threads: 2
+  replicas:
+    # -- Maximum memory per DuckDB instance on replicas
+    memoryLimit: 1GB
+    # -- Maximum threads per DuckDB instance on replicas
+    threads: 1
+
+# -- S3-compatible storage credentials for pg_duckdb to read Parquet files.
+# -- Works with any S3-compatible API (AWS, Hetzner Object Storage, MinIO).
+# -- Ignored when existingSecret.enabled is true.
+s3:
+  # -- S3 endpoint URL (e.g. "https://nbg1.your-objectstorage.com")
+  endpoint: ""
+  # -- S3 region (e.g. "nbg1", "us-east-1")
+  region: ""
+  # -- S3 access key ID
+  accessKeyId: ""
+  # -- S3 secret access key
+  secretAccessKey: ""
+
+# -- Use a pre-existing Secret instead of creating one from the values above.
+# -- Useful for SOPS/Age-managed secrets in GitOps workflows.
+existingSecret:
+  enabled: false
+  # -- Name of the existing Secret
+  name: ""
+  # -- Key names inside the existing Secret
+  keys:
+    password: "password"
+    s3AccessKeyId: "s3AccessKeyId"
+    s3SecretAccessKey: "s3SecretAccessKey"
+
+# -- Persistent volume for the primary instance data directory.
+# -- Replicas use emptyDir (ephemeral) and rebuild from the primary on restart.
+persistence:
+  enabled: true
+  # -- Volume size for the primary PVC
+  size: 10Gi
+  # -- Storage class (leave empty for cluster default, e.g. Hetzner CSI)
+  storageClass: ""
+
+# -- Primary service (read-write) and optional replicas service (read-only).
+# -- dbt connects to the primary service. Analysts connect to the replicas service.
+service:
+  type: ClusterIP
+  port: 5432
+
+# -- Primary instance configuration (StatefulSet, single pod).
+# -- Handles dbt writes and WAL streaming to replicas.
+# -- VPA adjusts resources based on actual usage (requires VPA operator).
+primary:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  # -- Vertical Pod Autoscaler for the primary only.
+  # -- Not applied to replicas (HPA manages replica scaling instead).
+  vpa:
+    enabled: false
+    # -- Update mode: "Auto" (restarts pods), "Initial" (only new pods), "Off" (recommendations only)
+    updateMode: Auto
+    minAllowed:
+      cpu: 250m
+      memory: 512Mi
+    maxAllowed:
+      cpu: 4000m
+      memory: 8Gi
+
+# -- Read replicas with horizontal autoscaling.
+# -- Each replica bootstraps via pg_basebackup from the primary and
+# -- continuously replays WAL changes. Replicas accept read-only queries
+# -- and each has its own pg_duckdb instance for analytical workloads.
+# -- HPA scales the replica count based on CPU utilization.
+# -- At least one replica is always running to isolate reads from writes.
+replicas:
+  # -- Minimum number of read replicas (also the initial count)
+  minReplicas: 1
+  # -- Maximum number of read replicas HPA can scale to
+  maxReplicas: 3
+  # -- CPU utilization threshold to trigger scale-up (percentage)
+  targetCPUUtilizationPercentage: 70
+  # -- Resource requests/limits per replica pod
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+# -- Stakater Reloader annotation for automatic pod restarts on Secret/ConfigMap changes.
+reloader:
+  enabled: true

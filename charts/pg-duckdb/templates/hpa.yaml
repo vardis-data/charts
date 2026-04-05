@@ -1,0 +1,20 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "pg-duckdb.fullname" . }}-replicas
+  labels:
+    {{- include "pg-duckdb.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "pg-duckdb.fullname" . }}-replicas
+  minReplicas: {{ .Values.replicas.minReplicas }}
+  maxReplicas: {{ .Values.replicas.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.replicas.targetCPUUtilizationPercentage }}

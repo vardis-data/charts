@@ -9,16 +9,6 @@ replicaCount: 1
 baseUrl: ""
 betterAuthSecret: ""
 
-existingSecret:
-  enabled: false
-  name: ""
-  keys:
-    betterAuthSecret: "betterAuthSecret"
-    databasePassword: "databasePassword"
-    s3AccessKeyId: "s3AccessKeyId"
-    s3SecretAccessKey: "s3SecretAccessKey"
-    smtpPassword: "smtpPassword"
-
 database:
   host: ""
   port: 5432
@@ -34,6 +24,11 @@ s3:
   accessKeyId: ""
   secretAccessKey: ""
   forcePathStyle: true
+  existingSecret:
+    name: ""
+    keys:
+      accessKeyId: "s3AccessKeyId"
+      secretAccessKey: "s3SecretAccessKey"
 
 smtp:
   enabled: false
@@ -43,6 +38,10 @@ smtp:
   password: ""
   secure: true
   fromAddress: ""
+  existingSecret:
+    name: ""
+    keys:
+      password: "smtpPassword"
 
 service:
   type: ClusterIP

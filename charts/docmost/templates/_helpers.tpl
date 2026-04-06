@@ -105,9 +105,45 @@ redis://{{ include "docmost.redisHost" . }}:{{ include "docmost.redisPort" . }}
 {{- end }}
 
 {{- define "docmost.secretName" -}}
-{{- if .Values.existingSecret.enabled }}
-{{- .Values.existingSecret.name }}
-{{- else }}
 {{- include "docmost.fullname" . }}
+{{- end }}
+
+{{- define "docmost.s3SecretName" -}}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.name }}
+{{- else }}
+{{- include "docmost.secretName" . }}
+{{- end }}
+{{- end }}
+
+{{- define "docmost.s3AccessKeyIdKey" -}}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.keys.accessKeyId }}
+{{- else }}
+{{- "AWS_S3_ACCESS_KEY_ID" }}
+{{- end }}
+{{- end }}
+
+{{- define "docmost.smtpSecretName" -}}
+{{- if .Values.smtp.existingSecret.name }}
+{{- .Values.smtp.existingSecret.name }}
+{{- else }}
+{{- include "docmost.secretName" . }}
+{{- end }}
+{{- end }}
+
+{{- define "docmost.smtpPasswordKey" -}}
+{{- if .Values.smtp.existingSecret.name }}
+{{- .Values.smtp.existingSecret.keys.password }}
+{{- else }}
+{{- "SMTP_PASSWORD" }}
+{{- end }}
+{{- end }}
+
+{{- define "docmost.s3SecretAccessKeyKey" -}}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.keys.secretAccessKey }}
+{{- else }}
+{{- "AWS_S3_SECRET_ACCESS_KEY" }}
 {{- end }}
 {{- end }}

@@ -9,17 +9,6 @@ replicaCount: 1
 appUrl: ""
 appSecret: ""
 
-existingSecret:
-  enabled: false
-  name: ""
-  keys:
-    appSecret: "appSecret"
-    databasePassword: "databasePassword"
-    redisPassword: "redisPassword"
-    s3AccessKeyId: "s3AccessKeyId"
-    s3SecretAccessKey: "s3SecretAccessKey"
-    smtpPassword: "smtpPassword"
-
 database:
   host: ""
   port: 5432
@@ -58,6 +47,11 @@ s3:
   accessKeyId: ""
   secretAccessKey: ""
   forcePathStyle: true
+  existingSecret:
+    name: ""
+    keys:
+      accessKeyId: "s3AccessKeyId"
+      secretAccessKey: "s3SecretAccessKey"
 
 smtp:
   enabled: false
@@ -68,6 +62,10 @@ smtp:
   secure: true
   fromAddress: ""
   fromName: "Docmost"
+  existingSecret:
+    name: ""
+    keys:
+      password: "smtpPassword"
 
 service:
   type: ClusterIP

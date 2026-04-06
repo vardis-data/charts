@@ -72,9 +72,45 @@ postgresql://{{ include "kan.databaseUser" . }}:{{ include "kan.databasePassword
 {{- end }}
 
 {{- define "kan.secretName" -}}
-{{- if .Values.existingSecret.enabled }}
-{{- .Values.existingSecret.name }}
-{{- else }}
 {{- include "kan.fullname" . }}
+{{- end }}
+
+{{- define "kan.s3SecretName" -}}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.name }}
+{{- else }}
+{{- include "kan.secretName" . }}
+{{- end }}
+{{- end }}
+
+{{- define "kan.s3AccessKeyIdKey" -}}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.keys.accessKeyId }}
+{{- else }}
+{{- "S3_ACCESS_KEY_ID" }}
+{{- end }}
+{{- end }}
+
+{{- define "kan.smtpSecretName" -}}
+{{- if .Values.smtp.existingSecret.name }}
+{{- .Values.smtp.existingSecret.name }}
+{{- else }}
+{{- include "kan.secretName" . }}
+{{- end }}
+{{- end }}
+
+{{- define "kan.smtpPasswordKey" -}}
+{{- if .Values.smtp.existingSecret.name }}
+{{- .Values.smtp.existingSecret.keys.password }}
+{{- else }}
+{{- "SMTP_PASSWORD" }}
+{{- end }}
+{{- end }}
+
+{{- define "kan.s3SecretAccessKeyKey" -}}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.keys.secretAccessKey }}
+{{- else }}
+{{- "S3_SECRET_ACCESS_KEY" }}
 {{- end }}
 {{- end }}

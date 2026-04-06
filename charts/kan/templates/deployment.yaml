@@ -35,12 +35,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "kan.secretName" . }}
-                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.betterAuthSecret }}{{ else }}BETTER_AUTH_SECRET{{ end }}
+                  key: BETTER_AUTH_SECRET
             - name: POSTGRES_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "kan.secretName" . }}
-                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.databasePassword }}{{ else }}POSTGRES_URL{{ end }}
+                  key: POSTGRES_URL
             {{- if .Values.s3.enabled }}
             - name: S3_ENDPOINT
               value: {{ .Values.s3.endpoint | quote }}
@@ -57,13 +57,13 @@ spec:
             - name: S3_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "kan.secretName" . }}
-                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.s3AccessKeyId }}{{ else }}S3_ACCESS_KEY_ID{{ end }}
+                  name: {{ include "kan.s3SecretName" . }}
+                  key: {{ include "kan.s3AccessKeyIdKey" . }}
             - name: S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "kan.secretName" . }}
-                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.s3SecretAccessKey }}{{ else }}S3_SECRET_ACCESS_KEY{{ end }}
+                  name: {{ include "kan.s3SecretName" . }}
+                  key: {{ include "kan.s3SecretAccessKeyKey" . }}
             {{- end }}
             {{- if .Values.smtp.enabled }}
             - name: EMAIL_FROM
@@ -79,8 +79,8 @@ spec:
             - name: SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "kan.secretName" . }}
-                  key: {{ if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.smtpPassword }}{{ else }}SMTP_PASSWORD{{ end }}
+                  name: {{ include "kan.smtpSecretName" . }}
+                  key: {{ include "kan.smtpPasswordKey" . }}
             {{- end }}
           {{- with .Values.resources }}
           resources:

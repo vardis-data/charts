@@ -46,7 +46,7 @@ spec:
               mountPath: /docker-entrypoint-initdb.d/00-init.sql
               subPath: 00-init.sql
               readOnly: true
-            {{- if or .Values.s3.accessKeyId .Values.existingSecret.enabled }}
+            {{- if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}
             - name: init-scripts
               mountPath: /docker-entrypoint-initdb.d/01-s3-secret.sh
               subPath: 01-s3-secret.sh

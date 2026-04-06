@@ -28,23 +28,47 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "pg-duckdb.secretName" -}}
-{{- if .Values.existingSecret.enabled }}
-{{- .Values.existingSecret.name }}
-{{- else }}
 {{- include "pg-duckdb.fullname" . }}
+{{- end }}
+
+{{- define "pg-duckdb.passwordSecretName" -}}
+{{- if .Values.passwordSecret.name }}
+{{- .Values.passwordSecret.name }}
+{{- else }}
+{{- include "pg-duckdb.secretName" . }}
 {{- end }}
 {{- end }}
 
 {{- define "pg-duckdb.passwordKey" -}}
-{{- if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.password }}{{ else }}password{{ end }}
+{{- if .Values.passwordSecret.name }}
+{{- .Values.passwordSecret.key }}
+{{- else }}
+{{- "password" }}
+{{- end }}
+{{- end }}
+
+{{- define "pg-duckdb.s3SecretName" -}}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.name }}
+{{- else }}
+{{- include "pg-duckdb.secretName" . }}
+{{- end }}
 {{- end }}
 
 {{- define "pg-duckdb.s3AccessKeyIdKey" -}}
-{{- if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.s3AccessKeyId }}{{ else }}s3AccessKeyId{{ end }}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.keys.accessKeyId }}
+{{- else }}
+{{- "s3AccessKeyId" }}
+{{- end }}
 {{- end }}
 
 {{- define "pg-duckdb.s3SecretAccessKeyKey" -}}
-{{- if .Values.existingSecret.enabled }}{{ .Values.existingSecret.keys.s3SecretAccessKey }}{{ else }}s3SecretAccessKey{{ end }}
+{{- if .Values.s3.existingSecret.name }}
+{{- .Values.s3.existingSecret.keys.secretAccessKey }}
+{{- else }}
+{{- "s3SecretAccessKey" }}
+{{- end }}
 {{- end }}
 
 {{- define "pg-duckdb.env" -}}
@@ -53,18 +77,18 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 - name: POSTGRES_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: {{ include "pg-duckdb.secretName" . }}
+      name: {{ include "pg-duckdb.passwordSecretName" . }}
       key: {{ include "pg-duckdb.passwordKey" . }}
-{{- if or .Values.s3.accessKeyId .Values.existingSecret.enabled }}
+{{- if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}
 - name: S3_ACCESS_KEY_ID
   valueFrom:
     secretKeyRef:
-      name: {{ include "pg-duckdb.secretName" . }}
+      name: {{ include "pg-duckdb.s3SecretName" . }}
       key: {{ include "pg-duckdb.s3AccessKeyIdKey" . }}
 - name: S3_SECRET_ACCESS_KEY
   valueFrom:
     secretKeyRef:
-      name: {{ include "pg-duckdb.secretName" . }}
+      name: {{ include "pg-duckdb.s3SecretName" . }}
       key: {{ include "pg-duckdb.s3SecretAccessKeyKey" . }}
 {{- end }}
 {{- end }}

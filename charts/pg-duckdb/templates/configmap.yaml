@@ -12,7 +12,7 @@ data:
     ALTER SYSTEM SET duckdb.threads = {{ .Values.duckdb.primary.threads }};
     SELECT pg_reload_conf();
 
-  {{- if or .Values.s3.accessKeyId .Values.existingSecret.enabled }}
+  {{- if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}
   01-s3-secret.sh: |
     #!/bin/bash
     set -e

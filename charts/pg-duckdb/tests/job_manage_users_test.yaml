@@ -73,10 +73,10 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: 'GRANT USAGE ON SCHEMA "marts" TO "analyst"'
+          pattern: 'GRANT USAGE ON SCHEMA \\"marts\\" TO \\"analyst\\"'
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: 'GRANT USAGE ON SCHEMA "seeds" TO "analyst"'
+          pattern: 'GRANT USAGE ON SCHEMA \\"seeds\\" TO \\"analyst\\"'
 
   - it: should support multiple users
     set:

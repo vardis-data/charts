@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nginx-s3-gateway.fullname" . }}
+  labels:
+    {{- include "nginx-s3-gateway.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "nginx-s3-gateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nginx-s3-gateway.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: nginx-s3-gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: S3_BUCKET_NAME
+              value: {{ .Values.s3.bucket | quote }}
+            - name: S3_SERVER
+              value: {{ .Values.s3.endpoint | quote }}
+            - name: S3_SERVER_PROTO
+              value: "https"
+            - name: S3_SERVER_PORT
+              value: "443"
+            - name: S3_REGION
+              value: {{ .Values.s3.region | quote }}
+            - name: S3_STYLE
+              value: {{ .Values.s3.style | quote }}
+            - name: S3_DEBUG
+              value: {{ .Values.s3.debug | quote }}
+            - name: ALLOW_DIRECTORY_LIST
+              value: {{ .Values.s3.allowDirectoryList | quote }}
+            - name: PROVIDE_INDEX_PAGE
+              value: "index.html"
+            - name: APPEND_SLASH_FOR_POSSIBLE_DIRECTORY
+              value: "true"
+            {{- if .Values.s3.accessKey }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nginx-s3-gateway.fullname" . }}
+                  key: access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nginx-s3-gateway.fullname" . }}
+                  key: secret-key
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

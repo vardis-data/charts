@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: redocly/redoc
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+openapiUrl: "https://warehouse-api-vardis.corvus-byzantine.ts.net/"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations: {}
+  hosts:
+    - host: api-docs.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi

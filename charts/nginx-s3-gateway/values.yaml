@@ -1,0 +1,33 @@
+replicaCount: 1
+
+image:
+  repository: nginxinc/nginx-s3-gateway
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+s3:
+  bucket: "vardis-dbt-docs"
+  region: "us-east-1"
+  endpoint: "https://nbg1.your-objectstorage.com"
+  style: "virtual"
+  debug: "false"
+  accessKey: ""
+  secretKey: ""
+  allowDirectoryList: "false"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: tailscale
+  hostname: dbt
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi

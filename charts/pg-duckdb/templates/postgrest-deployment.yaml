@@ -22,6 +22,65 @@ spec:
         reloader.stakater.com/auto: "true"
       {{- end }}
     spec:
+      initContainers:
+        - name: setup-role
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -e
+
+              until pg_isready -h "$PGHOST" -U "$PGUSER"; do
+                echo "Waiting for primary database..."
+                sleep 3
+              done
+
+              ROLE="{{ .Values.postgrest.anonRole }}"
+              SCHEMAS="{{ .Values.postgrest.schemas }}"
+
+              existing=$(psql -tAc "SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '$ROLE'" 2>/dev/null || echo "")
+
+              if [ "$existing" = "1" ]; then
+                echo "Role $ROLE already exists, updating password..."
+                psql -c "ALTER ROLE $ROLE WITH LOGIN PASSWORD '$ANON_PASSWORD';"
+              else
+                echo "Creating role: $ROLE"
+                psql -c "CREATE ROLE $ROLE WITH LOGIN PASSWORD '$ANON_PASSWORD' NOINHERIT;"
+              fi
+
+              psql -c "GRANT CONNECT ON DATABASE $PGDATABASE TO $ROLE;"
+
+              IFS=',' read -ra SCHEMA_ARRAY <<< "$SCHEMAS"
+              for schema in "${SCHEMA_ARRAY[@]}"; do
+                schema=$(echo "$schema" | xargs)
+                echo "Granting $ROLE access to schema: $schema"
+                psql -c "CREATE SCHEMA IF NOT EXISTS $schema;"
+                psql -c "GRANT USAGE ON SCHEMA $schema TO $ROLE;"
+                psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA $schema TO $ROLE;"
+                psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA $schema GRANT SELECT ON TABLES TO $ROLE;"
+              done
+
+              echo "PostgREST role setup complete."
+          env:
+            - name: PGHOST
+              value: {{ include "pg-duckdb.fullname" . }}
+            - name: PGPORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.postgres.database | quote }}
+            - name: PGUSER
+              value: {{ .Values.postgres.user | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pg-duckdb.passwordSecretName" . }}
+                  key: {{ include "pg-duckdb.passwordKey" . }}
+            - name: ANON_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pg-duckdb.fullname" . }}-postgrest
+                  key: anon-role-password
       containers:
         - name: postgrest
           image: "{{ .Values.postgrest.image.repository }}:{{ .Values.postgrest.image.tag }}"

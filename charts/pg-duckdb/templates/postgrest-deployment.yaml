@@ -85,13 +85,19 @@ spec:
         - name: postgrest
           image: "{{ .Values.postgrest.image.repository }}:{{ .Values.postgrest.image.tag }}"
           imagePullPolicy: {{ .Values.postgrest.image.pullPolicy }}
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - |
+              export PGRST_DB_URI="postgres://{{ .Values.postgrest.anonRole }}:${PGRST_DB_ANON_ROLE_PASSWORD}@{{ include "pg-duckdb.fullname" . }}-replicas:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+              exec postgrest
           ports:
             - name: http
               containerPort: 3000
               protocol: TCP
           env:
-            - name: PGRST_DB_URI
-              value: "postgres://{{ .Values.postgrest.anonRole }}:$(PGRST_DB_ANON_ROLE_PASSWORD)@{{ include "pg-duckdb.fullname" . }}-replicas:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+            - name: PGRST_DB_ANON_ROLE
+              value: {{ .Values.postgrest.anonRole | quote }}
             - name: PGRST_DB_ANON_ROLE_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -99,8 +105,6 @@ spec:
                   key: anon-role-password
             - name: PGRST_DB_SCHEMAS
               value: {{ .Values.postgrest.schemas | quote }}
-            - name: PGRST_DB_ANON_ROLE
-              value: {{ .Values.postgrest.anonRole | quote }}
             - name: PGRST_SERVER_PORT
               value: "3000"
             {{- if .Values.postgrest.jwt.enabled }}

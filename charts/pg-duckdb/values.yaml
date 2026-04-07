@@ -21,6 +21,10 @@ postgres:
 # -- Primary handles dbt writes (heavier, less concurrent).
 # -- Replicas handle analyst reads (lighter, more concurrent).
 duckdb:
+  # -- Route all analytical queries through DuckDB's vectorized engine.
+  # -- When true, SELECT queries on regular Postgres tables are executed
+  # -- by DuckDB for columnar performance (aggregations, GROUP BY, etc.).
+  forceExecution: false
   primary:
     # -- Maximum memory per DuckDB instance on the primary (e.g. "2GB", "4GB")
     memoryLimit: 2GB

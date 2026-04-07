@@ -19,6 +19,21 @@ tests:
           path: data["00-init.sql"]
           pattern: "duckdb.memory_limit = '2GB'"
 
+  - it: should set force_execution to false by default
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.force_execution = false"
+
+  - it: should set force_execution to true when enabled
+    set:
+      duckdb:
+        forceExecution: true
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.force_execution = true"
+
   - it: should include S3 secret setup when inline credentials
     set:
       s3:

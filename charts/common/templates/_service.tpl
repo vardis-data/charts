@@ -3,7 +3,7 @@ Standard Kubernetes Service
 Creates a ClusterIP service with common configuration
 
 Usage:
-  {{- include "vardis-common.service" . }}
+  {{- include "common.service" . }}
 
 Required values:
   service:
@@ -15,13 +15,13 @@ Optional values:
     targetPort: http       # defaults to "http"
     annotations: {}
 */}}
-{{- define "vardis-common.service" -}}
+{{- define "common.service" -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "vardis-common.fullname" . }}
+  name: {{ include "common.fullname" . }}
   labels:
-    {{- include "vardis-common.labels" . | nindent 4 }}
+    {{- include "common.labels" . | nindent 4 }}
   {{- with .Values.service.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -34,5 +34,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "vardis-common.selectorLabels" . | nindent 4 }}
+    {{- include "common.selectorLabels" . | nindent 4 }}
 {{- end }}

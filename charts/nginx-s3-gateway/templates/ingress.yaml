@@ -1,7 +1,7 @@
 {{- if .Values.ingress.enabled }}
 {{- if eq .Values.ingress.className "tailscale" }}
 {{- $tailscaleValues := merge . (dict "Values" (merge .Values (dict "tailscale" (dict "enabled" true "hostname" .Values.ingress.hostname "tags" .Values.ingress.tags)))) }}
-{{- include "vardis-common.tailscale-ingress" $tailscaleValues }}
+{{- include "common.tailscale-ingress" $tailscaleValues }}
 {{- else }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress

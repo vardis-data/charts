@@ -5,6 +5,6 @@ type: application
 version: 1.0.0
 appVersion: "latest"
 dependencies:
-  - name: vardis-common
+  - name: common
     version: "1.0.0"
     repository: "https://vardis-data.github.io/charts"

@@ -3,7 +3,7 @@ Database host helper
 Returns the database host, either from embedded postgres or external
 
 Usage:
-  {{ include "vardis-common.database-host" . }}
+  {{ include "common.database-host" . }}
 
 Required for embedded postgres:
   postgres:
@@ -13,7 +13,7 @@ Required for external database:
   database:
     host: "postgres.example.com"
 */}}
-{{- define "vardis-common.database-host" -}}
+{{- define "common.database-host" -}}
 {{- if .Values.postgres.enabled }}
 {{- printf "%s-postgres" .Release.Name }}
 {{- else }}
@@ -26,9 +26,9 @@ Database port helper
 Returns the database port, either from embedded postgres or external
 
 Usage:
-  {{ include "vardis-common.database-port" . }}
+  {{ include "common.database-port" . }}
 */}}
-{{- define "vardis-common.database-port" -}}
+{{- define "common.database-port" -}}
 {{- if .Values.postgres.enabled }}
 {{- 5432 }}
 {{- else }}
@@ -41,9 +41,9 @@ Database name helper
 Returns the database name, either from embedded postgres or external
 
 Usage:
-  {{ include "vardis-common.database-name" . }}
+  {{ include "common.database-name" . }}
 */}}
-{{- define "vardis-common.database-name" -}}
+{{- define "common.database-name" -}}
 {{- if .Values.postgres.enabled }}
 {{- .Values.postgres.customUser.database | default "postgres" }}
 {{- else }}
@@ -56,16 +56,16 @@ Database connection string helper
 Returns a PostgreSQL connection string
 
 Usage:
-  {{ include "vardis-common.database-url" . }}
+  {{ include "common.database-url" . }}
 
 Optional values:
   database:
     ssl: true  # adds sslmode=require
 */}}
-{{- define "vardis-common.database-url" -}}
-{{- $host := include "vardis-common.database-host" . }}
-{{- $port := include "vardis-common.database-port" . }}
-{{- $name := include "vardis-common.database-name" . }}
+{{- define "common.database-url" -}}
+{{- $host := include "common.database-host" . }}
+{{- $port := include "common.database-port" . }}
+{{- $name := include "common.database-name" . }}
 {{- $ssl := "" }}
 {{- if .Values.database.ssl }}
 {{- $ssl = "?sslmode=require" }}

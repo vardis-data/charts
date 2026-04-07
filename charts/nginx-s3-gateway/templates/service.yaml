@@ -1,1 +1,1 @@
-{{- include "vardis-common.service" . }}
+{{- include "common.service" . }}

@@ -1,9 +1,9 @@
 {{/*
 Common labels
 */}}
-{{- define "vardis-common.labels" -}}
-helm.sh/chart: {{ include "vardis-common.chart" . }}
-{{ include "vardis-common.selectorLabels" . }}
+{{- define "common.labels" -}}
+helm.sh/chart: {{ include "common.chart" . }}
+{{ include "common.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -16,7 +16,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "vardis-common.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "vardis-common.name" . }}
+{{- define "common.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "common.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

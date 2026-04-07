@@ -3,7 +3,7 @@ Tailscale Ingress
 Creates a Tailscale ingress resource
 
 Usage:
-  {{- include "vardis-common.tailscale-ingress" . }}
+  {{- include "common.tailscale-ingress" . }}
 
 Required values:
   tailscale:
@@ -17,14 +17,14 @@ Optional values:
     tags: "tag:k8s-myapp"  # defaults to tag:k8s-{hostname}
     annotations: {}         # additional annotations
 */}}
-{{- define "vardis-common.tailscale-ingress" -}}
+{{- define "common.tailscale-ingress" -}}
 {{- if .Values.tailscale.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "vardis-common.fullname" . }}
+  name: {{ include "common.fullname" . }}
   labels:
-    {{- include "vardis-common.labels" . | nindent 4 }}
+    {{- include "common.labels" . | nindent 4 }}
   annotations:
     tailscale.com/hostname: {{ .Values.tailscale.hostname | required ".Values.tailscale.hostname is required when tailscale.enabled is true" }}
     tailscale.com/tags: {{ .Values.tailscale.tags | default (printf "tag:k8s-%s" .Values.tailscale.hostname) }}
@@ -35,7 +35,7 @@ spec:
   ingressClassName: tailscale
   defaultBackend:
     service:
-      name: {{ include "vardis-common.fullname" . }}
+      name: {{ include "common.fullname" . }}
       port:
         number: {{ .Values.service.port }}
 {{- end }}
@@ -46,7 +46,7 @@ Traefik Ingress with common configuration
 Creates a Traefik ingress resource with standard settings
 
 Usage:
-  {{- include "vardis-common.traefik-ingress" . }}
+  {{- include "common.traefik-ingress" . }}
 
 Required values:
   ingress:
@@ -68,14 +68,14 @@ Optional values:
         hosts:
           - example.com
 */}}
-{{- define "vardis-common.traefik-ingress" -}}
+{{- define "common.traefik-ingress" -}}
 {{- if and .Values.ingress.enabled (eq .Values.ingress.className "traefik") }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "vardis-common.fullname" . }}
+  name: {{ include "common.fullname" . }}
   labels:
-    {{- include "vardis-common.labels" . | nindent 4 }}
+    {{- include "common.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -102,7 +102,7 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ include "vardis-common.fullname" $ }}
+                name: {{ include "common.fullname" $ }}
                 port:
                   number: {{ $.Values.service.port }}
           {{- end }}

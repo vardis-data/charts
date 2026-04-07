@@ -42,13 +42,13 @@ spec:
 
                 if [ "$existing" = "1" ]; then
                   echo "Updating password for user: $username"
-                  psql -c "ALTER ROLE $username WITH LOGIN PASSWORD '$password';"
+                  psql -c "ALTER ROLE \"$username\" WITH LOGIN PASSWORD :'user_pass';" -v user_pass="$password"
                 else
                   echo "Creating user: $username"
-                  psql -c "CREATE ROLE $username WITH LOGIN PASSWORD '$password';"
+                  psql -c "CREATE ROLE \"$username\" WITH LOGIN PASSWORD :'user_pass';" -v user_pass="$password"
                 fi
 
-                psql -c "GRANT CONNECT ON DATABASE $PGDATABASE TO $username;"
+                psql -c "GRANT CONNECT ON DATABASE $PGDATABASE TO \"$username\";"
 
                 psql -tAc "
                   SELECT n.nspname
@@ -65,9 +65,9 @@ spec:
                 " 2>/dev/null | while read -r old_schema; do
                   if [ -n "$old_schema" ]; then
                     echo "Revoking access on schema: $old_schema for user: $username"
-                    psql -c "REVOKE ALL ON SCHEMA $old_schema FROM $username;" 2>/dev/null || true
-                    psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA $old_schema FROM $username;" 2>/dev/null || true
-                    psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA $old_schema REVOKE SELECT ON TABLES FROM $username;" 2>/dev/null || true
+                    psql -c "REVOKE ALL ON SCHEMA \"$old_schema\" FROM \"$username\";" 2>/dev/null || true
+                    psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA \"$old_schema\" FROM \"$username\";" 2>/dev/null || true
+                    psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$old_schema\" REVOKE SELECT ON TABLES FROM \"$username\";" 2>/dev/null || true
                   fi
                 done
               done
@@ -76,10 +76,10 @@ spec:
               {{- range $schema := $user.schemas }}
 
               echo "Granting {{ $user.name }} access to schema: {{ $schema }}"
-              psql -c "CREATE SCHEMA IF NOT EXISTS {{ $schema }};"
-              psql -c "GRANT USAGE ON SCHEMA {{ $schema }} TO {{ $user.name }};"
-              psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA {{ $schema }} TO {{ $user.name }};"
-              psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA {{ $schema }} GRANT SELECT ON TABLES TO {{ $user.name }};"
+              psql -c "CREATE SCHEMA IF NOT EXISTS \"{{ $schema }}\";"
+              psql -c "GRANT USAGE ON SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
+              psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
+              psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"{{ $schema }}\" GRANT SELECT ON TABLES TO \"{{ $user.name }}\";"
               {{- end }}
               {{- end }}
 
@@ -96,15 +96,15 @@ spec:
 
                 if [ "$is_desired" = "false" ]; then
                   echo "Removing unmanaged user: $role"
-                  psql -c "REVOKE ALL PRIVILEGES ON DATABASE $PGDATABASE FROM $role;" 2>/dev/null || true
+                  psql -c "REVOKE ALL PRIVILEGES ON DATABASE $PGDATABASE FROM \"$role\";" 2>/dev/null || true
                   psql -tAc "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast')" | while read -r s; do
                     if [ -n "$s" ]; then
-                      psql -c "REVOKE ALL ON SCHEMA $s FROM $role;" 2>/dev/null || true
-                      psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA $s FROM $role;" 2>/dev/null || true
-                      psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA $s REVOKE SELECT ON TABLES FROM $role;" 2>/dev/null || true
+                      psql -c "REVOKE ALL ON SCHEMA \"$s\" FROM \"$role\";" 2>/dev/null || true
+                      psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA \"$s\" FROM \"$role\";" 2>/dev/null || true
+                      psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$s\" REVOKE SELECT ON TABLES FROM \"$role\";" 2>/dev/null || true
                     fi
                   done
-                  psql -c "DROP ROLE IF EXISTS $role;"
+                  psql -c "DROP ROLE IF EXISTS \"$role\";"
                 fi
               done
 

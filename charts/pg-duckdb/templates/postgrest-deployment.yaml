@@ -39,32 +39,34 @@ spec:
               ROLE="{{ .Values.postgrest.anonRole }}"
               SCHEMAS="{{ .Values.postgrest.schemas }}"
 
-              echo "$PGHOST:$PGPORT:$PGDATABASE:$ROLE:$ANON_PASSWORD" > ~/.pgpass
-              chmod 600 ~/.pgpass
-
               existing=$(PGPASSWORD="$PGPASSWORD" psql -tAc "SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '$ROLE'" 2>/dev/null || echo "")
 
               if [ "$existing" = "1" ]; then
                 echo "Role $ROLE already exists, updating password..."
-                PGPASSWORD="$PGPASSWORD" psql -c "ALTER ROLE \"$ROLE\" WITH LOGIN PASSWORD :'anon_pass';" -v anon_pass="$ANON_PASSWORD"
+                PGPASSWORD="$PGPASSWORD" psql <<EOSQL
+ALTER ROLE "$ROLE" WITH LOGIN ENCRYPTED PASSWORD '$ANON_PASSWORD';
+GRANT CONNECT ON DATABASE $PGDATABASE TO "$ROLE";
+EOSQL
               else
                 echo "Creating role: $ROLE"
-                PGPASSWORD="$PGPASSWORD" psql -c "CREATE ROLE \"$ROLE\" WITH LOGIN PASSWORD :'anon_pass' NOINHERIT;" -v anon_pass="$ANON_PASSWORD"
+                PGPASSWORD="$PGPASSWORD" psql <<EOSQL
+CREATE ROLE "$ROLE" WITH LOGIN ENCRYPTED PASSWORD '$ANON_PASSWORD' NOINHERIT;
+GRANT CONNECT ON DATABASE $PGDATABASE TO "$ROLE";
+EOSQL
               fi
-
-              PGPASSWORD="$PGPASSWORD" psql -c "GRANT CONNECT ON DATABASE $PGDATABASE TO \"$ROLE\";"
 
               IFS=',' read -ra SCHEMA_ARRAY <<< "$SCHEMAS"
               for schema in "${SCHEMA_ARRAY[@]}"; do
                 schema=$(echo "$schema" | xargs)
                 echo "Granting $ROLE access to schema: $schema"
-                PGPASSWORD="$PGPASSWORD" psql -c "CREATE SCHEMA IF NOT EXISTS \"$schema\";"
-                PGPASSWORD="$PGPASSWORD" psql -c "GRANT USAGE ON SCHEMA \"$schema\" TO \"$ROLE\";"
-                PGPASSWORD="$PGPASSWORD" psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA \"$schema\" TO \"$ROLE\";"
-                PGPASSWORD="$PGPASSWORD" psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$schema\" GRANT SELECT ON TABLES TO \"$ROLE\";"
+                PGPASSWORD="$PGPASSWORD" psql <<EOSQL
+CREATE SCHEMA IF NOT EXISTS "$schema";
+GRANT USAGE ON SCHEMA "$schema" TO "$ROLE";
+GRANT SELECT ON ALL TABLES IN SCHEMA "$schema" TO "$ROLE";
+ALTER DEFAULT PRIVILEGES IN SCHEMA "$schema" GRANT SELECT ON TABLES TO "$ROLE";
+EOSQL
               done
 
-              rm -f ~/.pgpass
               echo "PostgREST role setup complete."
           env:
             - name: PGHOST

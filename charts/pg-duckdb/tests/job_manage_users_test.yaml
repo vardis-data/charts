@@ -1,0 +1,114 @@
+suite: manage users job tests
+templates:
+  - templates/job-manage-users.yaml
+tests:
+  - it: should not render when no read-only users
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render when read-only users configured
+    set:
+      postgres:
+        readOnlyUsers:
+          - name: analyst
+            passwordSecret:
+              name: analyst-creds
+              key: password
+            schemas:
+              - marts
+    asserts:
+      - isKind:
+          of: Job
+
+  - it: should have helm hook annotations
+    set:
+      postgres:
+        readOnlyUsers:
+          - name: analyst
+            passwordSecret:
+              name: analyst-creds
+              key: password
+            schemas:
+              - marts
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation
+
+  - it: should inject password env var from secret
+    set:
+      postgres:
+        readOnlyUsers:
+          - name: analyst
+            passwordSecret:
+              name: analyst-creds
+              key: password
+            schemas:
+              - marts
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RO_PASSWORD_ANALYST
+            valueFrom:
+              secretKeyRef:
+                name: analyst-creds
+                key: password
+
+  - it: should grant access to configured schemas
+    set:
+      postgres:
+        readOnlyUsers:
+          - name: analyst
+            passwordSecret:
+              name: analyst-creds
+              key: password
+            schemas:
+              - marts
+              - seeds
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "GRANT USAGE ON SCHEMA marts TO analyst"
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "GRANT USAGE ON SCHEMA seeds TO analyst"
+
+  - it: should support multiple users
+    set:
+      postgres:
+        readOnlyUsers:
+          - name: analyst
+            passwordSecret:
+              name: analyst-creds
+              key: password
+            schemas:
+              - marts
+          - name: viewer
+            passwordSecret:
+              name: viewer-creds
+              key: password
+            schemas:
+              - marts
+              - seeds
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RO_PASSWORD_ANALYST
+            valueFrom:
+              secretKeyRef:
+                name: analyst-creds
+                key: password
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RO_PASSWORD_VIEWER
+            valueFrom:
+              secretKeyRef:
+                name: viewer-creds
+                key: password

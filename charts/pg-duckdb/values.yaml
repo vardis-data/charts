@@ -15,6 +15,18 @@ postgres:
   password: ""
   # -- PostgreSQL listen port
   port: 5432
+  # -- Additional read-only users created on first boot.
+  # -- Each user gets CONNECT on the database and SELECT on tables
+  # -- in the specified schemas only.
+  readOnlyUsers: []
+  # -- readOnlyUsers:
+  # --   - name: analyst
+  # --     passwordSecret:
+  # --       name: analyst-credentials
+  # --       key: password
+  # --     schemas:
+  # --       - prod
+  # --       - prod_seeds
 
 # -- DuckDB engine settings applied via init SQL.
 # -- Each connection gets its own DuckDB instance with these limits.

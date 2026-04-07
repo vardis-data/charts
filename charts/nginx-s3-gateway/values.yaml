@@ -59,6 +59,22 @@ ingress:
   
   # Optional: Tailscale tags (defaults to tag:k8s-{hostname})
   tags: ""
+  
+  # Traefik ingress configuration (used when className: traefik)
+  hosts: []
+  # - host: example.com
+  #   paths:
+  #     - path: /
+  #       pathType: Prefix
+  
+  # TLS configuration for Traefik ingress
+  tls: []
+  # - secretName: tls-secret
+  #   hosts:
+  #     - example.com
+  
+  # Additional annotations for Traefik ingress
+  annotations: {}
 
 # Resource limits and requests
 resources:

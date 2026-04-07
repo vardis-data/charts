@@ -2,7 +2,7 @@ apiVersion: v2
 name: nginx-s3-gateway
 description: Official nginx S3 gateway with caching
 type: application
-version: 1.0.2
+version: 1.0.3
 appVersion: "latest"
 dependencies:
   - name: common

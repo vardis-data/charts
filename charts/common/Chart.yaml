@@ -1,5 +1,5 @@
 apiVersion: v2
 name: common
 description: Common Helm library for Vardis charts
-type: application
+type: library
 version: 1.0.1

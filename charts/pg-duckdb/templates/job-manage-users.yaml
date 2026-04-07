@@ -42,16 +42,10 @@ spec:
 
                 if [ "$existing" = "1" ]; then
                   echo "Updating password for user: $username"
-                  psql <<EOSQL
-ALTER ROLE "$username" WITH LOGIN ENCRYPTED PASSWORD '$password';
-GRANT CONNECT ON DATABASE $PGDATABASE TO "$username";
-EOSQL
+                  psql -c "ALTER ROLE \"$username\" WITH LOGIN ENCRYPTED PASSWORD '$password'; GRANT CONNECT ON DATABASE $PGDATABASE TO \"$username\";"
                 else
                   echo "Creating user: $username"
-                  psql <<EOSQL
-CREATE ROLE "$username" WITH LOGIN ENCRYPTED PASSWORD '$password';
-GRANT CONNECT ON DATABASE $PGDATABASE TO "$username";
-EOSQL
+                  psql -c "CREATE ROLE \"$username\" WITH LOGIN ENCRYPTED PASSWORD '$password'; GRANT CONNECT ON DATABASE $PGDATABASE TO \"$username\";"
                 fi
 
                 psql -tAc "

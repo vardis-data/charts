@@ -43,28 +43,17 @@ spec:
 
               if [ "$existing" = "1" ]; then
                 echo "Role $ROLE already exists, updating password..."
-                PGPASSWORD="$PGPASSWORD" psql <<EOSQL
-ALTER ROLE "$ROLE" WITH LOGIN ENCRYPTED PASSWORD '$ANON_PASSWORD';
-GRANT CONNECT ON DATABASE $PGDATABASE TO "$ROLE";
-EOSQL
+                PGPASSWORD="$PGPASSWORD" psql -c "ALTER ROLE \"$ROLE\" WITH LOGIN ENCRYPTED PASSWORD '$ANON_PASSWORD'; GRANT CONNECT ON DATABASE $PGDATABASE TO \"$ROLE\";"
               else
                 echo "Creating role: $ROLE"
-                PGPASSWORD="$PGPASSWORD" psql <<EOSQL
-CREATE ROLE "$ROLE" WITH LOGIN ENCRYPTED PASSWORD '$ANON_PASSWORD' NOINHERIT;
-GRANT CONNECT ON DATABASE $PGDATABASE TO "$ROLE";
-EOSQL
+                PGPASSWORD="$PGPASSWORD" psql -c "CREATE ROLE \"$ROLE\" WITH LOGIN ENCRYPTED PASSWORD '$ANON_PASSWORD' NOINHERIT; GRANT CONNECT ON DATABASE $PGDATABASE TO \"$ROLE\";"
               fi
 
               IFS=',' read -ra SCHEMA_ARRAY <<< "$SCHEMAS"
               for schema in "${SCHEMA_ARRAY[@]}"; do
                 schema=$(echo "$schema" | xargs)
                 echo "Granting $ROLE access to schema: $schema"
-                PGPASSWORD="$PGPASSWORD" psql <<EOSQL
-CREATE SCHEMA IF NOT EXISTS "$schema";
-GRANT USAGE ON SCHEMA "$schema" TO "$ROLE";
-GRANT SELECT ON ALL TABLES IN SCHEMA "$schema" TO "$ROLE";
-ALTER DEFAULT PRIVILEGES IN SCHEMA "$schema" GRANT SELECT ON TABLES TO "$ROLE";
-EOSQL
+                PGPASSWORD="$PGPASSWORD" psql -c "CREATE SCHEMA IF NOT EXISTS \"$schema\"; GRANT USAGE ON SCHEMA \"$schema\" TO \"$ROLE\"; GRANT SELECT ON ALL TABLES IN SCHEMA \"$schema\" TO \"$ROLE\"; ALTER DEFAULT PRIVILEGES IN SCHEMA \"$schema\" GRANT SELECT ON TABLES TO \"$ROLE\";"
               done
 
               echo "PostgREST role setup complete."

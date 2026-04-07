@@ -208,6 +208,26 @@ postgrest:
     #  - secretName: postgrest-tls
     #    hosts:
     #      - api.example.com
+  # -- Public ingress configuration (e.g., for Traefik)
+  # -- Allows separate public and private ingresses
+  publicIngress:
+    # -- Enable public ingress for PostgREST
+    enabled: false
+    # -- Ingress class name (e.g., "traefik", "nginx")
+    className: "traefik"
+    # -- Ingress annotations
+    annotations: {}
+    # -- Ingress host configuration
+    hosts:
+      - host: ""
+        paths:
+          - path: /api
+            pathType: Prefix
+    # -- TLS configuration
+    tls: []
+    #  - secretName: postgrest-tls
+    #    hosts:
+    #      - api.example.com
   # -- Resource requests/limits for PostgREST pod
   resources:
     requests:

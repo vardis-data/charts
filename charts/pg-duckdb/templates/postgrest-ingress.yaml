@@ -1,10 +1,9 @@
 {{- if and .Values.postgrest.enabled .Values.postgrest.ingress.enabled }}
 {{- if eq .Values.postgrest.ingress.className "tailscale" }}
-{{- $tailscaleValues := merge . (dict "Values" (merge .Values (dict "tailscale" (dict "enabled" true "hostname" .Values.postgrest.ingress.hostname "tags" .Values.postgrest.ingress.tags) "service" (dict "port" .Values.postgrest.service.port)))) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "pg-duckdb.fullname" . }}-postgrest
+  name: {{ include "pg-duckdb.fullname" . }}-postgrest-tailscale
   labels:
     {{- include "pg-duckdb.labels" . | nindent 4 }}
     app.kubernetes.io/component: postgrest
@@ -63,4 +62,47 @@ spec:
           {{- end }}
     {{- end }}
 {{- end }}
+{{- end }}
+{{- if and .Values.postgrest.enabled .Values.postgrest.publicIngress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "pg-duckdb.fullname" . }}-postgrest-public
+  labels:
+    {{- include "pg-duckdb.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgrest
+  {{- with .Values.postgrest.publicIngress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.postgrest.publicIngress.className }}
+  ingressClassName: {{ .Values.postgrest.publicIngress.className }}
+  {{- end }}
+  {{- if .Values.postgrest.publicIngress.tls }}
+  tls:
+    {{- range .Values.postgrest.publicIngress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.postgrest.publicIngress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "pg-duckdb.fullname" $ }}-postgrest
+                port:
+                  number: {{ $.Values.postgrest.service.port }}
+          {{- end }}
+    {{- end }}
 {{- end }}

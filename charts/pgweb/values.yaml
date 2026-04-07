@@ -39,6 +39,12 @@ service:
   type: ClusterIP
   port: 8081
 
+ingress:
+  enabled: false
+  className: tailscale
+  hostname: pgweb
+  tags: ""
+
 resources:
   requests:
     cpu: 50m

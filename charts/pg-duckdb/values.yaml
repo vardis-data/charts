@@ -190,7 +190,11 @@ postgrest:
     # -- Enable ingress for PostgREST
     enabled: false
     # -- Ingress class name (e.g., "traefik", "nginx", "tailscale")
-    className: "traefik"
+    className: "tailscale"
+    # -- Tailscale hostname (without domain suffix)
+    hostname: "warehouse-api"
+    # -- Tailscale tags (defaults to tag:k8s-{hostname})
+    tags: ""
     # -- Ingress annotations
     annotations: {}
     # -- Ingress host configuration

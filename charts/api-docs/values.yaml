@@ -12,8 +12,10 @@ service:
   port: 80
 
 ingress:
-  enabled: true
+  enabled: false
   className: traefik
+  hostname: api-docs
+  tags: ""
   annotations: {}
   hosts:
     - host: api-docs.example.com

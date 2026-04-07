@@ -47,6 +47,12 @@ service:
   type: ClusterIP
   port: 3000
 
+ingress:
+  enabled: false
+  className: tailscale
+  hostname: kan
+  tags: ""
+
 resources:
   requests:
     cpu: 100m

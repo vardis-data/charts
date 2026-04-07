@@ -23,9 +23,6 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      - name: Login to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
-
       - name: Update chart dependencies
         run: |
           for chart in charts/*/; do
@@ -53,9 +50,6 @@ jobs:
 
       - name: Install helm-unittest
         run: helm plugin install --verify=false https://github.com/helm-unittest/helm-unittest.git
-
-      - name: Login to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Update chart dependencies
         run: |

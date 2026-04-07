@@ -1,0 +1,70 @@
+{{- if .Values.postgrest.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pg-duckdb.fullname" . }}-postgrest
+  labels:
+    {{- include "pg-duckdb.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgrest
+spec:
+  replicas: {{ .Values.postgrest.replicas }}
+  selector:
+    matchLabels:
+      {{- include "pg-duckdb.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postgrest
+  template:
+    metadata:
+      labels:
+        {{- include "pg-duckdb.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgrest
+      {{- if .Values.reloader.enabled }}
+      annotations:
+        reloader.stakater.com/auto: "true"
+      {{- end }}
+    spec:
+      containers:
+        - name: postgrest
+          image: "{{ .Values.postgrest.image.repository }}:{{ .Values.postgrest.image.tag }}"
+          imagePullPolicy: {{ .Values.postgrest.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: PGRST_DB_URI
+              value: "postgres://{{ .Values.postgrest.anonRole }}:$(PGRST_DB_ANON_ROLE_PASSWORD)@{{ include "pg-duckdb.fullname" . }}-replicas:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+            - name: PGRST_DB_ANON_ROLE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pg-duckdb.fullname" . }}-postgrest
+                  key: anon-role-password
+            - name: PGRST_DB_SCHEMAS
+              value: {{ .Values.postgrest.schemas | quote }}
+            - name: PGRST_DB_ANON_ROLE
+              value: {{ .Values.postgrest.anonRole | quote }}
+            - name: PGRST_SERVER_PORT
+              value: "3000"
+            {{- if .Values.postgrest.jwt.enabled }}
+            - name: PGRST_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pg-duckdb.postgrest.jwtSecretName" . }}
+                  key: {{ include "pg-duckdb.postgrest.jwtSecretKey" . }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          {{- with .Values.postgrest.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

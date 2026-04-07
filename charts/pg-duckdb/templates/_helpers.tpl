@@ -144,3 +144,19 @@ readinessProbe:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{- end }}
+
+{{- define "pg-duckdb.postgrest.jwtSecretName" -}}
+{{- if .Values.postgrest.jwt.existingSecret.name }}
+{{- .Values.postgrest.jwt.existingSecret.name }}
+{{- else }}
+{{- include "pg-duckdb.fullname" . }}-postgrest
+{{- end }}
+{{- end }}
+
+{{- define "pg-duckdb.postgrest.jwtSecretKey" -}}
+{{- if .Values.postgrest.jwt.existingSecret.name }}
+{{- .Values.postgrest.jwt.existingSecret.key }}
+{{- else }}
+{{- "jwt-secret" }}
+{{- end }}
+{{- end }}

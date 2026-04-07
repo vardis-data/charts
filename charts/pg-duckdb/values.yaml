@@ -154,3 +154,63 @@ metrics:
 # -- Stakater Reloader annotation for automatic pod restarts on Secret/ConfigMap changes.
 reloader:
   enabled: true
+
+# -- PostgREST configuration for exposing tables as a REST API.
+# -- Connects to the replicas service for read-only access.
+postgrest:
+  # -- Enable PostgREST deployment
+  enabled: false
+  image:
+    repository: postgrest/postgrest
+    # renovate: datasource=docker depName=postgrest/postgrest
+    tag: "v12.2.3"
+    pullPolicy: IfNotPresent
+  # -- Database schemas to expose via the REST API (comma-separated)
+  schemas: "public"
+  # -- Database role for anonymous (unauthenticated) requests.
+  # -- This role is created automatically with SELECT on exposed schemas.
+  anonRole: "api_anon"
+  # -- JWT authentication configuration
+  jwt:
+    # -- Enable JWT authentication
+    enabled: false
+    # -- JWT secret for signing/verifying tokens (min 32 chars).
+    # -- Ignored when existingSecret is set.
+    secret: ""
+    # -- Reference an existing K8s Secret for the JWT secret
+    existingSecret:
+      name: ""
+      key: "jwt-secret"
+  # -- Service configuration
+  service:
+    type: ClusterIP
+    port: 3000
+  # -- Ingress configuration for external access
+  ingress:
+    # -- Enable ingress for PostgREST
+    enabled: false
+    # -- Ingress class name (e.g., "traefik", "nginx", "tailscale")
+    className: "traefik"
+    # -- Ingress annotations
+    annotations: {}
+    # -- Ingress host configuration
+    hosts:
+      - host: ""
+        paths:
+          - path: /
+            pathType: Prefix
+    # -- TLS configuration
+    tls: []
+    #  - secretName: postgrest-tls
+    #    hosts:
+    #      - api.example.com
+  # -- Resource requests/limits for PostgREST pod
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  # -- Number of PostgREST replicas
+  replicas: 1

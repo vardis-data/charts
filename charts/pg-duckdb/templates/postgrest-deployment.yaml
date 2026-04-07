@@ -84,6 +84,9 @@ spec:
             - name: http
               containerPort: 3000
               protocol: TCP
+            - name: admin
+              containerPort: 3001
+              protocol: TCP
           env:
             - name: PGRST_DB_URI
               valueFrom:
@@ -94,8 +97,12 @@ spec:
               value: {{ .Values.postgrest.anonRole | quote }}
             - name: PGRST_DB_SCHEMAS
               value: {{ .Values.postgrest.schemas | quote }}
+            - name: PGRST_DB_CHANNEL_ENABLED
+              value: "false"
             - name: PGRST_SERVER_PORT
               value: "3000"
+            - name: PGRST_ADMIN_SERVER_PORT
+              value: "3001"
             {{- if .Values.postgrest.jwt.enabled }}
             - name: PGRST_JWT_SECRET
               valueFrom:

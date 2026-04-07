@@ -40,6 +40,8 @@ spec:
             - name: APPEND_SLASH_FOR_POSSIBLE_DIRECTORY
               value: "true"
             {{- if .Values.s3.accessKey }}
+            - name: AWS_SIGS_VERSION
+              value: "4"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:

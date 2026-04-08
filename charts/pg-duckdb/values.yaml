@@ -181,12 +181,12 @@ postgrest:
   # -- Database schemas to expose via the REST API (comma-separated)
   schemas: "public"
   # -- Database role for anonymous (unauthenticated) requests.
-  # -- This role is created automatically with SELECT on exposed schemas.
-  anonRole: "api_anon"
+  # -- Set to empty string ("") to require authentication for all requests.
+  # -- When empty, unauthenticated requests will be rejected with 401.
+  anonRole: ""
   # -- Database role for admin (JWT-authenticated) requests.
-  # -- This role is created automatically with ALL privileges on exposed schemas.
-  # -- Only used when jwt.enabled is true.
-  adminRole: "admin_role"
+  # -- Only used when jwt.enabled is true. Leave empty to disable admin role.
+  adminRole: ""
   # -- Authenticator password for PostgREST connection.
   # -- If set, uses this password. If empty, generates random or uses lookup.
   authenticatorPassword: ""

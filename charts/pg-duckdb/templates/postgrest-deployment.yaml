@@ -95,8 +95,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "pg-duckdb.fullname" . }}-postgrest
                   key: db-uri
+            {{- if .Values.postgrest.anonRole }}
             - name: PGRST_DB_ANON_ROLE
               value: {{ .Values.postgrest.anonRole | quote }}
+            {{- end }}
             - name: PGRST_DB_SCHEMAS
               value: {{ .Values.postgrest.schemas | quote }}
             - name: PGRST_DB_CHANNEL_ENABLED

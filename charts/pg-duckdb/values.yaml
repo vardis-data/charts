@@ -176,6 +176,9 @@ postgrest:
   # -- Database role for anonymous (unauthenticated) requests.
   # -- This role is created automatically with SELECT on exposed schemas.
   anonRole: "api_anon"
+  # -- Authenticator password for PostgREST connection.
+  # -- If set, uses this password. If empty, generates random or uses lookup.
+  authenticatorPassword: ""
   # -- JWT authentication configuration
   jwt:
     # -- Enable JWT authentication

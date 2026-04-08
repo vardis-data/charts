@@ -44,16 +44,16 @@ spec:
                 echo "JWKS saved successfully"
                 exit 0
               fi
-              
+
               OLD_HASH=$(sha256sum "$JWKS_FILE" | cut -d' ' -f1)
               NEW_HASH=$(sha256sum "$JWKS_TEMP" | cut -d' ' -f1)
-              
+
               if [ "$OLD_HASH" = "$NEW_HASH" ]; then
                 echo "JWKS unchanged (hash: $OLD_HASH), skipping update"
                 rm "$JWKS_TEMP"
                 exit 0
               fi
-              
+
               echo "JWKS changed (old: $OLD_HASH, new: $NEW_HASH), updating"
               mv "$JWKS_TEMP" "$JWKS_FILE"
               echo "JWKS updated successfully"
@@ -74,25 +74,80 @@ spec:
                 sleep 3
               done
 
-              ROLE="{{ .Values.postgrest.anonRole }}"
+              ANON_ROLE="{{ .Values.postgrest.anonRole }}"
               SCHEMAS="{{ .Values.postgrest.schemas }}"
 
-              existing=$(PGPASSWORD="$PGPASSWORD" psql -tAc "SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '$ROLE'" 2>/dev/null || echo "")
+              echo "Creating authenticator role..."
+              PGPASSWORD="$PGPASSWORD" psql << EOF
+              DO \$\$
+              BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticator') THEN
+                  CREATE ROLE authenticator WITH LOGIN NOINHERIT PASSWORD '$AUTHENTICATOR_PASSWORD';
+                  RAISE NOTICE 'Created authenticator role';
+                ELSE
+                  ALTER ROLE authenticator WITH LOGIN NOINHERIT PASSWORD '$AUTHENTICATOR_PASSWORD';
+                  RAISE NOTICE 'Updated authenticator role';
+                END IF;
+                GRANT CONNECT ON DATABASE $PGDATABASE TO authenticator;
+              END
+              \$\$;
+              EOF
 
-              if [ "$existing" = "1" ]; then
-                echo "Role $ROLE already exists, updating password..."
-                PGPASSWORD="$PGPASSWORD" psql -c "ALTER ROLE \"$ROLE\" WITH LOGIN ENCRYPTED PASSWORD '$ANON_PASSWORD'; GRANT CONNECT ON DATABASE $PGDATABASE TO \"$ROLE\";"
-              else
-                echo "Creating role: $ROLE"
-                PGPASSWORD="$PGPASSWORD" psql -c "CREATE ROLE \"$ROLE\" WITH LOGIN ENCRYPTED PASSWORD '$ANON_PASSWORD' NOINHERIT; GRANT CONNECT ON DATABASE $PGDATABASE TO \"$ROLE\";"
-              fi
+              echo "Creating anon role..."
+              PGPASSWORD="$PGPASSWORD" psql << EOF
+              DO \$\$
+              BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$ANON_ROLE') THEN
+                  CREATE ROLE "$ANON_ROLE" WITH NOLOGIN NOINHERIT;
+                  RAISE NOTICE 'Created $ANON_ROLE role';
+                ELSE
+                  RAISE NOTICE '$ANON_ROLE role already exists';
+                END IF;
+                GRANT CONNECT ON DATABASE $PGDATABASE TO "$ANON_ROLE";
+                GRANT "$ANON_ROLE" TO authenticator;
+              END
+              \$\$;
+              EOF
 
               IFS=',' read -ra SCHEMA_ARRAY <<< "$SCHEMAS"
-              for schema in "${SCHEMA_ARRAY[@]}"; do
-                schema=$(echo "$schema" | xargs)
-                echo "Granting $ROLE access to schema: $schema"
-                PGPASSWORD="$PGPASSWORD" psql -c "CREATE SCHEMA IF NOT EXISTS \"$schema\"; GRANT USAGE ON SCHEMA \"$schema\" TO \"$ROLE\"; GRANT SELECT ON ALL TABLES IN SCHEMA \"$schema\" TO \"$ROLE\"; ALTER DEFAULT PRIVILEGES IN SCHEMA \"$schema\" GRANT SELECT ON TABLES TO \"$ROLE\";"
+              for schema in "\${SCHEMA_ARRAY[@]}"; do
+                schema=\$(echo "\$schema" | xargs)
+                echo "Granting $ANON_ROLE access to schema: \$schema"
+                PGPASSWORD="$PGPASSWORD" psql << EOF
+                CREATE SCHEMA IF NOT EXISTS "\$schema";
+                GRANT USAGE ON SCHEMA "\$schema" TO "$ANON_ROLE";
+                GRANT SELECT ON ALL TABLES IN SCHEMA "\$schema" TO "$ANON_ROLE";
+                ALTER DEFAULT PRIVILEGES IN SCHEMA "\$schema" GRANT SELECT ON TABLES TO "$ANON_ROLE";
+              EOF
               done
+
+              {{- if .Values.postgrest.jwt.enabled }}
+              echo "Creating admin_role for JWT..."
+              PGPASSWORD="$PGPASSWORD" psql << EOF
+              DO \$\$
+              BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'admin_role') THEN
+                  CREATE ROLE admin_role WITH NOLOGIN NOINHERIT;
+                  RAISE NOTICE 'Created admin_role';
+                ELSE
+                  RAISE NOTICE 'admin_role already exists';
+                END IF;
+                GRANT CONNECT ON DATABASE $PGDATABASE TO admin_role;
+                GRANT admin_role TO authenticator;
+              END
+              \$\$;
+              EOF
+
+              for schema in "\${SCHEMA_ARRAY[@]}"; do
+                schema=\$(echo "\$schema" | xargs)
+                echo "Granting admin_role full access to schema: \$schema"
+                PGPASSWORD="$PGPASSWORD" psql << EOF
+                GRANT ALL ON SCHEMA "\$schema" TO admin_role;
+                GRANT ALL ON ALL TABLES IN SCHEMA "\$schema" TO admin_role;
+                ALTER DEFAULT PRIVILEGES IN SCHEMA "\$schema" GRANT ALL ON TABLES TO admin_role;
+              EOF
+              done
+              {{- end }}
 
               echo "PostgREST role setup complete."
           env:
@@ -114,6 +169,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "pg-duckdb.fullname" . }}-postgrest
                   key: anon-role-password
+            - name: AUTHENTICATOR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pg-duckdb.fullname" . }}-postgrest
+                  key: authenticator-password
       containers:
         - name: postgrest
           image: "{{ .Values.postgrest.image.repository }}:{{ .Values.postgrest.image.tag }}"

@@ -23,6 +23,44 @@ spec:
       {{- end }}
     spec:
       initContainers:
+        {{- if .Values.postgrest.jwt.jwksUrl }}
+        - name: fetch-jwks
+          image: curlimages/curl:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              JWKS_FILE="/jwks/jwks.json"
+              JWKS_TEMP="/tmp/jwks.json"
+              JWKS_URL={{ .Values.postgrest.jwt.jwksUrl | quote }}
+
+              echo "Downloading JWKS from $JWKS_URL"
+              curl -sSL "$JWKS_URL" -o "$JWKS_TEMP"
+
+              if [ ! -f "$JWKS_FILE" ]; then
+                echo "JWKS not found on disk, saving new file"
+                mv "$JWKS_TEMP" "$JWKS_FILE"
+                echo "JWKS saved successfully"
+                exit 0
+              fi
+              
+              OLD_HASH=$(sha256sum "$JWKS_FILE" | cut -d' ' -f1)
+              NEW_HASH=$(sha256sum "$JWKS_TEMP" | cut -d' ' -f1)
+              
+              if [ "$OLD_HASH" = "$NEW_HASH" ]; then
+                echo "JWKS unchanged (hash: $OLD_HASH), skipping update"
+                rm "$JWKS_TEMP"
+                exit 0
+              fi
+              
+              echo "JWKS changed (old: $OLD_HASH, new: $NEW_HASH), updating"
+              mv "$JWKS_TEMP" "$JWKS_FILE"
+              echo "JWKS updated successfully"
+          volumeMounts:
+            - name: jwks
+              mountPath: /jwks
+        {{- end }}
         - name: setup-role
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -104,11 +142,28 @@ spec:
             - name: PGRST_ADMIN_SERVER_PORT
               value: "3001"
             {{- if .Values.postgrest.jwt.enabled }}
+            {{- if .Values.postgrest.jwt.jwksUrl }}
+            - name: PGRST_JWT_SECRET
+              value: "@/jwks/jwks.json"
+            {{- if .Values.postgrest.jwt.aud }}
+            - name: PGRST_JWT_AUD
+              value: {{ .Values.postgrest.jwt.aud | quote }}
+            {{- end }}
+            {{- if .Values.postgrest.jwt.issuer }}
+            - name: PGRST_JWT_ISSUER
+              value: {{ .Values.postgrest.jwt.issuer | quote }}
+            {{- end }}
+            {{- if .Values.postgrest.jwt.roleClaim }}
+            - name: PGRST_JWT_ROLE_CLAIM_KEY
+              value: {{ printf ".%s" .Values.postgrest.jwt.roleClaim | quote }}
+            {{- end }}
+            {{- else }}
             - name: PGRST_JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "pg-duckdb.postgrest.jwtSecretName" . }}
                   key: {{ include "pg-duckdb.postgrest.jwtSecretKey" . }}
+            {{- end }}
             {{- end }}
           livenessProbe:
             httpGet:
@@ -126,4 +181,15 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if .Values.postgrest.jwt.jwksUrl }}
+          volumeMounts:
+            - name: jwks
+              mountPath: /jwks
+              readOnly: true
+          {{- end }}
+      {{- if .Values.postgrest.jwt.jwksUrl }}
+      volumes:
+        - name: jwks
+          emptyDir: {}
+      {{- end }}
 {{- end }}

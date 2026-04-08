@@ -12,30 +12,30 @@ image:
 s3:
   # S3 bucket name to proxy
   bucket: "vardis-dbt-docs"
-  
+
   # S3 region (must match bucket region)
   region: "us-east-1"
-  
+
   # S3 endpoint URL (include https://)
   # Examples:
   #   AWS S3: https://s3.amazonaws.com
   #   Hetzner: https://nbg1.your-objectstorage.com
   #   MinIO: https://minio.example.com
   endpoint: "https://nbg1.your-objectstorage.com"
-  
+
   # S3 path style: "virtual" or "path"
   # virtual: bucket.endpoint.com/key
   # path: endpoint.com/bucket/key
   style: "virtual"
-  
+
   # Enable debug logging (true/false)
   debug: "false"
-  
+
   # S3 credentials (leave empty for public buckets)
   # If provided, credentials will be stored in a Kubernetes secret
   accessKey: ""
   secretKey: ""
-  
+
   # Allow directory listing (true/false)
   # When false, directory requests will look for index.html
   allowDirectoryList: "false"
@@ -49,30 +49,30 @@ service:
 ingress:
   # Enable ingress
   enabled: true
-  
+
   # Ingress class (tailscale, traefik, nginx, etc.)
   className: tailscale
-  
+
   # Hostname for Tailscale ingress (without domain suffix)
   # Final URL: https://hostname.tailnet-name.ts.net
   hostname: dbt
-  
+
   # Optional: Tailscale tags (defaults to tag:k8s-{hostname})
   tags: ""
-  
+
   # Traefik ingress configuration (used when className: traefik)
   hosts: []
   # - host: example.com
   #   paths:
   #     - path: /
   #       pathType: Prefix
-  
+
   # TLS configuration for Traefik ingress
   tls: []
   # - secretName: tls-secret
   #   hosts:
   #     - example.com
-  
+
   # Additional annotations for Traefik ingress
   annotations: {}
 

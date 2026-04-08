@@ -175,12 +175,22 @@ postgrest:
     # -- Enable JWT authentication
     enabled: false
     # -- JWT secret for signing/verifying tokens (min 32 chars).
-    # -- Ignored when existingSecret is set.
+    # -- Ignored when existingSecret or jwks is set.
     secret: ""
     # -- Reference an existing K8s Secret for the JWT secret
     existingSecret:
       name: ""
       key: "jwt-secret"
+    # -- JWKS URL to fetch on pod startup (e.g., https://auth.example.com/jwks/)
+    # -- When set, an init container will fetch the JWKS and PostgREST will use it
+    # -- Takes precedence over secret/existingSecret
+    jwksUrl: ""
+    # -- JWT audience claim to validate
+    aud: ""
+    # -- JWT issuer claim to validate
+    issuer: ""
+    # -- JWT claim key for PostgreSQL role (default: role)
+    roleClaim: ""
   # -- Service configuration
   service:
     type: ClusterIP

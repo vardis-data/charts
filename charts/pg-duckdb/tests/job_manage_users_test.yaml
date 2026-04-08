@@ -2,21 +2,22 @@ suite: manage users job tests
 templates:
   - templates/job-manage-users.yaml
 tests:
-  - it: should not render when no read-only users
+  - it: should not render when no users
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: should render when read-only users configured
+  - it: should render when users configured
     set:
       postgres:
-        readOnlyUsers:
+        users:
           - name: analyst
+            login: false
             passwordSecret:
               name: analyst-creds
               key: password
             schemas:
-              - marts
+              marts: read
     asserts:
       - isKind:
           of: Job
@@ -24,13 +25,14 @@ tests:
   - it: should have helm hook annotations
     set:
       postgres:
-        readOnlyUsers:
+        users:
           - name: analyst
+            login: false
             passwordSecret:
               name: analyst-creds
               key: password
             schemas:
-              - marts
+              marts: read
     asserts:
       - equal:
           path: metadata.annotations["helm.sh/hook"]
@@ -42,34 +44,36 @@ tests:
   - it: should inject password env var from secret
     set:
       postgres:
-        readOnlyUsers:
+        users:
           - name: analyst
+            login: false
             passwordSecret:
               name: analyst-creds
               key: password
             schemas:
-              - marts
+              marts: read
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: RO_PASSWORD_ANALYST
+            name: USER_ANALYST_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: analyst-creds
                 key: password
 
-  - it: should grant access to configured schemas
+  - it: should grant read access to configured schemas
     set:
       postgres:
-        readOnlyUsers:
+        users:
           - name: analyst
+            login: false
             passwordSecret:
               name: analyst-creds
               key: password
             schemas:
-              - marts
-              - seeds
+              marts: read
+              seeds: read
     asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
@@ -81,34 +85,42 @@ tests:
   - it: should support multiple users
     set:
       postgres:
-        readOnlyUsers:
+        users:
           - name: analyst
+            login: true
             passwordSecret:
               name: analyst-creds
               key: password
             schemas:
-              - marts
-          - name: viewer
-            passwordSecret:
-              name: viewer-creds
-              key: password
+              marts: read
+          - name: admin
+            login: false
             schemas:
-              - marts
-              - seeds
+              marts: write
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: RO_PASSWORD_ANALYST
+            name: USER_ANALYST_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: analyst-creds
                 key: password
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: RO_PASSWORD_VIEWER
-            valueFrom:
-              secretKeyRef:
-                name: viewer-creds
-                key: password
+
+  - it: should support grants_to for role switching
+    set:
+      postgres:
+        users:
+          - name: authenticator
+            login: true
+            passwordSecret:
+              name: auth-creds
+              key: password
+            grantsTo: ["anon", "admin"]
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: 'GRANT \\"anon\\" TO \\"authenticator\\"'
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: 'GRANT \\"admin\\" TO \\"authenticator\\"'

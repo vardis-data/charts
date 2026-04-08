@@ -15,18 +15,25 @@ postgres:
   password: ""
   # -- PostgreSQL listen port
   port: 5432
-  # -- Additional read-only users created on first boot.
-  # -- Each user gets CONNECT on the database and SELECT on tables
-  # -- in the specified schemas only.
-  readOnlyUsers: []
-  # -- readOnlyUsers:
-  # --   - name: analyst
+  # -- Database users managed by Terraform.
+  # -- Supports both LOGIN (direct connection) and NOLOGIN (permission groups) users.
+  # -- Schema access levels: "read" (SELECT) or "write" (ALL privileges).
+  users: []
+  # -- users:
+  # --   - name: authenticator
+  # --     login: true
   # --     passwordSecret:
-  # --       name: analyst-credentials
+  # --       name: warehouse-user-authenticator
   # --       key: password
+  # --     grantsTo: ["anon", "admin"]
+  # --   - name: anon
+  # --     login: false
   # --     schemas:
-  # --       - prod
-  # --       - prod_seeds
+  # --       prod: read
+  # --   - name: admin
+  # --     login: false
+  # --     schemas:
+  # --       prod: write
 
 # -- DuckDB engine settings applied via init SQL.
 # -- Each connection gets its own DuckDB instance with these limits.
@@ -176,6 +183,10 @@ postgrest:
   # -- Database role for anonymous (unauthenticated) requests.
   # -- This role is created automatically with SELECT on exposed schemas.
   anonRole: "api_anon"
+  # -- Database role for admin (JWT-authenticated) requests.
+  # -- This role is created automatically with ALL privileges on exposed schemas.
+  # -- Only used when jwt.enabled is true.
+  adminRole: "admin_role"
   # -- Authenticator password for PostgREST connection.
   # -- If set, uses this password. If empty, generates random or uses lookup.
   authenticatorPassword: ""

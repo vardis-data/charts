@@ -1,4 +1,4 @@
-{{- if .Values.postgres.readOnlyUsers }}
+{{- if .Values.postgres.users }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -31,78 +31,73 @@ spec:
                 sleep 3
               done
 
-              MANAGED_PREFIX="ro_"
-              DESIRED_USERS="{{ range $i, $user := .Values.postgres.readOnlyUsers }}{{ if $i }} {{ end }}{{ $user.name }}{{ end }}"
+              {{- range $user := .Values.postgres.users }}
+              echo "Processing user: {{ $user.name }}"
 
-              for username in $DESIRED_USERS; do
-                password_var="RO_PASSWORD_$(echo "$username" | tr '[:lower:]' '[:upper:]')"
-                password=$(printenv "$password_var")
+              {{- if $user.passwordSecret }}
+              PASSWORD="${USER_{{ $user.name | upper }}_PASSWORD}"
+              {{- else }}
+              PASSWORD=""
+              {{- end }}
 
-                existing=$(psql -tAc "SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '$username'" 2>/dev/null || echo "")
+              if psql -tAc "SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '{{ $user.name }}'" | grep -q 1; then
+                echo "User {{ $user.name }} exists, updating..."
+                {{- if $user.passwordSecret }}
+                psql -c "ALTER ROLE \"{{ $user.name }}\" WITH {{ if $user.login }}LOGIN{{ else }}NOLOGIN{{ end }} ENCRYPTED PASSWORD '$PASSWORD';"
+                {{- else }}
+                psql -c "ALTER ROLE \"{{ $user.name }}\" WITH {{ if $user.login }}LOGIN{{ else }}NOLOGIN{{ end }};"
+                {{- end }}
+              else
+                echo "Creating user: {{ $user.name }}"
+                {{- if $user.passwordSecret }}
+                psql -c "CREATE ROLE \"{{ $user.name }}\" WITH {{ if $user.login }}LOGIN{{ else }}NOLOGIN{{ end }} NOINHERIT ENCRYPTED PASSWORD '$PASSWORD';"
+                {{- else }}
+                psql -c "CREATE ROLE \"{{ $user.name }}\" WITH {{ if $user.login }}LOGIN{{ else }}NOLOGIN{{ end }} NOINHERIT;"
+                {{- end }}
+              fi
 
-                if [ "$existing" = "1" ]; then
-                  echo "Updating password for user: $username"
-                  psql -c "ALTER ROLE \"$username\" WITH LOGIN ENCRYPTED PASSWORD '$password'; GRANT CONNECT ON DATABASE $PGDATABASE TO \"$username\";"
-                else
-                  echo "Creating user: $username"
-                  psql -c "CREATE ROLE \"$username\" WITH LOGIN ENCRYPTED PASSWORD '$password'; GRANT CONNECT ON DATABASE $PGDATABASE TO \"$username\";"
-                fi
+              psql -c "GRANT CONNECT ON DATABASE $PGDATABASE TO \"{{ $user.name }}\";"
 
-                psql -tAc "
-                  SELECT n.nspname
-                  FROM pg_namespace n
-                  JOIN (
-                    SELECT nspacl.grantee
-                    FROM pg_namespace,
-                    LATERAL aclexplode(nspacl) AS nspacl
-                    WHERE nspacl.privilege_type = 'USAGE'
-                  ) a ON true
-                  JOIN pg_roles r ON r.oid = a.grantee
-                  WHERE r.rolname = '$username'
-                    AND n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
-                " 2>/dev/null | while read -r old_schema; do
-                  if [ -n "$old_schema" ]; then
-                    echo "Revoking access on schema: $old_schema for user: $username"
-                    psql -c "REVOKE ALL ON SCHEMA \"$old_schema\" FROM \"$username\";" 2>/dev/null || true
-                    psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA \"$old_schema\" FROM \"$username\";" 2>/dev/null || true
-                    psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$old_schema\" REVOKE SELECT ON TABLES FROM \"$username\";" 2>/dev/null || true
-                  fi
-                done
+              {{- range $grantee := $user.grantsTo }}
+              psql -c "GRANT \"{{ $grantee }}\" TO \"{{ $user.name }}\";"
+              {{- end }}
+
+              for schema in $(psql -tAc "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'duckdb')"); do
+                psql -c "REVOKE ALL ON SCHEMA \"$schema\" FROM \"{{ $user.name }}\";" || true
+                psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA \"$schema\" FROM \"{{ $user.name }}\";" || true
+                psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$schema\" REVOKE ALL ON TABLES FROM \"{{ $user.name }}\";" || true
               done
 
-              {{- range $user := .Values.postgres.readOnlyUsers }}
-              {{- range $schema := $user.schemas }}
-
-              echo "Granting {{ $user.name }} access to schema: {{ $schema }}"
+              {{- range $schema, $access := $user.schemas }}
               psql -c "CREATE SCHEMA IF NOT EXISTS \"{{ $schema }}\";"
+
+              {{- if eq $access "read" }}
               psql -c "GRANT USAGE ON SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
               psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
               psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"{{ $schema }}\" GRANT SELECT ON TABLES TO \"{{ $user.name }}\";"
+              {{- else if eq $access "write" }}
+              psql -c "GRANT ALL ON SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
+              psql -c "GRANT ALL ON ALL TABLES IN SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
+              psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"{{ $schema }}\" GRANT ALL ON TABLES TO \"{{ $user.name }}\";"
               {{- end }}
               {{- end }}
 
-              current_roles=$(psql -tAc "SELECT rolname FROM pg_catalog.pg_roles WHERE rolname NOT IN ('$PGUSER', 'pg_signal_backend', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_monitor', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_checkpoint', 'pg_maintain', 'pg_create_subscription', 'pg_use_reserved_connections') AND rolcanlogin = true AND rolsuper = false AND rolreplication = false")
+              {{- end }}
 
-              for role in $current_roles; do
-                is_desired=false
-                for desired in $DESIRED_USERS; do
-                  if [ "$role" = "$desired" ]; then
-                    is_desired=true
-                    break
-                  fi
-                done
+              DESIRED_USERS="{{ range $i, $user := .Values.postgres.users }}{{ if $i }} {{ end }}{{ $user.name }}{{ end }} {{ .Values.postgres.user }}"
 
-                if [ "$is_desired" = "false" ]; then
-                  echo "Removing unmanaged user: $role"
-                  psql -c "REVOKE ALL PRIVILEGES ON DATABASE $PGDATABASE FROM \"$role\";" 2>/dev/null || true
-                  psql -tAc "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast')" | while read -r s; do
-                    if [ -n "$s" ]; then
-                      psql -c "REVOKE ALL ON SCHEMA \"$s\" FROM \"$role\";" 2>/dev/null || true
-                      psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA \"$s\" FROM \"$role\";" 2>/dev/null || true
-                      psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$s\" REVOKE SELECT ON TABLES FROM \"$role\";" 2>/dev/null || true
-                    fi
+              for user in $(psql -tAc "SELECT rolname FROM pg_catalog.pg_roles WHERE rolname NOT LIKE 'pg_%' AND rolsuper = false AND rolname != '{{ .Values.postgres.user }}'"); do
+                if ! echo "$DESIRED_USERS" | grep -qw "$user"; then
+                  echo "Removing unmanaged user: $user"
+
+                  for schema in $(psql -tAc "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'duckdb')"); do
+                    psql -c "REVOKE ALL ON SCHEMA \"$schema\" FROM \"$user\";" || true
+                    psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA \"$schema\" FROM \"$user\";" || true
+                    psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$schema\" REVOKE ALL ON TABLES FROM \"$user\";" || true
                   done
-                  psql -c "DROP ROLE IF EXISTS \"$role\";"
+
+                  psql -c "REVOKE ALL ON DATABASE $PGDATABASE FROM \"$user\";" || true
+                  psql -c "DROP ROLE \"$user\";"
                 fi
               done
 
@@ -121,11 +116,13 @@ spec:
                 secretKeyRef:
                   name: {{ include "pg-duckdb.passwordSecretName" . }}
                   key: {{ include "pg-duckdb.passwordKey" . }}
-            {{- range $user := .Values.postgres.readOnlyUsers }}
-            - name: RO_PASSWORD_{{ $user.name | upper }}
+            {{- range $user := .Values.postgres.users }}
+            {{- if $user.passwordSecret }}
+            - name: USER_{{ $user.name | upper }}_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ $user.passwordSecret.name }}
                   key: {{ $user.passwordSecret.key }}
+            {{- end }}
             {{- end }}
 {{- end }}

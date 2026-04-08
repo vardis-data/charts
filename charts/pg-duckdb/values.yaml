@@ -157,6 +157,12 @@ reloader:
 
 # -- PostgREST configuration for exposing tables as a REST API.
 # -- Connects to the replicas service for read-only access.
+# TODO: Consider adding PgBouncer when scaling:
+#   - Multiple PostgREST replicas (>3 pods)
+#   - Other database clients (dbt, analytics tools)
+#   - Connection count approaching PostgreSQL limits
+#   - High connection churn visible in monitoring
+#   PgBouncer benefits: connection pooling, protection against connection exhaustion
 postgrest:
   # -- Enable PostgREST deployment
   enabled: false

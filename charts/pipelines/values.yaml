@@ -36,3 +36,16 @@ imagePullSecrets:
 
 sharedConfigMap: pipelines-variables
 sharedSecret: pipelines-secrets
+
+imageUpdater:
+  enabled: false
+  applicationRef: ""
+  imageName: workflow-submitter
+  image: ""
+  updateStrategy: latest
+  allowTags:
+    - regexp: ^main-.*$
+  pullPolicy: Always
+  writeBack:
+    method: git
+    gitBranch: main

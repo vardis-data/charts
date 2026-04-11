@@ -1,0 +1,28 @@
+{{- if .Values.imageUpdater.enabled }}
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: {{ include "pipelines.fullname" . }}
+  labels:
+    {{- include "pipelines.labels" . | nindent 4 }}
+spec:
+  applicationRef:
+    name: {{ .Values.imageUpdater.applicationRef | default (include "pipelines.fullname" .) }}
+  images:
+    - name: {{ .Values.imageUpdater.imageName | default "workflow-submitter" }}
+      image: {{ .Values.imageUpdater.image | default (printf "%s/%s" .Values.pipeline.image.repository .Values.pipeline.name) }}
+      {{- with .Values.imageUpdater.updateStrategy }}
+      updateStrategy: {{ . }}
+      {{- end }}
+      {{- with .Values.imageUpdater.allowTags }}
+      allowTags:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.imageUpdater.pullPolicy }}
+      pullPolicy: {{ . }}
+      {{- end }}
+  {{- with .Values.imageUpdater.writeBack }}
+  writeBack:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

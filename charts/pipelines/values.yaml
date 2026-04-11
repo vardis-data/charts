@@ -32,7 +32,7 @@ pipeline:
 namespace: pipelines
 
 imagePullSecrets:
-  - name: ghcr-secret
+  - name: ghcr-credentials
 
 sharedConfigMap: pipelines-variables
 sharedSecret: pipelines-secrets

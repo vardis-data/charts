@@ -2,7 +2,7 @@ apiVersion: v2
 name: pipelines
 description: Generate Kubernetes manifests for vardis data pipelines
 type: application
-version: 1.8.0
+version: 1.8.1
 appVersion: 1.0.0
 home: https://github.com/vardis-data/pipelines
 sources:

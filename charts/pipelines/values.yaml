@@ -38,7 +38,7 @@ sharedConfigMap: pipelines-variables
 sharedSecret: pipelines-secrets
 
 imageUpdater:
-  enabled: false
+  enabled: true
   applicationRef: ""
   imageName: workflow-submitter
   image: ""

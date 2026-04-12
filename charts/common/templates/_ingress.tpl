@@ -33,6 +33,9 @@ metadata:
     {{- end }}
 spec:
   ingressClassName: tailscale
+  tls:
+    - hosts:
+        - {{ .Values.tailscale.hostname }}
   defaultBackend:
     service:
       name: {{ include "common.fullname" . }}

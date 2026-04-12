@@ -2,7 +2,7 @@ apiVersion: v2
 name: pgweb
 description: Web-based PostgreSQL database browser
 type: application
-version: 1.2.0
+version: 1.3.0
 appVersion: 0.17.0
 home: https://github.com/sosedoff/pgweb
 sources:
@@ -14,5 +14,5 @@ keywords:
   - admin
 dependencies:
   - name: common
-    version: 1.0.1
+    version: 1.0.2
     repository: oci://ghcr.io/vardis-data/charts

@@ -2,7 +2,7 @@ apiVersion: v2
 name: docmost
 description: Open-source collaborative documentation and wiki software
 type: application
-version: 1.4.0
+version: 1.5.0
 appVersion: 0.8.2
 home: https://docmost.com
 sources:
@@ -13,7 +13,7 @@ keywords:
   - collaboration
 dependencies:
   - name: common
-    version: 1.0.1
+    version: 1.0.2
     repository: oci://ghcr.io/vardis-data/charts
   - name: postgres
     version: 0.18.3

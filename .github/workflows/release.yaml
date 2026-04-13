@@ -29,12 +29,16 @@ jobs:
           for chart in charts/*; do
             if [ -d "$chart" ]; then
               chart_name=$(basename $chart)
-              echo "Processing chart: $chart_name"
-              
+              chart_version=$(grep '^version:' $chart/Chart.yaml | awk '{print $2}')
+              echo "Processing chart: $chart_name ($chart_version)"
+
+              if helm show chart oci://ghcr.io/${{ github.repository_owner }}/charts/${chart_name} --version ${chart_version} &>/dev/null; then
+                echo "Skipping $chart_name $chart_version: already exists in registry"
+                continue
+              fi
+
               helm dependency update $chart
               helm package $chart
-              
-              chart_version=$(grep '^version:' $chart/Chart.yaml | awk '{print $2}')
               helm push ${chart_name}-${chart_version}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
             fi
           done

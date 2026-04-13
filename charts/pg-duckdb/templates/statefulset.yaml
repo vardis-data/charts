@@ -61,7 +61,6 @@ spec:
             {{- include "pg-duckdb.env" . | nindent 12 }}
           volumeMounts:
             {{- include "pg-duckdb.volumeMounts" . | nindent 12 }}
-            {{- include "pg-duckdb.preloadVolumeMount" . | nindent 12 }}
             - name: init-scripts
               mountPath: /docker-entrypoint-initdb.d/00-init.sql
               subPath: 00-init.sql

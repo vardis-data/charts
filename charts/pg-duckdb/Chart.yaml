@@ -2,7 +2,7 @@ apiVersion: v2
 name: pg-duckdb
 description: PostgreSQL with pg_duckdb extension for analytical queries on S3 Parquet files
 type: application
-version: 2.3.3
+version: 2.3.4
 appVersion: 1.1.1
 home: https://github.com/duckdb/pg_duckdb
 sources:

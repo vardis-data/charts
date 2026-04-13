@@ -2,6 +2,8 @@ suite: extension management tests
 templates:
   - templates/job-manage-extensions.yaml
   - templates/configmap.yaml
+  - templates/statefulset.yaml
+  - templates/secret.yaml
 tests:
   - it: should render extension hook job by default
     template: templates/job-manage-extensions.yaml
@@ -23,19 +25,12 @@ tests:
           path: spec.template.spec.containers[0].args[0]
           pattern: "ALTER SYSTEM SET shared_preload_libraries"
 
-  - it: should emit preload.conf with pg_duckdb always included
-    template: templates/configmap.yaml
+  - it: should pass shared_preload_libraries with pg_duckdb always included as a CLI arg to postgres
+    template: templates/statefulset.yaml
     asserts:
-      - matchRegex:
-          path: data["preload.conf"]
-          pattern: "pg_duckdb"
-
-  - it: should emit preload.conf with pg_cron when in sharedPreloadLibraries
-    template: templates/configmap.yaml
-    asserts:
-      - matchRegex:
-          path: data["preload.conf"]
-          pattern: "pg_cron"
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "shared_preload_libraries=pg_duckdb,pg_cron"
 
   - it: should emit cron.database_name in init SQL when pg_cron preloaded
     template: templates/configmap.yaml

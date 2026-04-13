@@ -106,7 +106,6 @@ spec:
             {{- include "pg-duckdb.env" . | nindent 12 }}
           volumeMounts:
             {{- include "pg-duckdb.volumeMounts" . | nindent 12 }}
-            {{- include "pg-duckdb.preloadVolumeMount" . | nindent 12 }}
           {{- include "pg-duckdb.probes" . | nindent 10 }}
           {{- with .Values.replicas.resources }}
           resources:
@@ -118,6 +117,3 @@ spec:
       volumes:
         - name: data
           emptyDir: {}
-        - name: init-scripts
-          configMap:
-            name: {{ include "pg-duckdb.fullname" . }}-init

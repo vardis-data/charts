@@ -1,0 +1,94 @@
+name: Build pg-duckdb image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - images/pg-duckdb/**
+      - .github/workflows/build-pg-duckdb-image.yaml
+  pull_request:
+    paths:
+      - images/pg-duckdb/**
+      - .github/workflows/build-pg-duckdb-image.yaml
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: vardis-data/pg-duckdb
+  BASE_IMAGE: pgduckdb/pgduckdb:17-v1.1.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=sha-
+
+      - name: Compute base fingerprint
+        id: base
+        run: |
+          set -euo pipefail
+          BASE_MANIFEST="$(docker buildx imagetools inspect "$BASE_IMAGE" --raw)"
+          BASE_FINGERPRINT="$(printf '%s' "$BASE_MANIFEST" | sha256sum | cut -c1-12)"
+          BASE_TAG="base-${BASE_FINGERPRINT}"
+          echo "base_tag=$BASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Check if base image already built
+        id: check
+        run: |
+          set -euo pipefail
+          if docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:${{ steps.base.outputs.base_tag }}" >/dev/null 2>&1; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Base image unchanged; skipping scheduled rebuild."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Base image changed (or first build for this base); build required."
+          fi
+
+      - name: Compose tags
+        id: tags
+        run: |
+          {
+            echo "value<<EOF"
+            echo "${{ steps.meta.outputs.tags }}"
+            echo "${REGISTRY}/${IMAGE_NAME}:${{ steps.base.outputs.base_tag }}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        if: ${{ github.event_name != 'schedule' || steps.check.outputs.changed == 'true' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: images/pg-duckdb
+          file: images/pg-duckdb/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          pull: true
+          tags: ${{ steps.tags.outputs.value }}
+          labels: ${{ steps.meta.outputs.labels }}

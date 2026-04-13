@@ -1,8 +1,8 @@
 # -- PostgreSQL + pg_duckdb container image
 image:
-  repository: pgduckdb/pgduckdb
-  # renovate: datasource=docker depName=pgduckdb/pgduckdb
-  tag: "17-v1.1.1"
+  repository: ghcr.io/vardis-data/pg-duckdb
+  # renovate: datasource=docker depName=ghcr.io/vardis-data/pg-duckdb
+  tag: "sha-latest"
   pullPolicy: IfNotPresent
 
 # -- PostgreSQL configuration for the primary instance
@@ -34,6 +34,140 @@ postgres:
   # --     login: false
   # --     schemas:
   # --       prod: write
+  # -- PostgreSQL runtime tuning applied with ALTER SYSTEM.
+  tuning:
+    autovacuumVacuumScaleFactor: "0.05"
+    autovacuumAnalyzeScaleFactor: "0.02"
+    autovacuumVacuumThreshold: "50"
+    autovacuumAnalyzeThreshold: "50"
+    autovacuumNaptime: "30s"
+    maintenanceWorkMem: "256MB"
+    checkpointTimeout: "15min"
+    minWalSize: "1GB"
+    maxWalSize: "4GB"
+
+# -- PostgreSQL extensions to create in the target database.
+# -- `install` runs on first bootstrap and also via a post-install/upgrade hook job.
+# -- `sharedPreloadLibraries` configures `shared_preload_libraries` with ALTER SYSTEM.
+# -- Libraries like pg_cron require a pod restart after this setting changes.
+extensions:
+  # -- Extensions to create in .Values.postgres.database.
+  install:
+    - pg_duckdb
+    - pgstattuple
+    - pg_repack
+    - pg_cron
+  # -- Libraries to preload at PostgreSQL startup (comma-joined).
+  sharedPreloadLibraries:
+    - pg_cron
+  hook:
+    # -- Enable post-install/post-upgrade extension management job.
+    enabled: true
+
+# -- Maintenance jobs for extension-driven operations.
+maintenance:
+  analyze:
+    # -- Run ANALYZE to keep planner stats fresh.
+    enabled: true
+    # -- Every 12 hours.
+    schedule: "15 */12 * * *"
+    # -- Optional schema filters for analyze job.
+    schemas: []
+    # -- Extra args passed to vacuumdb.
+    extraArgs: []
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
+  vacuum:
+    # -- Run VACUUM (ANALYZE) for periodic table cleanup.
+    enabled: true
+    # -- Weekly at 04:00 UTC.
+    schedule: "0 4 * * 0"
+    # -- Optional schema filters for vacuum job.
+    schemas: []
+    # -- Extra args passed to vacuumdb.
+    extraArgs: []
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+
+  pgstattuple:
+    # -- Run periodic bloat snapshots using pgstattuple_approx.
+    enabled: true
+    # -- Weekly at 03:30 UTC.
+    schedule: "30 3 * * 0"
+    # -- Keep history for this many days.
+    retentionDays: 30
+    # -- Only scan relations larger than this size (MB).
+    minTableSizeMb: 256
+    # -- Schema used for maintenance history tables.
+    schema: maintenance
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
+  repack:
+    # -- One-shot pg_repack job (manual trigger via values override).
+    enabled: false
+    # -- Optional table to repack (schema-qualified, e.g. public.events).
+    table: ""
+    # -- Optional schema to repack when table is empty.
+    schema: ""
+    # -- Extra args passed to pg_repack.
+    extraArgs: []
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+
+# -- Scheduling controls for primary and replicas.
+scheduling:
+  primary:
+    antiAffinity:
+      enabled: true
+      weight: 100
+      topologyKey: kubernetes.io/hostname
+  replicas:
+    antiAffinity:
+      enabled: true
+      weight: 100
+      topologyKey: kubernetes.io/hostname
+    topologySpread:
+      enabled: true
+      maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+
+# -- Pod disruption budgets for safer voluntary disruptions.
+pdb:
+  primary:
+    enabled: true
+    minAvailable: 1
+  replicas:
+    enabled: false
+    minAvailable: 1
+
+# -- Network policy for database pods.
+networkPolicy:
+  enabled: false
+  allowSameNamespace: true
+  extraIngress: []
 
 # -- DuckDB engine settings applied via init SQL.
 # -- Each connection gets its own DuckDB instance with these limits.

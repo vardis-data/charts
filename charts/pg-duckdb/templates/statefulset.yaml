@@ -26,6 +26,18 @@ spec:
         fsGroup: 999
         runAsUser: 999
         runAsGroup: 999
+      {{- if .Values.scheduling.primary.antiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: {{ .Values.scheduling.primary.antiAffinity.weight }}
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "pg-duckdb.selectorLabels" . | nindent 20 }}
+                    pg-duckdb/role: primary
+                topologyKey: {{ .Values.scheduling.primary.antiAffinity.topologyKey }}
+      {{- end }}
       containers:
         - name: postgres
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

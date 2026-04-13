@@ -1,0 +1,63 @@
+{{- if and .Values.extensions.hook.enabled (or .Values.extensions.install .Values.extensions.sharedPreloadLibraries) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "pg-duckdb.fullname" . }}-manage-extensions
+  labels:
+    {{- include "pg-duckdb.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-1"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "pg-duckdb.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: manage-extensions
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -e
+
+              until pg_isready -h "$PGHOST" -U "$PGUSER"; do
+                echo "Waiting for database..."
+                sleep 3
+              done
+
+              {{- if .Values.extensions.sharedPreloadLibraries }}
+              psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET shared_preload_libraries = {{ join "," .Values.extensions.sharedPreloadLibraries }};"
+              {{- end }}
+
+              {{- if has "pg_cron" .Values.extensions.sharedPreloadLibraries }}
+              psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET cron.database_name = '$PGDATABASE';"
+              {{- end }}
+
+              {{- range .Values.extensions.install }}
+              psql -v ON_ERROR_STOP=1 -d "$PGDATABASE" -c "CREATE EXTENSION IF NOT EXISTS {{ . }};"
+              {{- end }}
+
+              psql -v ON_ERROR_STOP=1 -c "SELECT pg_reload_conf();"
+
+              echo "Extension management complete."
+          env:
+            - name: PGHOST
+              value: {{ include "pg-duckdb.fullname" . }}
+            - name: PGPORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.postgres.database | quote }}
+            - name: PGUSER
+              value: {{ .Values.postgres.user | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pg-duckdb.passwordSecretName" . }}
+                  key: {{ include "pg-duckdb.passwordKey" . }}
+{{- end }}

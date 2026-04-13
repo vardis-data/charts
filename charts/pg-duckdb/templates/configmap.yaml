@@ -6,7 +6,26 @@ metadata:
     {{- include "pg-duckdb.labels" . | nindent 4 }}
 data:
   00-init.sql: |
-    CREATE EXTENSION IF NOT EXISTS pg_duckdb;
+    {{- range .Values.extensions.install }}
+    CREATE EXTENSION IF NOT EXISTS {{ . }};
+    {{- end }}
+
+    {{- if .Values.extensions.sharedPreloadLibraries }}
+    ALTER SYSTEM SET shared_preload_libraries = {{ join "," .Values.extensions.sharedPreloadLibraries }};
+    {{- if has "pg_cron" .Values.extensions.sharedPreloadLibraries }}
+    ALTER SYSTEM SET cron.database_name = '{{ .Values.postgres.database }}';
+    {{- end }}
+    {{- end }}
+
+    ALTER SYSTEM SET autovacuum_vacuum_scale_factor = {{ .Values.postgres.tuning.autovacuumVacuumScaleFactor }};
+    ALTER SYSTEM SET autovacuum_analyze_scale_factor = {{ .Values.postgres.tuning.autovacuumAnalyzeScaleFactor }};
+    ALTER SYSTEM SET autovacuum_vacuum_threshold = {{ .Values.postgres.tuning.autovacuumVacuumThreshold }};
+    ALTER SYSTEM SET autovacuum_analyze_threshold = {{ .Values.postgres.tuning.autovacuumAnalyzeThreshold }};
+    ALTER SYSTEM SET autovacuum_naptime = '{{ .Values.postgres.tuning.autovacuumNaptime }}';
+    ALTER SYSTEM SET maintenance_work_mem = '{{ .Values.postgres.tuning.maintenanceWorkMem }}';
+    ALTER SYSTEM SET checkpoint_timeout = '{{ .Values.postgres.tuning.checkpointTimeout }}';
+    ALTER SYSTEM SET min_wal_size = '{{ .Values.postgres.tuning.minWalSize }}';
+    ALTER SYSTEM SET max_wal_size = '{{ .Values.postgres.tuning.maxWalSize }}';
 
     ALTER SYSTEM SET duckdb.memory_limit = '{{ .Values.duckdb.primary.memoryLimit }}';
     ALTER SYSTEM SET duckdb.threads = {{ .Values.duckdb.primary.threads }};

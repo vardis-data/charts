@@ -17,7 +17,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: "pgduckdb/pgduckdb:17-v1.1.1"
+          value: "ghcr.io/vardis-data/pg-duckdb:sha-latest"
 
   - it: should have primary role label
     asserts:

@@ -25,6 +25,30 @@ spec:
         fsGroup: 999
         runAsUser: 999
         runAsGroup: 999
+      {{- if or .Values.scheduling.replicas.antiAffinity.enabled .Values.scheduling.replicas.topologySpread.enabled }}
+      {{- if .Values.scheduling.replicas.antiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: {{ .Values.scheduling.replicas.antiAffinity.weight }}
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "pg-duckdb.selectorLabels" . | nindent 20 }}
+                    pg-duckdb/role: replica
+                topologyKey: {{ .Values.scheduling.replicas.antiAffinity.topologyKey }}
+      {{- end }}
+      {{- if .Values.scheduling.replicas.topologySpread.enabled }}
+      topologySpreadConstraints:
+        - maxSkew: {{ .Values.scheduling.replicas.topologySpread.maxSkew }}
+          topologyKey: {{ .Values.scheduling.replicas.topologySpread.topologyKey }}
+          whenUnsatisfiable: {{ .Values.scheduling.replicas.topologySpread.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "pg-duckdb.selectorLabels" . | nindent 14 }}
+              pg-duckdb/role: replica
+      {{- end }}
+      {{- end }}
       initContainers:
         - name: wait-for-primary
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

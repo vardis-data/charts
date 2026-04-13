@@ -1,0 +1,24 @@
+suite: extension management tests
+templates:
+  - templates/job-manage-extensions.yaml
+  - templates/configmap.yaml
+tests:
+  - it: should render extension hook job by default
+    template: templates/job-manage-extensions.yaml
+    asserts:
+      - isKind:
+          of: Job
+
+  - it: should set cron database name when pg_cron preloaded
+    template: templates/job-manage-extensions.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "ALTER SYSTEM SET cron\\.database_name = '\\$PGDATABASE';"
+
+  - it: should emit cron.database_name in init SQL when pg_cron preloaded
+    template: templates/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "ALTER SYSTEM SET cron.database_name = 'warehouse'"

@@ -10,11 +10,10 @@ data:
     CREATE EXTENSION IF NOT EXISTS {{ . }};
     {{- end }}
 
-    {{- if .Values.extensions.sharedPreloadLibraries }}
-    ALTER SYSTEM SET shared_preload_libraries = {{ join "," .Values.extensions.sharedPreloadLibraries }};
+    {{- $libs := prepend .Values.extensions.sharedPreloadLibraries "pg_duckdb" | uniq }}
+    ALTER SYSTEM SET shared_preload_libraries = {{ join "," $libs }};
     {{- if has "pg_cron" .Values.extensions.sharedPreloadLibraries }}
     ALTER SYSTEM SET cron.database_name = '{{ .Values.postgres.database }}';
-    {{- end }}
     {{- end }}
 
     ALTER SYSTEM SET autovacuum_vacuum_scale_factor = {{ .Values.postgres.tuning.autovacuumVacuumScaleFactor }};

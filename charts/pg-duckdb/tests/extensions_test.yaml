@@ -16,9 +16,37 @@ tests:
           path: spec.template.spec.containers[0].args[0]
           pattern: "ALTER SYSTEM SET cron.database_name"
 
+  - it: should not manage shared_preload_libraries via ALTER SYSTEM in the job
+    template: templates/job-manage-extensions.yaml
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "ALTER SYSTEM SET shared_preload_libraries"
+
+  - it: should emit preload.conf with pg_duckdb always included
+    template: templates/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["preload.conf"]
+          pattern: "pg_duckdb"
+
+  - it: should emit preload.conf with pg_cron when in sharedPreloadLibraries
+    template: templates/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["preload.conf"]
+          pattern: "pg_cron"
+
   - it: should emit cron.database_name in init SQL when pg_cron preloaded
     template: templates/configmap.yaml
     asserts:
       - matchRegex:
           path: data["00-init.sql"]
           pattern: "ALTER SYSTEM SET cron.database_name = 'warehouse'"
+
+  - it: should not set shared_preload_libraries via ALTER SYSTEM in init SQL
+    template: templates/configmap.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["00-init.sql"]
+          pattern: "ALTER SYSTEM SET shared_preload_libraries"

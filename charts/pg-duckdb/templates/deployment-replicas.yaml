@@ -92,6 +92,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["docker-entrypoint.sh", "postgres"]
+          args:
+            {{- include "pg-duckdb.preloadArgs" . | nindent 12 }}
           ports:
             - name: postgres
               containerPort: {{ .Values.postgres.port }}
@@ -104,6 +106,7 @@ spec:
             {{- include "pg-duckdb.env" . | nindent 12 }}
           volumeMounts:
             {{- include "pg-duckdb.volumeMounts" . | nindent 12 }}
+            {{- include "pg-duckdb.preloadVolumeMount" . | nindent 12 }}
           {{- include "pg-duckdb.probes" . | nindent 10 }}
           {{- with .Values.replicas.resources }}
           resources:
@@ -115,3 +118,6 @@ spec:
       volumes:
         - name: data
           emptyDir: {}
+        - name: init-scripts
+          configMap:
+            name: {{ include "pg-duckdb.fullname" . }}-init

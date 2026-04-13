@@ -98,6 +98,27 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   mountPath: /var/lib/postgresql/data
 {{- end }}
 
+{{/*
+Mount the preload.conf snippet so postgres picks up shared_preload_libraries
+on every pod start without relying on ALTER SYSTEM / postgresql.auto.conf.
+*/}}
+{{- define "pg-duckdb.preloadVolumeMount" -}}
+- name: init-scripts
+  mountPath: /etc/postgresql/conf.d/preload.conf
+  subPath: preload.conf
+  readOnly: true
+{{- end }}
+
+{{/*
+Extra CLI args passed to postgres so include_dir wins over postgresql.auto.conf.
+Postgres processes command-line -c options after all config files, so this
+guarantees shared_preload_libraries is always what the chart declares.
+*/}}
+{{- define "pg-duckdb.preloadArgs" -}}
+- "-c"
+- "include_dir=/etc/postgresql/conf.d"
+{{- end }}
+
 {{- define "pg-duckdb.probes" -}}
 livenessProbe:
   exec:

@@ -46,6 +46,9 @@ spec:
         - name: postgres
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "postgres"
+            {{- include "pg-duckdb.preloadArgs" . | nindent 12 }}
           ports:
             - name: postgres
               containerPort: {{ .Values.postgres.port }}
@@ -58,6 +61,7 @@ spec:
             {{- include "pg-duckdb.env" . | nindent 12 }}
           volumeMounts:
             {{- include "pg-duckdb.volumeMounts" . | nindent 12 }}
+            {{- include "pg-duckdb.preloadVolumeMount" . | nindent 12 }}
             - name: init-scripts
               mountPath: /docker-entrypoint-initdb.d/00-init.sql
               subPath: 00-init.sql

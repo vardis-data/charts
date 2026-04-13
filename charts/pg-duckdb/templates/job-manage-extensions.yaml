@@ -35,9 +35,6 @@ spec:
                 sleep 3
               done
 
-              {{- $libs := prepend .Values.extensions.sharedPreloadLibraries "pg_duckdb" | uniq }}
-              psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET shared_preload_libraries = {{ join "," $libs }};"
-
               {{- if has "pg_cron" .Values.extensions.sharedPreloadLibraries }}
               # Set cron.database_name only if pg_cron is already loaded (i.e. after a restart).
               # If not yet loaded this is a no-op; the setting is already written to

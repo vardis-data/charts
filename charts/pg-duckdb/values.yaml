@@ -51,8 +51,9 @@ postgres:
 
 # -- PostgreSQL extensions to create in the target database.
 # -- `install` runs on first bootstrap and also via a post-install/upgrade hook job.
-# -- `sharedPreloadLibraries` configures `shared_preload_libraries` with ALTER SYSTEM.
-# -- Libraries like pg_cron require a pod restart after this setting changes.
+# -- `sharedPreloadLibraries` is written to a mounted preload.conf file and passed
+# -- to postgres via -c include_dir. pg_duckdb is always prepended automatically.
+# -- Changing this list triggers a pod restart via Reloader (configmap annotation).
 extensions:
   # -- Extensions to create in .Values.postgres.database.
   install:
@@ -60,7 +61,7 @@ extensions:
     - pgstattuple
     - pg_repack
     - pg_cron
-  # -- Libraries to preload at PostgreSQL startup (comma-joined).
+  # -- Additional libraries to preload beyond pg_duckdb (which is always included).
   sharedPreloadLibraries:
     - pg_cron
   hook:

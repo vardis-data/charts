@@ -5,13 +5,18 @@ metadata:
   labels:
     {{- include "pg-duckdb.labels" . | nindent 4 }}
 data:
+  {{- $libs := prepend .Values.extensions.sharedPreloadLibraries "pg_duckdb" | uniq }}
+  preload.conf: |
+    # Managed by Helm – do not edit manually.
+    # shared_preload_libraries is set here so it is applied on every pod start
+    # without requiring ALTER SYSTEM (which persists across chart upgrades in
+    # postgresql.auto.conf and can be lost or corrupted on restart).
+    shared_preload_libraries = '{{ join "," $libs }}'
   00-init.sql: |
     {{- range .Values.extensions.install }}
     CREATE EXTENSION IF NOT EXISTS {{ . }};
     {{- end }}
 
-    {{- $libs := prepend .Values.extensions.sharedPreloadLibraries "pg_duckdb" | uniq }}
-    ALTER SYSTEM SET shared_preload_libraries = {{ join "," $libs }};
     {{- if has "pg_cron" .Values.extensions.sharedPreloadLibraries }}
     ALTER SYSTEM SET cron.database_name = '{{ .Values.postgres.database }}';
     {{- end }}

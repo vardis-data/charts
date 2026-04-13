@@ -17,6 +17,10 @@ spec:
         {{- include "pg-duckdb.selectorLabels" . | nindent 8 }}
     spec:
       restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: pg-repack
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

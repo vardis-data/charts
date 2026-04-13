@@ -41,3 +41,12 @@ tests:
       - equal:
           path: spec.template.spec.securityContext.fsGroup
           value: 999
+
+  - it: should render imagePullSecrets when set
+    set:
+      imagePullSecrets:
+        - name: ghcr-credentials
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: ghcr-credentials

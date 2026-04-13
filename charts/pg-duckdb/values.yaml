@@ -5,6 +5,9 @@ image:
   tag: "sha-latest"
   pullPolicy: IfNotPresent
 
+# -- Optional image pull secrets for private registries.
+imagePullSecrets: []
+
 # -- PostgreSQL configuration for the primary instance
 postgres:
   # -- Database name created on first boot

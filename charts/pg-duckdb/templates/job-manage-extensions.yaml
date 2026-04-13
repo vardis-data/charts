@@ -36,34 +36,11 @@ spec:
               done
 
               {{- if has "pg_cron" .Values.extensions.sharedPreloadLibraries }}
-              # Set cron.database_name only if pg_cron is already loaded (i.e. after a restart).
-              # If not yet loaded this is a no-op; the setting is already written to
-              # postgresql.auto.conf by 00-init.sql and will take effect after the next restart.
-              psql -c "DO \$\$
-              BEGIN
-                IF EXISTS (SELECT 1 FROM pg_settings WHERE name = 'cron.database_name') THEN
-                  EXECUTE 'ALTER SYSTEM SET cron.database_name = ''$PGDATABASE''';
-                END IF;
-              END
-              \$\$;"
+              psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET cron.database_name = '$PGDATABASE';"
               {{- end }}
 
               {{- range .Values.extensions.install }}
-              {{- if has . $.Values.extensions.sharedPreloadLibraries }}
-              # {{ . }} requires shared_preload_libraries; only create if already loaded.
-              psql -d "$PGDATABASE" -c "DO \$\$
-              BEGIN
-                IF EXISTS (SELECT 1 FROM pg_settings WHERE name = 'shared_preload_libraries'
-                           AND setting LIKE '%{{ . }}%') THEN
-                  CREATE EXTENSION IF NOT EXISTS {{ . }};
-                ELSE
-                  RAISE NOTICE 'Skipping {{ . }}: not yet in shared_preload_libraries (restart required)';
-                END IF;
-              END
-              \$\$;"
-              {{- else }}
               psql -v ON_ERROR_STOP=1 -d "$PGDATABASE" -c "CREATE EXTENSION IF NOT EXISTS {{ . }};"
-              {{- end }}
               {{- end }}
 
               psql -v ON_ERROR_STOP=1 -c "SELECT pg_reload_conf();"

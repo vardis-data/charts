@@ -11,12 +11,12 @@ tests:
       - isKind:
           of: Job
 
-  - it: should set cron database name when pg_cron preloaded
+  - it: should set cron.database_name directly via ALTER SYSTEM (not inside a DO block)
     template: templates/job-manage-extensions.yaml
     asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: "ALTER SYSTEM SET cron.database_name"
+          pattern: "ALTER SYSTEM SET cron\\.database_name = '\\$PGDATABASE';"
 
   - it: should not manage shared_preload_libraries via ALTER SYSTEM in the job
     template: templates/job-manage-extensions.yaml

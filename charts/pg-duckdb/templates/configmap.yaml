@@ -43,6 +43,8 @@ data:
         {{- if .Values.s3.endpoint }}
         , endpoint := '{{ .Values.s3.endpoint }}'
         {{- end }}
+        , url_style := '{{ .Values.s3.urlStyle }}'
+        , use_ssl := '{{ .Values.s3.useSSL }}'
       );
     EOSQL
   {{- end }}

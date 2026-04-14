@@ -39,13 +39,11 @@ sharedSecret: pipelines-secrets
 
 imageUpdater:
   enabled: true
+  argocdNamespace: argo-cd
   applicationRef: ""
-  imageName: workflow-submitter
   image: ""
   updateStrategy: latest
-  allowTags:
-    - regexp: ^main-.*$
-  pullPolicy: Always
+  allowTags: "^main-.*$"
   writeBack:
     method: git
     gitBranch: main

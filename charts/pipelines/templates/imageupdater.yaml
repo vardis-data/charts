@@ -6,23 +6,23 @@ metadata:
   labels:
     {{- include "pipeline.labels" . | nindent 4 }}
 spec:
-  applicationRef:
-    name: {{ .Values.imageUpdater.applicationRef | default (include "pipeline.releaseName" .) }}
-  images:
-    - name: {{ .Values.imageUpdater.imageName | default "workflow-submitter" }}
-      image: {{ .Values.imageUpdater.image | default (printf "%s/%s" .Values.pipeline.image.repository .Values.pipeline.name) }}
-      {{- with .Values.imageUpdater.updateStrategy }}
-      updateStrategy: {{ . }}
-      {{- end }}
-      {{- with .Values.imageUpdater.allowTags }}
-      allowTags:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.imageUpdater.pullPolicy }}
-      pullPolicy: {{ . }}
-      {{- end }}
+  namespace: {{ .Values.imageUpdater.argocdNamespace }}
+  applicationRefs:
+    - namePattern: {{ .Values.imageUpdater.applicationRef | default (include "pipeline.releaseName" .) }}
+      images:
+        - alias: {{ include "pipeline.releaseName" . }}
+          imageName: {{ .Values.imageUpdater.image | default (include "pipeline.fullImageName" .) }}
+          commonUpdateSettings:
+            updateStrategy: {{ .Values.imageUpdater.updateStrategy }}
+            {{- with .Values.imageUpdater.allowTags }}
+            allowTags: {{ . | quote }}
+            {{- end }}
   {{- with .Values.imageUpdater.writeBack }}
-  writeBack:
-    {{- toYaml . | nindent 4 }}
+  writeBackConfig:
+    method: {{ .method }}
+    {{- with .gitBranch }}
+    gitConfig:
+      branch: {{ . }}
+    {{- end }}
   {{- end }}
 {{- end }}

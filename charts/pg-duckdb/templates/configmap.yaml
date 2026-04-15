@@ -27,6 +27,9 @@ data:
     ALTER SYSTEM SET duckdb.memory_limit = '{{ .Values.duckdb.primary.memoryLimit }}';
     ALTER SYSTEM SET duckdb.threads = {{ .Values.duckdb.primary.threads }};
     ALTER SYSTEM SET duckdb.force_execution = {{ .Values.duckdb.forceExecution }};
+    {{- if .Values.duckdb.postgresRole }}
+    ALTER SYSTEM SET duckdb.postgres_role = '{{ .Values.duckdb.postgresRole }}';
+    {{- end }}
     SELECT pg_reload_conf();
 
   {{- if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}

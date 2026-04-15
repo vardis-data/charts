@@ -182,6 +182,10 @@ duckdb:
   # -- When true, SELECT queries on regular Postgres tables are executed
   # -- by DuckDB for columnar performance (aggregations, GROUP BY, etc.).
   forceExecution: false
+  # -- Comma-separated list of PostgreSQL roles allowed to execute DuckDB queries.
+  # -- Maps to the duckdb.postgres_role GUC (requires a PostgreSQL restart to take effect).
+  # -- Example: "analyst" or "analyst,admin"
+  postgresRole: ""
   primary:
     # -- Maximum memory per DuckDB instance on the primary (e.g. "2GB", "4GB")
     memoryLimit: 2GB

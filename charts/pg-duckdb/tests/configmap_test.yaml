@@ -62,6 +62,21 @@ tests:
       - notExists:
           path: data["01-s3-secret.sh"]
 
+  - it: should not set duckdb.postgres_role when postgresRole is empty
+    asserts:
+      - notMatchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.postgres_role"
+
+  - it: should set duckdb.postgres_role when postgresRole is configured
+    set:
+      duckdb:
+        postgresRole: "analyst"
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.postgres_role = 'analyst'"
+
   - it: should always include replication config
     asserts:
       - exists:

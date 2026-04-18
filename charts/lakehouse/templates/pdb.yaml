@@ -1,0 +1,29 @@
+{{- if .Values.pdb.primary.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-primary
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.pdb.primary.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "lakehouse.selectorLabels" . | nindent 6 }}
+      lakehouse/role: primary
+{{- end }}
+{{- if .Values.pdb.replicas.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-replicas
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.pdb.replicas.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "lakehouse.selectorLabels" . | nindent 6 }}
+      lakehouse/role: replica
+{{- end }}

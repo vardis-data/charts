@@ -1,0 +1,52 @@
+suite: service tests
+templates:
+  - templates/service.yaml
+tests:
+  - it: should render two services
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should render primary service as ClusterIP
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+
+  - it: should have correct primary service name
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse
+
+  - it: should have primary role label on primary service
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.labels["lakehouse/role"]
+          value: primary
+
+  - it: should expose postgres port on primary service
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 5432
+
+  - it: should have correct replicas service name
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-replicas
+
+  - it: should have replica role label on replicas service
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: metadata.labels["lakehouse/role"]
+          value: replica

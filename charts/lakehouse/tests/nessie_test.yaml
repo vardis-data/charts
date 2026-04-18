@@ -1,0 +1,266 @@
+suite: nessie tests
+templates:
+  - templates/nessie-deployment.yaml
+  - templates/nessie-service.yaml
+  - templates/job-setup-nessie.yaml
+tests:
+  - it: should render nessie deployment
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should have correct nessie deployment name
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-nessie
+
+  - it: should use correct nessie image
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/projectnessie/nessie:0.105.5-java"
+
+  - it: should have nessie component label
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["lakehouse/component"]
+          value: nessie
+
+  - it: should expose nessie port
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 19120
+
+  - it: should set NESSIE_VERSION_STORE_TYPE to JDBC
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NESSIE_VERSION_STORE_TYPE
+            value: JDBC
+
+  - it: should set JDBC URL pointing to primary postgres
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_DATASOURCE_JDBC_URL
+            value: "jdbc:postgresql://RELEASE-NAME-lakehouse:5432/nessie"
+
+  - it: should set nessie postgres user
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_DATASOURCE_USERNAME
+            value: "nessie"
+
+  - it: should set default branch
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NESSIE_DEFAULT_BRANCH
+            value: "main"
+
+  - it: should set default branch from values
+    template: templates/nessie-deployment.yaml
+    set:
+      nessie:
+        defaultBranch: production
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NESSIE_DEFAULT_BRANCH
+            value: "production"
+
+  - it: should have liveness and readiness probes on management port
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: management
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: management
+
+  - it: should have wait-for-postgres init container
+    template: templates/nessie-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: wait-for-postgres
+
+  - it: should render nessie service
+    template: templates/nessie-service.yaml
+    asserts:
+      - isKind:
+          of: Service
+
+  - it: should have correct nessie service name
+    template: templates/nessie-service.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-nessie
+
+  - it: should expose nessie service on correct port
+    template: templates/nessie-service.yaml
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 19120
+
+  - it: should use existing secret for nessie password when set
+    template: templates/nessie-deployment.yaml
+    set:
+      nessie:
+        postgres:
+          existingSecret:
+            name: my-nessie-secret
+            key: my-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_DATASOURCE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-nessie-secret
+                key: my-key
+
+  - it: should render setup-nessie job
+    template: templates/job-setup-nessie.yaml
+    asserts:
+      - isKind:
+          of: Job
+
+  - it: should have correct setup-nessie job name
+    template: templates/job-setup-nessie.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-setup-nessie
+
+  - it: setup-nessie job should have post-install and post-upgrade hooks
+    template: templates/job-setup-nessie.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+
+  - it: setup-nessie job should have before-hook-creation delete policy
+    template: templates/job-setup-nessie.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation
+
+  - it: setup-nessie job should run before manage-extensions (lower hook-weight)
+    template: templates/job-setup-nessie.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-2"
+
+  - it: setup-nessie job should set NESSIE_USER env from values
+    template: templates/job-setup-nessie.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NESSIE_USER
+            value: "nessie"
+
+  - it: setup-nessie job should set NESSIE_DB env from values
+    template: templates/job-setup-nessie.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NESSIE_DB
+            value: "nessie"
+
+  - it: setup-nessie job should read NESSIE_PASSWORD from existing secret
+    template: templates/job-setup-nessie.yaml
+    set:
+      nessie:
+        postgres:
+          existingSecret:
+            name: my-nessie-secret
+            key: my-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NESSIE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-nessie-secret
+                key: my-key
+
+  - it: setup-nessie job should have restartPolicy OnFailure
+    template: templates/job-setup-nessie.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: OnFailure
+
+  - it: should set S3 access key URI env when accessKeyId is set
+    template: templates/nessie-deployment.yaml
+    set:
+      s3:
+        accessKeyId: "TESTKEY"
+        secretAccessKey: "TESTSECRET"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_ACCESS_KEY
+            value: "urn:nessie-secret:quarkus:s3-credentials"
+
+  - it: should read S3_CREDENTIALS from built-in secret when accessKeyId is set
+    template: templates/nessie-deployment.yaml
+    set:
+      s3:
+        accessKeyId: "TESTKEY"
+        secretAccessKey: "TESTSECRET"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: S3_CREDENTIALS
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-lakehouse
+                key: s3Credentials
+
+  - it: should read S3_CREDENTIALS from existing secret when set
+    template: templates/nessie-deployment.yaml
+    set:
+      s3:
+        existingSecret:
+          name: my-s3-secret
+          keys:
+            credentials: nessie-s3-creds
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: S3_CREDENTIALS
+            valueFrom:
+              secretKeyRef:
+                name: my-s3-secret
+                key: nessie-s3-creds

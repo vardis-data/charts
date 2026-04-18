@@ -1,0 +1,165 @@
+{{- if .Values.postgrest.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-postgrest
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgrest
+spec:
+  replicas: {{ .Values.postgrest.replicas }}
+  selector:
+    matchLabels:
+      {{- include "lakehouse.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postgrest
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgrest
+      {{- if .Values.reloader.enabled }}
+      annotations:
+        reloader.stakater.com/auto: "true"
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        {{- if .Values.postgrest.jwt.jwksUrl }}
+        - name: fetch-jwks
+          image: curlimages/curl:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              JWKS_FILE="/jwks/jwks.json"
+              JWKS_TEMP="/tmp/jwks.json"
+              JWKS_URL={{ .Values.postgrest.jwt.jwksUrl | quote }}
+
+              echo "Downloading JWKS from $JWKS_URL"
+              curl -sSL "$JWKS_URL" -o "$JWKS_TEMP"
+
+              if [ ! -f "$JWKS_FILE" ]; then
+                echo "JWKS not found on disk, saving new file"
+                mv "$JWKS_TEMP" "$JWKS_FILE"
+                echo "JWKS saved successfully"
+                exit 0
+              fi
+
+              OLD_HASH=$(sha256sum "$JWKS_FILE" | cut -d' ' -f1)
+              NEW_HASH=$(sha256sum "$JWKS_TEMP" | cut -d' ' -f1)
+
+              if [ "$OLD_HASH" = "$NEW_HASH" ]; then
+                echo "JWKS unchanged (hash: $OLD_HASH), skipping update"
+                rm "$JWKS_TEMP"
+                exit 0
+              fi
+
+              echo "JWKS changed (old: $OLD_HASH, new: $NEW_HASH), updating"
+              mv "$JWKS_TEMP" "$JWKS_FILE"
+              echo "JWKS updated successfully"
+          volumeMounts:
+            - name: jwks
+              mountPath: /jwks
+        {{- end }}
+        - name: wait-for-db
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -e
+              until pg_isready -h "$PGHOST" -U "$PGUSER"; do
+                echo "Waiting for database..."
+                sleep 3
+              done
+              echo "Database ready"
+          env:
+            - name: PGHOST
+              value: {{ include "lakehouse.fullname" . }}-replicas
+            - name: PGUSER
+              value: {{ .Values.postgres.user | quote }}
+      containers:
+        - name: postgrest
+          image: "{{ .Values.postgrest.image.repository }}:{{ .Values.postgrest.image.tag }}"
+          imagePullPolicy: {{ .Values.postgrest.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+            - name: admin
+              containerPort: 3001
+              protocol: TCP
+          env:
+            - name: PGRST_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.fullname" . }}-postgrest
+                  key: db-uri
+            {{- if .Values.postgrest.anonRole }}
+            - name: PGRST_DB_ANON_ROLE
+              value: {{ .Values.postgrest.anonRole | quote }}
+            {{- end }}
+            - name: PGRST_DB_SCHEMAS
+              value: {{ .Values.postgrest.schemas | quote }}
+            - name: PGRST_DB_CHANNEL_ENABLED
+              value: "false"
+            - name: PGRST_SERVER_PORT
+              value: "3000"
+            - name: PGRST_ADMIN_SERVER_PORT
+              value: "3001"
+            {{- if .Values.postgrest.jwt.enabled }}
+            {{- if .Values.postgrest.jwt.jwksUrl }}
+            - name: PGRST_JWT_SECRET
+              value: "@/jwks/jwks.json"
+            {{- if .Values.postgrest.jwt.aud }}
+            - name: PGRST_JWT_AUD
+              value: {{ .Values.postgrest.jwt.aud | quote }}
+            {{- end }}
+            {{- if .Values.postgrest.jwt.issuer }}
+            - name: PGRST_JWT_ISSUER
+              value: {{ .Values.postgrest.jwt.issuer | quote }}
+            {{- end }}
+            {{- if .Values.postgrest.jwt.roleClaim }}
+            - name: PGRST_JWT_ROLE_CLAIM_KEY
+              value: {{ printf ".%s" .Values.postgrest.jwt.roleClaim | quote }}
+            {{- end }}
+            {{- else }}
+            - name: PGRST_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.postgrest.jwtSecretName" . }}
+                  key: {{ include "lakehouse.postgrest.jwtSecretKey" . }}
+            {{- end }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: admin
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: admin
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          {{- with .Values.postgrest.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postgrest.jwt.jwksUrl }}
+          volumeMounts:
+            - name: jwks
+              mountPath: /jwks
+              readOnly: true
+          {{- end }}
+      {{- if .Values.postgrest.jwt.jwksUrl }}
+      volumes:
+        - name: jwks
+          emptyDir: {}
+      {{- end }}
+{{- end }}

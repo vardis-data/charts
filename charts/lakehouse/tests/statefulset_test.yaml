@@ -1,0 +1,175 @@
+suite: statefulset tests
+templates:
+  - templates/statefulset.yaml
+tests:
+  - it: should render statefulset
+    asserts:
+      - isKind:
+          of: StatefulSet
+
+  - it: should have correct name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse
+
+  - it: should use correct image
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/vardis-data/pg-duckdb:main"
+
+  - it: should have primary role label
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["lakehouse/role"]
+          value: primary
+
+  - it: should have postgres port
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 5432
+
+  - it: should set POSTGRES_DB
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POSTGRES_DB
+            value: "vardis"
+
+  - it: should set POSTGRES_USER
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POSTGRES_USER
+            value: "vardis"
+
+  - it: should inject NESSIE_PASSWORD env
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NESSIE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-lakehouse
+                key: nessie-password
+
+  - it: should mount init SQL via subPath
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: init-scripts
+            mountPath: /docker-entrypoint-initdb.d/00-init.sql
+            subPath: 00-init.sql
+            readOnly: true
+
+  - it: should mount nessie init script via subPath
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: init-scripts
+            mountPath: /docker-entrypoint-initdb.d/01-nessie.sh
+            subPath: 01-nessie.sh
+            readOnly: true
+
+  - it: should mount replication script via subPath
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: init-scripts
+            mountPath: /docker-entrypoint-initdb.d/03-replication.sh
+            subPath: 03-replication.sh
+            readOnly: true
+
+  - it: should have ensure-hba init container
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: ensure-hba
+
+  - it: should mount hba-replication.conf at /etc/postgresql
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: init-scripts
+            mountPath: /etc/postgresql/hba-replication.conf
+            subPath: hba-replication.conf
+            readOnly: true
+
+  - it: should create PVC when persistence enabled
+    asserts:
+      - exists:
+          path: spec.volumeClaimTemplates
+
+  - it: should have probes
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe
+
+  - it: should run as postgres user
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 999
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 999
+
+  - it: should render imagePullSecrets when set
+    set:
+      imagePullSecrets:
+        - name: ghcr-credentials
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: ghcr-credentials
+
+  - it: should mount S3 script when existingSecret configured
+    set:
+      s3:
+        existingSecret:
+          name: s3-credentials
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: init-scripts
+            mountPath: /docker-entrypoint-initdb.d/02-s3-secret.sh
+            subPath: 02-s3-secret.sh
+            readOnly: true
+
+  - it: should not mount S3 script when S3 not configured
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: init-scripts
+            mountPath: /docker-entrypoint-initdb.d/02-s3-secret.sh
+            subPath: 02-s3-secret.sh
+            readOnly: true
+
+  - it: should use existingSecret for password when set
+    set:
+      postgres:
+        passwordSecret:
+          name: my-secret
+          key: my-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-secret
+                key: my-key

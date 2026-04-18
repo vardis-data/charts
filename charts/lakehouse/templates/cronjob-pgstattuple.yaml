@@ -1,0 +1,112 @@
+{{- if .Values.maintenance.pgstattuple.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-pgstattuple
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.maintenance.pgstattuple.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "lakehouse.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: pgstattuple
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+
+                  psql -v ON_ERROR_STOP=1 -d "$PGDATABASE" <<'EOSQL'
+                  CREATE SCHEMA IF NOT EXISTS {{ .Values.maintenance.pgstattuple.schema }};
+
+                  CREATE TABLE IF NOT EXISTS {{ .Values.maintenance.pgstattuple.schema }}.bloat_stats (
+                    collected_at timestamptz NOT NULL DEFAULT now(),
+                    relid oid NOT NULL,
+                    relation_name text NOT NULL,
+                    relation_size_bytes bigint NOT NULL,
+                    approx_table_len bigint,
+                    tuple_scanned_percent numeric,
+                    approx_tuple_count bigint,
+                    approx_tuple_len bigint,
+                    approx_tuple_percent numeric,
+                    dead_tuple_count bigint,
+                    dead_tuple_len bigint,
+                    dead_tuple_percent numeric,
+                    approx_free_space bigint,
+                    approx_free_percent numeric
+                  );
+
+                  INSERT INTO {{ .Values.maintenance.pgstattuple.schema }}.bloat_stats (
+                    relid,
+                    relation_name,
+                    relation_size_bytes,
+                    approx_table_len,
+                    tuple_scanned_percent,
+                    approx_tuple_count,
+                    approx_tuple_len,
+                    approx_tuple_percent,
+                    dead_tuple_count,
+                    dead_tuple_len,
+                    dead_tuple_percent,
+                    approx_free_space,
+                    approx_free_percent
+                  )
+                  SELECT
+                    c.oid,
+                    format('%I.%I', n.nspname, c.relname),
+                    pg_relation_size(c.oid),
+                    st.table_len,
+                    st.scanned_percent,
+                    st.approx_tuple_count,
+                    st.approx_tuple_len,
+                    st.approx_tuple_percent,
+                    st.dead_tuple_count,
+                    st.dead_tuple_len,
+                    st.dead_tuple_percent,
+                    st.approx_free_space,
+                    st.approx_free_percent
+                  FROM pg_class c
+                  JOIN pg_namespace n ON n.oid = c.relnamespace
+                  CROSS JOIN LATERAL pgstattuple_approx(c.oid) st
+                  WHERE c.relkind = 'r'
+                    AND n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+                    AND pg_relation_size(c.oid) >= ({{ .Values.maintenance.pgstattuple.minTableSizeMb }}::bigint * 1024 * 1024);
+
+                  DELETE FROM {{ .Values.maintenance.pgstattuple.schema }}.bloat_stats
+                  WHERE collected_at < now() - interval '{{ .Values.maintenance.pgstattuple.retentionDays }} days';
+                  EOSQL
+              env:
+                - name: PGHOST
+                  value: {{ include "lakehouse.fullname" . }}
+                - name: PGPORT
+                  value: {{ .Values.postgres.port | quote }}
+                - name: PGDATABASE
+                  value: {{ .Values.postgres.database | quote }}
+                - name: PGUSER
+                  value: {{ .Values.postgres.user | quote }}
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "lakehouse.passwordSecretName" . }}
+                      key: {{ include "lakehouse.passwordKey" . }}
+              {{- with .Values.maintenance.pgstattuple.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+{{- end }}

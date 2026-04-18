@@ -1,0 +1,41 @@
+suite: hpa tests
+templates:
+  - templates/hpa.yaml
+tests:
+  - it: should render hpa
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+
+  - it: should have correct name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-replicas
+
+  - it: should target replicas deployment
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: RELEASE-NAME-lakehouse-replicas
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+
+  - it: should have default min and max replicas
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 1
+      - equal:
+          path: spec.maxReplicas
+          value: 3
+
+  - it: should use CPU utilization metric
+    asserts:
+      - equal:
+          path: spec.metrics[0].type
+          value: Resource
+      - equal:
+          path: spec.metrics[0].resource.name
+          value: cpu

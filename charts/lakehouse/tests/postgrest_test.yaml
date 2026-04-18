@@ -1,0 +1,118 @@
+suite: postgrest tests
+templates:
+  - templates/postgrest-deployment.yaml
+  - templates/postgrest-secret.yaml
+  - templates/postgrest-service.yaml
+tests:
+  - it: should not render postgrest resources when disabled
+    template: templates/postgrest-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render postgrest deployment when enabled
+    template: templates/postgrest-deployment.yaml
+    set:
+      postgrest:
+        enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should have correct postgrest deployment name
+    template: templates/postgrest-deployment.yaml
+    set:
+      postgrest:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-postgrest
+
+  - it: should use correct postgrest image
+    template: templates/postgrest-deployment.yaml
+    set:
+      postgrest:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "postgrest/postgrest:v12.2.3"
+
+  - it: should expose http and admin ports
+    template: templates/postgrest-deployment.yaml
+    set:
+      postgrest:
+        enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http
+            containerPort: 3000
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: admin
+            containerPort: 3001
+            protocol: TCP
+
+  - it: should set schemas env var
+    template: templates/postgrest-deployment.yaml
+    set:
+      postgrest:
+        enabled: true
+        schemas: "prod,stg"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PGRST_DB_SCHEMAS
+            value: "prod,stg"
+
+  - it: should wait for replicas service in init container
+    template: templates/postgrest-deployment.yaml
+    set:
+      postgrest:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: wait-for-db
+
+  - it: should render postgrest secret when enabled
+    template: templates/postgrest-secret.yaml
+    set:
+      postgrest:
+        enabled: true
+    asserts:
+      - isKind:
+          of: Secret
+      - exists:
+          path: stringData["db-uri"]
+      - exists:
+          path: stringData["authenticator-password"]
+
+  - it: should use db-uri pointing to replicas service
+    template: templates/postgrest-secret.yaml
+    set:
+      postgrest:
+        enabled: true
+        authenticatorPassword: test-pass
+    asserts:
+      - matchRegex:
+          path: stringData["db-uri"]
+          pattern: "RELEASE-NAME-lakehouse-replicas"
+
+  - it: should render postgrest service when enabled
+    template: templates/postgrest-service.yaml
+    set:
+      postgrest:
+        enabled: true
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-postgrest

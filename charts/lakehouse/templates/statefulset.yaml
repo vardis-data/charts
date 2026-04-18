@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "lakehouse.fullname" . }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    lakehouse/role: primary
+spec:
+  replicas: 1
+  serviceName: {{ include "lakehouse.fullname" . }}
+  selector:
+    matchLabels:
+      {{- include "lakehouse.selectorLabels" . | nindent 6 }}
+      lakehouse/role: primary
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse.selectorLabels" . | nindent 8 }}
+        lakehouse/role: primary
+      {{- if .Values.reloader.enabled }}
+      annotations:
+        reloader.stakater.com/auto: "true"
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
+      {{- if .Values.scheduling.primary.antiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: {{ .Values.scheduling.primary.antiAffinity.weight }}
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "lakehouse.selectorLabels" . | nindent 20 }}
+                    lakehouse/role: primary
+                topologyKey: {{ .Values.scheduling.primary.antiAffinity.topologyKey }}
+      {{- end }}
+      initContainers:
+        - name: ensure-hba
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              HBA="/var/lib/postgresql/data/pgdata/pg_hba.conf"
+              INCLUDE_LINE="include_if_exists /etc/postgresql/hba-replication.conf"
+              if [ -f "$HBA" ]; then
+                grep -qxF "$INCLUDE_LINE" "$HBA" || echo "$INCLUDE_LINE" >> "$HBA"
+              fi
+          volumeMounts:
+            {{- include "lakehouse.volumeMounts" . | nindent 12 }}
+      containers:
+        - name: postgres
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "postgres"
+            {{- include "lakehouse.preloadArgs" . | nindent 12 }}
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.postgres.port }}
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.user | quote }}
+            - name: NESSIE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.nessiePasswordSecretName" . }}
+                  key: {{ include "lakehouse.nessiePasswordKey" . }}
+            {{- include "lakehouse.env" . | nindent 12 }}
+          volumeMounts:
+            {{- include "lakehouse.volumeMounts" . | nindent 12 }}
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d/00-init.sql
+              subPath: 00-init.sql
+              readOnly: true
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d/01-nessie.sh
+              subPath: 01-nessie.sh
+              readOnly: true
+            {{- if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d/02-s3-secret.sh
+              subPath: 02-s3-secret.sh
+              readOnly: true
+            {{- end }}
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d/03-replication.sh
+              subPath: 03-replication.sh
+              readOnly: true
+            - name: init-scripts
+              mountPath: /etc/postgresql/hba-replication.conf
+              subPath: hba-replication.conf
+              readOnly: true
+          {{- include "lakehouse.probes" . | nindent 10 }}
+          {{- with .Values.primary.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- if .Values.metrics.enabled }}
+        {{- include "lakehouse.exporter" . | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: {{ include "lakehouse.fullname" . }}-init
+            defaultMode: 0755
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: {{ .Values.persistence.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size | quote }}
+  {{- else }}
+      - name: data
+        emptyDir: {}
+  {{- end }}

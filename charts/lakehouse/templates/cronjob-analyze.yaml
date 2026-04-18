@@ -1,0 +1,70 @@
+{{- if .Values.maintenance.analyze.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-analyze
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.maintenance.analyze.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "lakehouse.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: analyze
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+
+                  ARGS=(
+                    "--analyze-only"
+                    "--host=$PGHOST"
+                    "--port=$PGPORT"
+                    "--username=$PGUSER"
+                    "$PGDATABASE"
+                  )
+
+                  {{- range .Values.maintenance.analyze.schemas }}
+                  ARGS+=("--schema={{ . }}")
+                  {{- end }}
+
+                  {{- range .Values.maintenance.analyze.extraArgs }}
+                  ARGS+=("{{ . }}")
+                  {{- end }}
+
+                  vacuumdb "${ARGS[@]}"
+              env:
+                - name: PGHOST
+                  value: {{ include "lakehouse.fullname" . }}
+                - name: PGPORT
+                  value: {{ .Values.postgres.port | quote }}
+                - name: PGDATABASE
+                  value: {{ .Values.postgres.database | quote }}
+                - name: PGUSER
+                  value: {{ .Values.postgres.user | quote }}
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "lakehouse.passwordSecretName" . }}
+                      key: {{ include "lakehouse.passwordKey" . }}
+              {{- with .Values.maintenance.analyze.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+{{- end }}

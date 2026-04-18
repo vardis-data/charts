@@ -1,0 +1,83 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-setup-nessie
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-2"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: setup-nessie
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -e
+
+              echo "Waiting for primary to accept connections..."
+              until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER"; do
+                sleep 3
+              done
+
+              echo "Waiting for database '$PGDATABASE' to exist..."
+              until psql -v ON_ERROR_STOP=1 -c "SELECT 1" > /dev/null 2>&1; do
+                sleep 3
+              done
+
+              echo "Ensuring nessie role exists..."
+              psql -v ON_ERROR_STOP=1 -c "
+                DO \$\$
+                BEGIN
+                  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$NESSIE_USER') THEN
+                    CREATE ROLE \"$NESSIE_USER\" WITH LOGIN PASSWORD '$NESSIE_PASSWORD';
+                  END IF;
+                END
+                \$\$;
+              "
+
+              echo "Ensuring nessie database exists..."
+              if ! psql -v ON_ERROR_STOP=1 -tAc \
+                  "SELECT 1 FROM pg_database WHERE datname = '$NESSIE_DB'" | grep -q 1; then
+                psql -v ON_ERROR_STOP=1 \
+                  -c "CREATE DATABASE \"$NESSIE_DB\" OWNER \"$NESSIE_USER\";"
+              fi
+
+              echo "Nessie setup complete."
+          env:
+            - name: PGHOST
+              value: {{ include "lakehouse.fullname" . }}
+            - name: PGPORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.postgres.database | quote }}
+            - name: PGUSER
+              value: {{ .Values.postgres.user | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.passwordSecretName" . }}
+                  key: {{ include "lakehouse.passwordKey" . }}
+            - name: NESSIE_USER
+              value: {{ .Values.nessie.postgres.user | quote }}
+            - name: NESSIE_DB
+              value: {{ .Values.nessie.postgres.database | quote }}
+            - name: NESSIE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.nessiePasswordSecretName" . }}
+                  key: {{ include "lakehouse.nessiePasswordKey" . }}

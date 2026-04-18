@@ -1,0 +1,110 @@
+suite: configmap tests
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should render configmap
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+  - it: should contain pg_duckdb extension
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "CREATE EXTENSION IF NOT EXISTS pg_duckdb"
+
+  - it: should have nessie init shell script
+    asserts:
+      - exists:
+          path: data["01-nessie.sh"]
+      - matchRegex:
+          path: data["01-nessie.sh"]
+          pattern: "CREATE ROLE"
+
+  - it: should set primary DuckDB memory limit
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.memory_limit = '2GB'"
+
+  - it: should set force_execution to false by default
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.force_execution = false"
+
+  - it: should set force_execution to true when enabled
+    set:
+      duckdb:
+        forceExecution: true
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.force_execution = true"
+
+  - it: should include S3 secret setup when inline credentials
+    set:
+      s3:
+        accessKeyId: test-key
+        secretAccessKey: test-secret
+        endpoint: s3.example.com
+        region: us-east-1
+    asserts:
+      - exists:
+          path: data["02-s3-secret.sh"]
+      - matchRegex:
+          path: data["02-s3-secret.sh"]
+          pattern: "duckdb.create_simple_secret"
+
+  - it: should include S3 secret setup when using existing secret
+    set:
+      s3:
+        existingSecret:
+          name: s3-credentials
+    asserts:
+      - exists:
+          path: data["02-s3-secret.sh"]
+
+  - it: should not include S3 secret when not configured
+    asserts:
+      - notExists:
+          path: data["02-s3-secret.sh"]
+
+  - it: should not set duckdb.postgres_role when postgresRole is empty
+    asserts:
+      - notMatchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.postgres_role"
+
+  - it: should set duckdb.postgres_role when postgresRole is configured
+    set:
+      duckdb:
+        postgresRole: "analyst"
+    asserts:
+      - matchRegex:
+          path: data["00-init.sql"]
+          pattern: "duckdb.postgres_role = 'analyst'"
+
+  - it: should always include replication config
+    asserts:
+      - exists:
+          path: data["03-replication.sh"]
+
+  - it: should have hba-replication.conf snippet
+    asserts:
+      - exists:
+          path: data["hba-replication.conf"]
+      - matchRegex:
+          path: data["hba-replication.conf"]
+          pattern: "host replication"
+
+  - it: should use nessie user in nessie init script
+    set:
+      nessie:
+        postgres:
+          user: nessie
+          database: nessie
+    asserts:
+      - matchRegex:
+          path: data["01-nessie.sh"]
+          pattern: "nessie"

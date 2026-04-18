@@ -1,0 +1,132 @@
+{{- if .Values.postgres.users }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-manage-users
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: manage-users
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -e
+
+              until pg_isready -h "$PGHOST" -U "$PGUSER"; do
+                echo "Waiting for database..."
+                sleep 3
+              done
+
+              {{- range $user := .Values.postgres.users }}
+              echo "Processing user: {{ $user.name }}"
+
+              {{- if $user.passwordSecret }}
+              PASSWORD="${USER_{{ $user.name | upper }}_PASSWORD}"
+              {{- else }}
+              PASSWORD=""
+              {{- end }}
+
+              if psql -tAc "SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '{{ $user.name }}'" | grep -q 1; then
+                echo "User {{ $user.name }} exists, updating..."
+                {{- if $user.passwordSecret }}
+                psql -c "ALTER ROLE \"{{ $user.name }}\" WITH {{ if $user.login }}LOGIN{{ else }}NOLOGIN{{ end }} ENCRYPTED PASSWORD '$PASSWORD';"
+                {{- else }}
+                psql -c "ALTER ROLE \"{{ $user.name }}\" WITH {{ if $user.login }}LOGIN{{ else }}NOLOGIN{{ end }};"
+                {{- end }}
+              else
+                echo "Creating user: {{ $user.name }}"
+                {{- if $user.passwordSecret }}
+                psql -c "CREATE ROLE \"{{ $user.name }}\" WITH {{ if $user.login }}LOGIN{{ else }}NOLOGIN{{ end }} NOINHERIT ENCRYPTED PASSWORD '$PASSWORD';"
+                {{- else }}
+                psql -c "CREATE ROLE \"{{ $user.name }}\" WITH {{ if $user.login }}LOGIN{{ else }}NOLOGIN{{ end }} NOINHERIT;"
+                {{- end }}
+              fi
+
+              psql -c "GRANT CONNECT ON DATABASE $PGDATABASE TO \"{{ $user.name }}\";"
+
+              {{- range $grantee := $user.grantsTo }}
+              psql -c "GRANT \"{{ $grantee }}\" TO \"{{ $user.name }}\";"
+              {{- end }}
+
+              for schema in $(psql -tAc "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'duckdb')"); do
+                psql -c "REVOKE ALL ON SCHEMA \"$schema\" FROM \"{{ $user.name }}\";" || true
+                psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA \"$schema\" FROM \"{{ $user.name }}\";" || true
+                psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$schema\" REVOKE ALL ON TABLES FROM \"{{ $user.name }}\";" || true
+              done
+
+              {{- range $schema, $access := $user.schemas }}
+              psql -c "CREATE SCHEMA IF NOT EXISTS \"{{ $schema }}\";"
+
+              {{- if eq $access "read" }}
+              psql -c "GRANT USAGE ON SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
+              psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
+              psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"{{ $schema }}\" GRANT SELECT ON TABLES TO \"{{ $user.name }}\";"
+              {{- else if eq $access "write" }}
+              psql -c "GRANT ALL ON SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
+              psql -c "GRANT ALL ON ALL TABLES IN SCHEMA \"{{ $schema }}\" TO \"{{ $user.name }}\";"
+              psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"{{ $schema }}\" GRANT ALL ON TABLES TO \"{{ $user.name }}\";"
+              {{- end }}
+              {{- end }}
+
+              {{- end }}
+
+              DESIRED_USERS="{{ range $i, $user := .Values.postgres.users }}{{ if $i }} {{ end }}{{ $user.name }}{{ end }} {{ .Values.postgres.user }} {{ .Values.nessie.postgres.user }}"
+
+              for user in $(psql -tAc "SELECT rolname FROM pg_catalog.pg_roles WHERE rolname NOT LIKE 'pg_%' AND rolsuper = false AND rolname != '{{ .Values.postgres.user }}'"); do
+                if ! echo "$DESIRED_USERS" | grep -qw "$user"; then
+                  echo "Removing unmanaged user: $user"
+
+                  for schema in $(psql -tAc "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'duckdb')"); do
+                    psql -c "REVOKE ALL ON SCHEMA \"$schema\" FROM \"$user\";" || true
+                    psql -c "REVOKE ALL ON ALL TABLES IN SCHEMA \"$schema\" FROM \"$user\";" || true
+                    psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$schema\" REVOKE ALL ON TABLES FROM \"$user\";" || true
+                  done
+
+                  psql -c "REVOKE ALL ON DATABASE $PGDATABASE FROM \"$user\";" || true
+                  psql -c "DROP ROLE \"$user\";"
+                fi
+              done
+
+              echo "User management complete."
+          env:
+            - name: PGHOST
+              value: {{ include "lakehouse.fullname" . }}
+            - name: PGPORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.postgres.database | quote }}
+            - name: PGUSER
+              value: {{ .Values.postgres.user | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.passwordSecretName" . }}
+                  key: {{ include "lakehouse.passwordKey" . }}
+            {{- range $user := .Values.postgres.users }}
+            {{- if $user.passwordSecret }}
+            - name: USER_{{ $user.name | upper }}_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $user.passwordSecret.name }}
+                  key: {{ $user.passwordSecret.key }}
+            {{- end }}
+            {{- end }}
+{{- end }}

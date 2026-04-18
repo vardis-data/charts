@@ -1,0 +1,361 @@
+# -- pg-duckdb container image (primary + replicas)
+image:
+  repository: ghcr.io/vardis-data/pg-duckdb
+  # renovate: datasource=docker depName=ghcr.io/vardis-data/pg-duckdb
+  tag: "main"
+  pullPolicy: IfNotPresent
+
+# -- Optional image pull secrets for private registries
+imagePullSecrets: []
+
+# -- Extra labels applied to all resources
+commonLabels: {}
+
+# -- Stakater Reloader: auto-restart pods on ConfigMap/Secret changes
+reloader:
+  enabled: true
+
+# -----------------------------------------------------------------------------
+# PostgreSQL primary (pg-duckdb)
+# Single StatefulSet with persistent PVC. Handles dbt writes and WAL streaming
+# to replicas. S3 secret and Iceberg extension configured at init time.
+# -----------------------------------------------------------------------------
+postgres:
+  # -- Database name created on first boot
+  database: vardis
+  # -- Superuser name created on first boot
+  user: vardis
+  # -- Superuser password (ignored when passwordSecret.name is set)
+  password: ""
+  # -- Listen port
+  port: 5432
+  # -- Reference an existing Secret for the Postgres password
+  passwordSecret:
+    name: ""
+    key: "password"
+  # -- Additional managed users (login + nologin roles with schema grants)
+  users: []
+  # --   - name: authenticator
+  # --     login: true
+  # --     passwordSecret:
+  # --       name: lakehouse-user-authenticator
+  # --       key: password
+  # --     grantsTo: ["anon", "admin"]
+  # --   - name: anon
+  # --     login: false
+  # --     schemas:
+  # --       prod: read
+  # -- PostgreSQL runtime tuning applied via ALTER SYSTEM at init
+  tuning:
+    autovacuumVacuumScaleFactor: "0.05"
+    autovacuumAnalyzeScaleFactor: "0.02"
+    autovacuumVacuumThreshold: "50"
+    autovacuumAnalyzeThreshold: "50"
+    autovacuumNaptime: "30s"
+    maintenanceWorkMem: "256MB"
+    checkpointTimeout: "15min"
+    minWalSize: "1GB"
+    maxWalSize: "4GB"
+
+# -- PostgreSQL extensions to install on first boot and via post-install hook
+extensions:
+  install:
+    - pg_duckdb
+    - pgstattuple
+    - pg_repack
+    - pg_cron
+  sharedPreloadLibraries:
+    - pg_cron
+  hook:
+    enabled: true
+
+# -----------------------------------------------------------------------------
+# DuckDB engine settings
+# Applied via ALTER SYSTEM at init. Each connection spawns its own DuckDB
+# instance bounded by these limits.
+# -----------------------------------------------------------------------------
+duckdb:
+  # -- Route all SELECT queries through DuckDB's vectorised engine
+  forceExecution: false
+  # -- PostgreSQL roles allowed to use DuckDB (empty = all superusers)
+  postgresRole: ""
+  primary:
+    memoryLimit: "2GB"
+    threads: 2
+  replicas:
+    memoryLimit: "1GB"
+    threads: 1
+
+# -----------------------------------------------------------------------------
+# S3-compatible object storage
+# Credentials are stored in duckdb.secrets on the primary and WAL-replicated.
+# -----------------------------------------------------------------------------
+s3:
+  # -- S3 endpoint hostname (e.g. "nbg1.your-objectstorage.com")
+  endpoint: ""
+  # -- S3 region (e.g. "nbg1", "us-east-1")
+  region: ""
+  # -- URL style: "path" for Hetzner/MinIO, "vhost" for AWS
+  urlStyle: "path"
+  # -- Whether to use SSL
+  useSSL: true
+  # -- S3 access key ID (ignored when existingSecret.name is set)
+  accessKeyId: ""
+  # -- S3 secret access key (ignored when existingSecret.name is set)
+  secretAccessKey: ""
+  # -- Reference an existing Secret for S3 credentials
+  existingSecret:
+    name: ""
+    keys:
+      accessKeyId: "s3AccessKeyId"
+      secretAccessKey: "s3SecretAccessKey"
+      credentials: "s3Credentials"
+
+# -----------------------------------------------------------------------------
+# Nessie — Iceberg REST catalog
+# Stores table metadata (schema, snapshots, file manifests) in Postgres.
+# pg-duckdb reads Iceberg tables via iceberg_scan(..., catalog='rest').
+# EL pipeline registers table snapshots via the Nessie REST API.
+# -----------------------------------------------------------------------------
+nessie:
+  image:
+    repository: ghcr.io/projectnessie/nessie
+    # renovate: datasource=docker depName=ghcr.io/projectnessie/nessie
+    tag: "0.105.5-java"
+    pullPolicy: IfNotPresent
+  # -- Number of Nessie replicas (stateless — catalog state is in Postgres)
+  replicas: 1
+  # -- Nessie REST API port
+  port: 19120
+  # -- Default branch name for the Iceberg catalog
+  defaultBranch: "main"
+  # -- Iceberg warehouse name (identifier used when ATTACHing from DuckDB)
+  warehouseName: "warehouse"
+  # -- S3 URI for the Iceberg warehouse (e.g. "s3://my-bucket/warehouse")
+  warehouseLocation: ""
+  # -- Nessie Postgres backend configuration
+  postgres:
+    # -- Database name for Nessie catalog metadata (created at init)
+    database: nessie
+    # -- Postgres user for Nessie (created at init)
+    user: nessie
+    # -- Nessie Postgres password (ignored when existingSecret.name is set)
+    password: ""
+    # -- Reference an existing Secret for Nessie's Postgres password
+    existingSecret:
+      name: ""
+      key: "nessie-password"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# -----------------------------------------------------------------------------
+# Persistent volume for pg-duckdb primary PGDATA
+# Replicas use emptyDir (ephemeral) and rebuild via pg_basebackup on restart.
+# -----------------------------------------------------------------------------
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: ""
+
+# -- Services for primary (read-write) and replicas (read-only)
+service:
+  type: ClusterIP
+  port: 5432
+
+# -- Primary StatefulSet resource limits
+primary:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  vpa:
+    enabled: false
+    updateMode: Auto
+    minAllowed:
+      cpu: 250m
+      memory: 512Mi
+    maxAllowed:
+      cpu: 4000m
+      memory: 8Gi
+
+# -- Read replicas with horizontal autoscaling
+replicas:
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+# -- Scheduling controls
+scheduling:
+  primary:
+    antiAffinity:
+      enabled: true
+      weight: 100
+      topologyKey: kubernetes.io/hostname
+  replicas:
+    antiAffinity:
+      enabled: true
+      weight: 100
+      topologyKey: kubernetes.io/hostname
+    topologySpread:
+      enabled: true
+      maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+
+# -- Pod Disruption Budgets
+pdb:
+  primary:
+    enabled: true
+    minAvailable: 1
+  replicas:
+    enabled: false
+    minAvailable: 1
+
+# -- Network policy
+networkPolicy:
+  enabled: false
+  allowSameNamespace: true
+  extraIngress: []
+
+# -- Prometheus metrics exporter sidecar on the primary pod
+metrics:
+  enabled: false
+  image:
+    repository: prometheuscommunity/postgres-exporter
+    # renovate: datasource=docker depName=prometheuscommunity/postgres-exporter
+    tag: "v0.16.0"
+    pullPolicy: IfNotPresent
+  port: 9187
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+# -- Maintenance CronJobs
+maintenance:
+  analyze:
+    enabled: true
+    schedule: "15 */12 * * *"
+    schemas: []
+    extraArgs: []
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+  vacuum:
+    enabled: true
+    schedule: "0 4 * * 0"
+    schemas: []
+    extraArgs: []
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+  pgstattuple:
+    enabled: true
+    schedule: "30 3 * * 0"
+    retentionDays: 30
+    minTableSizeMb: 256
+    schema: maintenance
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+  repack:
+    enabled: false
+    table: ""
+    schema: ""
+    extraArgs: []
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+
+# -- PostgREST: exposes PostgreSQL views as a JSON REST API
+postgrest:
+  enabled: false
+  image:
+    repository: postgrest/postgrest
+    # renovate: datasource=docker depName=postgrest/postgrest
+    tag: "v12.2.3"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  # -- Schemas to expose (comma-separated)
+  schemas: "prod"
+  # -- Role for anonymous requests
+  anonRole: ""
+  # -- Role for admin (JWT-authenticated) requests
+  adminRole: ""
+  # -- Authenticator password
+  authenticatorPassword: ""
+  jwt:
+    enabled: false
+    secret: ""
+    existingSecret:
+      name: ""
+      key: "jwt-secret"
+    jwksUrl: ""
+    aud: ""
+    issuer: ""
+    roleClaim: ""
+  service:
+    type: ClusterIP
+    port: 3000
+  ingress:
+    enabled: false
+    className: "tailscale"
+    hostname: "vardis-api"
+    tags: ""
+    annotations: {}
+    hosts:
+      - host: ""
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  publicIngress:
+    enabled: false
+    className: "traefik"
+    annotations: {}
+    hosts:
+      - host: ""
+        paths:
+          - path: /api
+            pathType: Prefix
+    tls: []
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi

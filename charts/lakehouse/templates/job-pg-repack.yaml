@@ -1,0 +1,78 @@
+{{- if .Values.maintenance.repack.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-pg-repack
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "1"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: pg-repack
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+
+              until pg_isready -h "$PGHOST" -U "$PGUSER"; do
+                echo "Waiting for database..."
+                sleep 3
+              done
+
+              ARGS=(
+                "--host=$PGHOST"
+                "--port=$PGPORT"
+                "--username=$PGUSER"
+                "--dbname=$PGDATABASE"
+                "--no-superuser-check"
+              )
+
+              {{- if .Values.maintenance.repack.table }}
+              ARGS+=("--table={{ .Values.maintenance.repack.table }}")
+              {{- else if .Values.maintenance.repack.schema }}
+              ARGS+=("--schema={{ .Values.maintenance.repack.schema }}")
+              {{- else }}
+              echo "Set maintenance.repack.table or maintenance.repack.schema before enabling repack job."
+              exit 1
+              {{- end }}
+
+              {{- range .Values.maintenance.repack.extraArgs }}
+              ARGS+=("{{ . }}")
+              {{- end }}
+
+              pg_repack "${ARGS[@]}"
+          env:
+            - name: PGHOST
+              value: {{ include "lakehouse.fullname" . }}
+            - name: PGPORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.postgres.database | quote }}
+            - name: PGUSER
+              value: {{ .Values.postgres.user | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.passwordSecretName" . }}
+                  key: {{ include "lakehouse.passwordKey" . }}
+          {{- with .Values.maintenance.repack.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

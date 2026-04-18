@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-nessie
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    lakehouse/component: nessie
+spec:
+  replicas: {{ .Values.nessie.replicas }}
+  selector:
+    matchLabels:
+      {{- include "lakehouse.selectorLabels" . | nindent 6 }}
+      lakehouse/component: nessie
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse.selectorLabels" . | nindent 8 }}
+        lakehouse/component: nessie
+      {{- if .Values.reloader.enabled }}
+      annotations:
+        reloader.stakater.com/search: "true"
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-postgres
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              until pg_isready -h {{ include "lakehouse.fullname" . }} -U {{ .Values.postgres.user }}; do
+                echo "Waiting for postgres primary..."
+                sleep 5
+              done
+      containers:
+        - name: nessie
+          image: "{{ .Values.nessie.image.repository }}:{{ .Values.nessie.image.tag }}"
+          imagePullPolicy: {{ .Values.nessie.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.nessie.port }}
+              protocol: TCP
+            - name: management
+              containerPort: 9000
+              protocol: TCP
+          env:
+            - name: NESSIE_VERSION_STORE_TYPE
+              value: JDBC
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              value: {{ include "lakehouse.nessie.jdbcUrl" . | quote }}
+            - name: QUARKUS_DATASOURCE_USERNAME
+              value: {{ .Values.nessie.postgres.user | quote }}
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.nessiePasswordSecretName" . }}
+                  key: {{ include "lakehouse.nessiePasswordKey" . }}
+            - name: NESSIE_DEFAULT_BRANCH
+              value: {{ .Values.nessie.defaultBranch | quote }}
+            - name: NESSIE_CATALOG_DEFAULT_WAREHOUSE
+              value: {{ .Values.nessie.warehouseName | quote }}
+            {{- if .Values.nessie.warehouseLocation }}
+            - name: NESSIE_CATALOG_WAREHOUSES__{{ .Values.nessie.warehouseName | upper }}__LOCATION
+              value: {{ .Values.nessie.warehouseLocation | quote }}
+            {{- end }}
+            {{- if .Values.s3.region }}
+            - name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_REGION
+              value: {{ .Values.s3.region | quote }}
+            {{- end }}
+            {{- if .Values.s3.endpoint }}
+            - name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_ENDPOINT
+              value: "https://{{ .Values.s3.endpoint }}"
+            {{- end }}
+            {{- if eq .Values.s3.urlStyle "path" }}
+            - name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_PATH_STYLE_ACCESS
+              value: "true"
+            {{- end }}
+            {{- if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}
+            - name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_ACCESS_KEY
+              value: "urn:nessie-secret:quarkus:s3-credentials"
+            - name: S3_CREDENTIALS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.name }}{{ else }}{{ include "lakehouse.fullname" . }}{{ end }}
+                  key: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.keys.credentials }}{{ else }}s3Credentials{{ end }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: management
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          {{- with .Values.nessie.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

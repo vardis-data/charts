@@ -1,0 +1,6 @@
+dependencies:
+- name: common
+  repository: oci://ghcr.io/vardis-data/charts
+  version: 1.0.1
+digest: sha256:b6831e535bdd2cbd694a1b3f833996d2e5f88e0ec0c81030f5a2a8e599836776
+generated: "2026-04-17T14:21:13.327411411-03:00"

@@ -147,11 +147,18 @@ nessie:
       key: "nessie-password"
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
+      cpu: 200m
       memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  # -- Horizontal autoscaling for Nessie (stateless — safe to scale horizontally)
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
 
 # -----------------------------------------------------------------------------
 # Persistent volume for pg-duckdb primary PGDATA

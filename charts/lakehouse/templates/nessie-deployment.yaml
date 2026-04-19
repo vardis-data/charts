@@ -6,7 +6,9 @@ metadata:
     {{- include "lakehouse.labels" . | nindent 4 }}
     lakehouse/component: nessie
 spec:
+  {{- if not .Values.nessie.autoscaling.enabled }}
   replicas: {{ .Values.nessie.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "lakehouse.selectorLabels" . | nindent 6 }}

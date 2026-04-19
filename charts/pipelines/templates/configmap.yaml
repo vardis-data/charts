@@ -15,7 +15,7 @@ data:
   K8S_IMAGE_PULL_POLICY: {{ .Values.pipeline.image.pullPolicy | quote }}
   PIPELINE_PARALLELISM: {{ .Values.pipeline.resources.parallelism | quote }}
   PIPELINE_RETRY_LIMIT: {{ .Values.pipeline.resources.retryLimit | quote }}
-  PIPELINE_OVERWRITE_PARQUET_FILES: {{ .Values.pipeline.storage.overwriteParquetFiles | quote }}
+  PIPELINE_OVERWRITE_EXISTING: {{ .Values.pipeline.storage.overwriteExisting | quote }}
   LOG_LEVEL: {{ .Values.pipeline.logging.level | quote }}
   {{- if .Values.pipeline.nodeSelector }}
   K8S_NODE_SELECTOR: {{ .Values.pipeline.nodeSelector | toJson | quote }}

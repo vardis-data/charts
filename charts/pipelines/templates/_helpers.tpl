@@ -63,6 +63,3 @@ app.kubernetes.io/name: {{ include "pipeline.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{- define "pipeline.overwriteParquetFiles" -}}
-{{- if .Values.pipeline.storage.overwriteParquetFiles }}1{{- else }}0{{- end }}
-{{- end }}

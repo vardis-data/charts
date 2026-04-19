@@ -48,26 +48,26 @@ tests:
           path: data.K8S_IMAGE_PULL_POLICY
           value: "Never"
 
-  - it: should set overwrite parquet files to true when enabled
+  - it: should set overwrite existing to true when enabled
     set:
       pipeline:
         name: test-pipeline
         storage:
-          overwriteParquetFiles: true
+          overwriteExisting: true
     asserts:
       - equal:
-          path: data.PIPELINE_OVERWRITE_PARQUET_FILES
+          path: data.PIPELINE_OVERWRITE_EXISTING
           value: "true"
 
-  - it: should set overwrite parquet files to false when disabled
+  - it: should set overwrite existing to false when disabled
     set:
       pipeline:
         name: test-pipeline
         storage:
-          overwriteParquetFiles: false
+          overwriteExisting: false
     asserts:
       - equal:
-          path: data.PIPELINE_OVERWRITE_PARQUET_FILES
+          path: data.PIPELINE_OVERWRITE_EXISTING
           value: "false"
 
   - it: should use custom namespace

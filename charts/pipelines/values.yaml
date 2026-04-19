@@ -27,7 +27,7 @@ pipeline:
     level: INFO
 
   storage:
-    overwriteParquetFiles: false
+    overwriteExisting: false
 
 namespace: pipelines
 

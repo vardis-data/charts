@@ -6,8 +6,11 @@ metadata:
     {{- include "dozzle.labels" . | nindent 4 }}
 rules:
   - apiGroups: [""]
-    resources: ["pods", "pods/log"]
+    resources: ["pods", "pods/log", "nodes"]
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["get", "list"]

@@ -23,13 +23,13 @@ tests:
       - exists:
           path: metadata.labels["app.kubernetes.io/managed-by"]
 
-  - it: should allow reading pods and pod logs
+  - it: should allow reading pods, pod logs and nodes
     asserts:
       - contains:
           path: rules
           content:
             apiGroups: [""]
-            resources: ["pods", "pods/log"]
+            resources: ["pods", "pods/log", "nodes"]
             verbs: ["get", "list", "watch"]
 
   - it: should allow reading namespaces
@@ -40,3 +40,12 @@ tests:
             apiGroups: [""]
             resources: ["namespaces"]
             verbs: ["get", "list", "watch"]
+
+  - it: should allow reading metrics API pods (required by Dozzle k8s mode)
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["metrics.k8s.io"]
+            resources: ["pods"]
+            verbs: ["get", "list"]

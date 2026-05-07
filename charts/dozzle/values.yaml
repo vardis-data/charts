@@ -1,0 +1,27 @@
+image:
+  repository: amir20/dozzle
+  # renovate: datasource=docker depName=amir20/dozzle
+  tag: "v10.5.2"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: tailscale
+  hostname: dozzle
+  tags: ""
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
+
+reloader:
+  enabled: false

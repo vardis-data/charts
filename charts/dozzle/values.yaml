@@ -6,6 +6,8 @@ image:
 
 replicaCount: 1
 
+mode: server
+
 service:
   type: ClusterIP
   port: 8080

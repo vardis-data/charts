@@ -34,6 +34,15 @@ tests:
           path: spec.template.spec.containers[0].ports[0].containerPort
           value: 8080
 
+  - it: should pass --mode server args by default
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--mode"
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "server"
+
   - it: should set DOZZLE_NO_ANALYTICS env var
     asserts:
       - contains:

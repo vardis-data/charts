@@ -27,6 +27,9 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+          args:
+            - "--mode"
+            - {{ .Values.mode | quote }}
           env:
             - name: DOZZLE_NO_ANALYTICS
               value: "true"

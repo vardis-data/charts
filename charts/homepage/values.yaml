@@ -1,0 +1,34 @@
+image:
+  repository: ghcr.io/gethomepage/homepage
+  # renovate: datasource=docker depName=ghcr.io/gethomepage/homepage
+  tag: "v0.10.9"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: false
+  className: tailscale
+  hostname: homepage
+  tags: ""
+
+# Homepage configuration files. Each value is a raw YAML string
+# that will be mounted as a config file inside the container.
+config:
+  settings: ""
+  bookmarks: ""
+  services: ""
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+reloader:
+  enabled: true

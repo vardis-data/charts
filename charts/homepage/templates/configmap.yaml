@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "homepage.fullname" . }}
+  labels:
+    {{- include "homepage.labels" . | nindent 4 }}
+data:
+  settings.yaml: |
+    {{- .Values.config.settings | nindent 4 }}
+  bookmarks.yaml: |
+    {{- .Values.config.bookmarks | nindent 4 }}
+  services.yaml: |
+    {{- .Values.config.services | nindent 4 }}

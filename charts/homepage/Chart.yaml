@@ -1,0 +1,17 @@
+apiVersion: v2
+name: homepage
+description: A highly customizable homepage dashboard
+type: application
+version: 1.0.0
+appVersion: "0.10.9"
+home: https://gethomepage.dev
+sources:
+  - https://github.com/gethomepage/homepage
+keywords:
+  - homepage
+  - dashboard
+  - startpage
+dependencies:
+  - name: common
+    version: 1.0.2
+    repository: oci://ghcr.io/vardis-data/charts

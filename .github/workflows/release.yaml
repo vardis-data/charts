@@ -27,7 +27,11 @@ jobs:
         uses: helm/chart-testing-action@v2
 
       - name: Login to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lint changed charts
         run: ct lint --config ct.yaml
@@ -42,6 +46,7 @@ jobs:
           done
 
       - name: Bump and release changed charts
+        id: bump
         run: |
           REGISTRY="oci://ghcr.io/${{ github.repository_owner }}/charts"
           bumped=false
@@ -68,9 +73,12 @@ jobs:
           done
 
           if [ "$bumped" = true ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add charts/*/Chart.yaml
-            git commit -m "ci: bump chart versions [skip ci]"
-            git push
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Commit version bumps
+        if: steps.bump.outputs.bumped == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "ci: bump chart versions [skip ci]"
+          file_pattern: "charts/*/Chart.yaml"

@@ -74,7 +74,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Values.nessie.postgres.existingSecret.name }}
 {{- .Values.nessie.postgres.existingSecret.name }}
 {{- else }}
-{{- include "lakehouse.fullname" . }}
+{{- include "lakehouse.metadata.secretName" . }}
 {{- end }}
 {{- end }}
 
@@ -82,7 +82,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Values.nessie.postgres.existingSecret.name }}
 {{- .Values.nessie.postgres.existingSecret.key }}
 {{- else }}
-{{- "nessie-password" }}
+password
 {{- end }}
 {{- end }}
 
@@ -186,5 +186,29 @@ readinessProbe:
 
 {{/* Nessie JDBC URL pointing to the primary pg-duckdb pod */}}
 {{- define "lakehouse.nessie.jdbcUrl" -}}
-{{- printf "jdbc:postgresql://%s:%d/%s" (include "lakehouse.fullname" .) (.Values.postgres.port | int) .Values.nessie.postgres.database }}
+{{- printf "jdbc:postgresql://%s:%s/%s" (include "lakehouse.metadata.host" .) (include "lakehouse.metadata.port" .) .Values.nessie.postgres.database }}
+{{- end }}
+
+{{- define "lakehouse.metadata.host" -}}
+{{- if .Values.metadata.external.host }}
+{{- .Values.metadata.external.host }}
+{{- else }}
+{{- include "lakehouse.fullname" . }}-metadata
+{{- end }}
+{{- end }}
+
+{{- define "lakehouse.metadata.port" -}}
+{{- if .Values.metadata.external.host }}
+{{- .Values.metadata.external.port | int }}
+{{- else }}
+5432
+{{- end }}
+{{- end }}
+
+{{- define "lakehouse.metadata.secretName" -}}
+{{- if .Values.metadata.external.secretName }}
+{{- .Values.metadata.external.secretName }}
+{{- else }}
+{{- include "lakehouse.fullname" . }}-metadata
+{{- end }}
 {{- end }}

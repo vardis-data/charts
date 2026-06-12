@@ -1,0 +1,60 @@
+{{- if .Values.metadata.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-metadata
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metadata
+spec:
+  serviceName: {{ include "lakehouse.fullname" . }}-metadata
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "lakehouse.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: metadata
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: metadata
+    spec:
+      containers:
+        - name: postgresql
+          image: {{ .Values.metadata.image.repository }}:{{ .Values.metadata.image.tag }}
+          imagePullPolicy: {{ .Values.metadata.image.pullPolicy }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.metadata.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.metadata.user | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.fullname" . }}-metadata
+                  key: password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          {{- with .Values.metadata.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.metadata.persistence.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.metadata.persistence.size }}
+{{- end }}

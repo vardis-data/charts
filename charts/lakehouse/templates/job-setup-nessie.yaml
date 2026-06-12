@@ -29,7 +29,7 @@ spec:
             - |
               set -e
 
-              echo "Waiting for primary to accept connections..."
+              echo "Waiting for metadata postgres to accept connections..."
               until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER"; do
                 sleep 3
               done
@@ -60,18 +60,18 @@ spec:
               echo "Nessie setup complete."
           env:
             - name: PGHOST
-              value: {{ include "lakehouse.fullname" . }}
+              value: {{ include "lakehouse.metadata.host" . }}
             - name: PGPORT
-              value: {{ .Values.postgres.port | quote }}
+              value: {{ include "lakehouse.metadata.port" . | quote }}
             - name: PGDATABASE
-              value: {{ .Values.postgres.database | quote }}
+              value: {{ .Values.nessie.postgres.database | quote }}
             - name: PGUSER
-              value: {{ .Values.postgres.user | quote }}
+              value: {{ .Values.nessie.postgres.user | quote }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lakehouse.passwordSecretName" . }}
-                  key: {{ include "lakehouse.passwordKey" . }}
+                  name: {{ include "lakehouse.nessiePasswordSecretName" . }}
+                  key: {{ include "lakehouse.nessiePasswordKey" . }}
             - name: NESSIE_USER
               value: {{ .Values.nessie.postgres.user | quote }}
             - name: NESSIE_DB

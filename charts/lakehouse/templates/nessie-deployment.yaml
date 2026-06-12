@@ -34,8 +34,8 @@ spec:
           command: ["bash", "-c"]
           args:
             - |
-              until pg_isready -h {{ include "lakehouse.fullname" . }} -U {{ .Values.postgres.user }}; do
-                echo "Waiting for postgres primary..."
+              until pg_isready -h {{ include "lakehouse.metadata.host" . }} -U {{ .Values.nessie.postgres.user }}; do
+                echo "Waiting for metadata postgres..."
                 sleep 5
               done
       containers:

@@ -1,3 +1,30 @@
+# -- Metadata PostgreSQL (Nessie catalog, file_tracking, dbt_state)
+# When enabled, deploys cloudpirates-postgres as a subchart.
+# Set enabled: false and configure external to use an existing PG.
+metadata:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16"
+    pullPolicy: IfNotPresent
+  database: vardis_metadata
+  user: vardis
+  password: ""
+  persistence:
+    size: 10Gi
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  external:
+    host: ""
+    port: 5432
+    secretName: ""
+
 # -- pg-duckdb container image (primary + replicas)
 image:
   repository: ghcr.io/vardis-data/pg-duckdb
@@ -135,10 +162,10 @@ nessie:
   warehouseLocation: ""
   # -- Nessie Postgres backend configuration
   postgres:
-    # -- Database name for Nessie catalog metadata (created at init)
-    database: nessie
-    # -- Postgres user for Nessie (created at init)
-    user: nessie
+    # -- Database name for Nessie catalog metadata
+    database: vardis_metadata
+    # -- Postgres user for Nessie
+    user: vardis
     # -- Nessie Postgres password (ignored when existingSecret.name is set)
     password: ""
     # -- Reference an existing Secret for Nessie's Postgres password
@@ -165,7 +192,7 @@ nessie:
 # Replicas use emptyDir (ephemeral) and rebuild via pg_basebackup on restart.
 # -----------------------------------------------------------------------------
 persistence:
-  enabled: true
+  enabled: false
   size: 10Gi
   storageClass: ""
 

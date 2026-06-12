@@ -1,0 +1,12 @@
+inputs:
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+  flake-utils:
+    url: github:numtide/flake-utils
+  flakes:
+    url: git+ssh://git@github.com/vardis-data/flakes.git
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+      utils:
+        follows: flake-utils

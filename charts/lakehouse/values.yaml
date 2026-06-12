@@ -25,6 +25,43 @@ metadata:
     port: 5432
     secretName: ""
 
+# -- Cube: semantic layer with REST API (:4000), SQL API (:15432),
+# pre-aggregation caching, and JWT auth. Replaces PostgREST.
+cube:
+  enabled: true
+  image:
+    repository: cubejs/cube
+    tag: "v0.36.26"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  jwt:
+    secret: ""
+    jwksUrl: ""
+    audience: ""
+    issuer: ""
+  cache:
+    driver: memory
+    external: "false"
+    externalToCubeJS: "false"
+  refreshWorker: "true"
+  scheduledRefreshTimer: "false"
+  model:
+    cubes.yaml: |
+      cubes:
+        - name: example
+          sql: SELECT 1 AS value
+          measures:
+            - name: count
+              sql: value
+              type: count
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
 # -- pg-duckdb container image (primary + replicas)
 image:
   repository: ghcr.io/vardis-data/pg-duckdb
@@ -354,63 +391,3 @@ pgbouncer:
       memory: 32Mi
     limits:
       memory: 128Mi
-
-# -- PostgREST: exposes PostgreSQL views as a JSON REST API
-postgrest:
-  enabled: false
-  image:
-    repository: postgrest/postgrest
-    # renovate: datasource=docker depName=postgrest/postgrest
-    tag: "v12.2.3"
-    pullPolicy: IfNotPresent
-  replicas: 1
-  # -- Schemas to expose (comma-separated)
-  schemas: "prod"
-  # -- Role for anonymous requests
-  anonRole: ""
-  # -- Role for admin (JWT-authenticated) requests
-  adminRole: ""
-  # -- Authenticator password
-  authenticatorPassword: ""
-  jwt:
-    enabled: false
-    secret: ""
-    existingSecret:
-      name: ""
-      key: "jwt-secret"
-    jwksUrl: ""
-    aud: ""
-    issuer: ""
-    roleClaim: ""
-  service:
-    type: ClusterIP
-    port: 3000
-  ingress:
-    enabled: false
-    className: "tailscale"
-    hostname: "vardis-api"
-    tags: ""
-    annotations: {}
-    hosts:
-      - host: ""
-        paths:
-          - path: /
-            pathType: Prefix
-    tls: []
-  publicIngress:
-    enabled: false
-    className: "traefik"
-    annotations: {}
-    hosts:
-      - host: ""
-        paths:
-          - path: /api
-            pathType: Prefix
-    tls: []
-  resources:
-    requests:
-      cpu: 50m
-      memory: 64Mi
-    limits:
-      cpu: 500m
-      memory: 256Mi

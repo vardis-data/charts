@@ -1,0 +1,124 @@
+{{- if .Values.cube.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-cube
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cube
+spec:
+  replicas: {{ .Values.cube.replicas }}
+  selector:
+    matchLabels:
+      {{- include "lakehouse.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: cube
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: cube
+      {{- if .Values.reloader.enabled }}
+      annotations:
+        reloader.stakater.com/auto: "true"
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-db
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              until pg_isready -h "$PGHOST" -U "$PGUSER"; do
+                echo "Waiting for pgbouncer..."
+                sleep 3
+              done
+              echo "Database ready"
+          env:
+            - name: PGHOST
+              value: {{ include "lakehouse.fullname" . }}-pgbouncer
+            - name: PGUSER
+              value: {{ .Values.postgres.user | quote }}
+      containers:
+        - name: cube
+          image: {{ .Values.cube.image.repository }}:{{ .Values.cube.image.tag }}
+          imagePullPolicy: {{ .Values.cube.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 4000
+              protocol: TCP
+            - name: sql
+              containerPort: 15432
+              protocol: TCP
+          env:
+            - name: CUBEJS_DB_TYPE
+              value: postgres
+            - name: CUBEJS_DB_HOST
+              value: {{ include "lakehouse.fullname" . }}-pgbouncer
+            - name: CUBEJS_DB_PORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: CUBEJS_DB_NAME
+              value: {{ .Values.postgres.database | quote }}
+            - name: CUBEJS_DB_USER
+              value: {{ .Values.postgres.user | quote }}
+            - name: CUBEJS_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.passwordSecretName" . }}
+                  key: {{ include "lakehouse.passwordKey" . }}
+            - name: CUBEJS_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.fullname" . }}-cube
+                  key: jwt-secret
+            {{- if .Values.cube.jwt.jwksUrl }}
+            - name: CUBEJS_JWK_URL
+              value: {{ .Values.cube.jwt.jwksUrl | quote }}
+            {{- end }}
+            {{- if .Values.cube.jwt.audience }}
+            - name: CUBEJS_JWT_AUDIENCE
+              value: {{ .Values.cube.jwt.audience | quote }}
+            {{- end }}
+            {{- if .Values.cube.jwt.issuer }}
+            - name: CUBEJS_JWT_ISSUER
+              value: {{ .Values.cube.jwt.issuer | quote }}
+            {{- end }}
+            - name: CUBEJS_CACHE_AND_QUEUE_DRIVER
+              value: {{ .Values.cube.cache.driver | quote }}
+            - name: CUBEJS_CACHE_AND_QUEUE_EXTERNAL
+              value: {{ .Values.cube.cache.external | quote }}
+            - name: CUBEJS_CACHE_AND_QUEUE_EXTERNAL_TO_CUBEJS
+              value: {{ .Values.cube.cache.externalToCubeJS | quote }}
+            - name: CUBEJS_REFRESH_WORKER
+              value: {{ .Values.cube.refreshWorker | quote }}
+            - name: CUBEJS_SCHEDULED_REFRESH_TIMER
+              value: {{ .Values.cube.scheduledRefreshTimer | quote }}
+          volumeMounts:
+            - name: model
+              mountPath: /cube/model
+              readOnly: true
+          {{- with .Values.cube.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: model
+          configMap:
+            name: {{ include "lakehouse.fullname" . }}-cube-model
+{{- end }}

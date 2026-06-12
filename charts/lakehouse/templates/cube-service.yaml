@@ -1,0 +1,23 @@
+{{- if .Values.cube.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-cube
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cube
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
+      protocol: TCP
+    - name: sql
+      port: 15432
+      targetPort: 15432
+      protocol: TCP
+  selector:
+    {{- include "lakehouse.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: cube
+{{- end }}

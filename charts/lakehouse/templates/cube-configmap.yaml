@@ -1,0 +1,14 @@
+{{- if .Values.cube.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-cube-model
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cube
+data:
+{{- range $path, $content := .Values.cube.model }}
+  {{ $path }}: |
+    {{- $content | nindent 4 }}
+{{- end }}
+{{- end }}

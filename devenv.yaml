@@ -1,6 +1,4 @@
 inputs:
-  nixpkgs:
-    url: github:cachix/devenv-nixpkgs/rolling
   flake-utils:
     url: github:numtide/flake-utils
   flakes:
@@ -10,3 +8,10 @@ inputs:
         follows: nixpkgs
       utils:
         follows: flake-utils
+  git-hooks:
+    url: github:cachix/git-hooks.nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling

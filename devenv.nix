@@ -13,12 +13,12 @@ in
 
   name = "vardis/charts";
 
-  packages = with pkgs; [ helm just ];
+  packages = with pkgs; [
+    helm
+    just
+  ];
 
   scripts = {
-    lint.exec = "helm lint charts/*";
-    test.exec = "helm unittest charts/*";
-    check.exec = "helm lint charts/* && helm unittest charts/*";
     template.exec = "helm template $1 charts/$1";
     package.exec = "helm package charts/$1";
   };

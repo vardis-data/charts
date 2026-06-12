@@ -9,7 +9,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - name: Checkout
@@ -41,20 +41,36 @@ jobs:
             fi
           done
 
-      - name: Release changed charts
+      - name: Bump and release changed charts
         run: |
+          REGISTRY="oci://ghcr.io/${{ github.repository_owner }}/charts"
+          bumped=false
+
           for chart in $(ct list-changed --config ct.yaml); do
             name=$(basename "$chart")
             version=$(grep '^version:' "$chart/Chart.yaml" | awk '{print $2}')
-            echo "Checking $name $version..."
 
-            if helm show chart "oci://ghcr.io/${{ github.repository_owner }}/charts/${name}" --version "${version}" &>/dev/null; then
-              echo "Skipping $name $version: already exists"
-              continue
-            fi
+            while helm show chart "${REGISTRY}/${name}" --version "${version}" &>/dev/null; do
+              major=$(echo "$version" | cut -d. -f1)
+              minor=$(echo "$version" | cut -d. -f2)
+              patch=$(echo "$version" | cut -d. -f3)
+              patch=$((patch + 1))
+              version="${major}.${minor}.${patch}"
+              sed -i "s/^version:.*/version: ${version}/" "$chart/Chart.yaml"
+              bumped=true
+              echo "Bumped $name to $version"
+            done
 
             echo "Releasing $name $version..."
             helm dependency update "$chart"
             helm package "$chart"
-            helm push "${name}-${version}.tgz" "oci://ghcr.io/${{ github.repository_owner }}/charts"
+            helm push "${name}-${version}.tgz" "${REGISTRY}"
           done
+
+          if [ "$bumped" = true ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add charts/*/Chart.yaml
+            git commit -m "ci: bump chart versions [skip ci]"
+            git push
+          fi

@@ -78,8 +78,13 @@ spec:
               done
               echo "Database ready"
           env:
+            {{- if .Values.pgbouncer.enabled }}
+            - name: PGHOST
+              value: {{ include "lakehouse.fullname" . }}-pgbouncer
+            {{- else }}
             - name: PGHOST
               value: {{ include "lakehouse.fullname" . }}-replicas
+            {{- end }}
             - name: PGUSER
               value: {{ .Values.postgres.user | quote }}
       containers:

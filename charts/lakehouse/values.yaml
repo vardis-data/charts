@@ -307,6 +307,27 @@ maintenance:
         cpu: 1000m
         memory: 512Mi
 
+# -- PgBouncer: connection pooler between PostgREST and pg-duckdb
+# Transaction pooling multiplexes API connections into a small pool of real
+# PG connections, improving DuckDB cache reuse (fewer DuckDB instances).
+pgbouncer:
+  enabled: true
+  image:
+    repository: pgbouncer/pgbouncer
+    tag: "1.25.1"
+    pullPolicy: IfNotPresent
+  poolMode: transaction
+  defaultPoolSize: 20
+  maxClientConn: 200
+  serverIdleTimeout: 600
+  ignoreStartupParameters: extra_float_digits
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
 # -- PostgREST: exposes PostgreSQL views as a JSON REST API
 postgrest:
   enabled: false

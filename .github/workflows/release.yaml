@@ -1,12 +1,9 @@
 name: Release Charts
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
-    paths:
-      - "charts/**"
+    branches: [main]
+    paths: ["charts/**"]
 
 jobs:
   release:
@@ -17,28 +14,47 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      - name: Install helm-unittest
+        run: helm plugin install --verify=false https://github.com/helm-unittest/helm-unittest.git
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2
+
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Package and push charts
+      - name: Lint changed charts
+        run: ct lint --config ct.yaml
+
+      - name: Test changed charts
         run: |
-          for chart in charts/*; do
-            if [ -d "$chart" ]; then
-              chart_name=$(basename $chart)
-              chart_version=$(grep '^version:' $chart/Chart.yaml | awk '{print $2}')
-              echo "Processing chart: $chart_name ($chart_version)"
-
-              if helm show chart oci://ghcr.io/${{ github.repository_owner }}/charts/${chart_name} --version ${chart_version} &>/dev/null; then
-                echo "Skipping $chart_name $chart_version: already exists in registry"
-                continue
-              fi
-
-              helm dependency update $chart
-              helm package $chart
-              helm push ${chart_name}-${chart_version}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+          for chart in $(ct list-changed --config ct.yaml); do
+            if [ -d "${chart}/tests" ]; then
+              echo "Testing $chart..."
+              helm unittest "$chart"
             fi
+          done
+
+      - name: Release changed charts
+        run: |
+          for chart in $(ct list-changed --config ct.yaml); do
+            name=$(basename "$chart")
+            version=$(grep '^version:' "$chart/Chart.yaml" | awk '{print $2}')
+            echo "Checking $name $version..."
+
+            if helm show chart "oci://ghcr.io/${{ github.repository_owner }}/charts/${name}" --version "${version}" &>/dev/null; then
+              echo "Skipping $name $version: already exists"
+              continue
+            fi
+
+            echo "Releasing $name $version..."
+            helm dependency update "$chart"
+            helm package "$chart"
+            helm push "${name}-${version}.tgz" "oci://ghcr.io/${{ github.repository_owner }}/charts"
           done

@@ -1,17 +1,11 @@
 name: Build images
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - images/**
-      - .github/workflows/build-images.yaml
-  pull_request:
-    paths:
-      - images/**
-      - .github/workflows/build-images.yaml
   workflow_dispatch:
+    inputs:
+      reason:
+        description: "No images to build — workflow disabled"
+        required: false
 
 env:
   REGISTRY: ghcr.io

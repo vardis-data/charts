@@ -1,24 +1,17 @@
 apiVersion: v2
 name: lakehouse
-description: Iceberg lakehouse — Nessie catalog, pg-duckdb primary/replicas, PostgREST
+description: Lakehouse serving layer — ClickHouse query engine and Cube semantic layer
 type: application
-version: 1.0.0
+version: 2.0.0
 appVersion: "1.0"
-home: https://projectnessie.org
+home: https://clickhouse.com
 sources:
-  - https://github.com/projectnessie/nessie
-  - https://github.com/duckdb/pg_duckdb
+  - https://github.com/Altinity/clickhouse-operator
+  - https://github.com/cube-js/cube
 keywords:
-  - postgresql
-  - duckdb
-  - iceberg
-  - nessie
+  - clickhouse
+  - cube
   - analytics
-  - parquet
   - s3
   - lakehouse
-  - postgrest
-dependencies:
-  - name: common
-    version: 1.0.1
-    repository: oci://ghcr.io/vardis-data/charts
+dependencies: []

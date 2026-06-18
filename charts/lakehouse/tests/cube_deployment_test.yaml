@@ -1,0 +1,84 @@
+suite: cube deployment tests
+templates:
+  - templates/cube-deployment.yaml
+tests:
+  - it: should render cube deployment
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should have correct cube deployment name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-cube
+
+  - it: should not render when cube is disabled
+    set:
+      cube:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should use clickhouse as db type
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CUBEJS_DB_TYPE
+            value: clickhouse
+
+  - it: should connect to clickhouse on port 8123
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CUBEJS_DB_PORT
+            value: "8123"
+
+  - it: should set clickhouse host to chi service name
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CUBEJS_DB_HOST
+            value: RELEASE-NAME-lakehouse
+
+  - it: should have no initContainers
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+
+  - it: should enable scheduled refresh timer
+    set:
+      cube:
+        scheduledRefreshTimer: "true"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CUBEJS_SCHEDULED_REFRESH_TIMER
+            value: "true"
+
+  - it: should set pre-aggregations schema
+    set:
+      cube:
+        preAggregationsSchema: prod_pre_aggs
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CUBEJS_PRE_AGGREGATIONS_SCHEMA
+            value: prod_pre_aggs
+
+  - it: should set scheduled refresh timezones
+    set:
+      cube:
+        scheduledRefreshTimezones: America/Sao_Paulo
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CUBEJS_SCHEDULED_REFRESH_TIMEZONES
+            value: America/Sao_Paulo

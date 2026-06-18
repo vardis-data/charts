@@ -1,0 +1,101 @@
+suite: clickhouse tests
+templates:
+  - templates/clickhouse-installation.yaml
+  - templates/clickhouse-secret.yaml
+tests:
+  - it: should render ClickHouseInstallation
+    template: templates/clickhouse-installation.yaml
+    asserts:
+      - isKind:
+          of: ClickHouseInstallation
+      - isAPIVersion:
+          of: clickhouse.altinity.com/v1
+
+  - it: should have correct chi name
+    template: templates/clickhouse-installation.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse
+
+  - it: should configure single shard single replica cluster
+    template: templates/clickhouse-installation.yaml
+    asserts:
+      - equal:
+          path: spec.configuration.clusters[0].name
+          value: vardis
+      - equal:
+          path: spec.configuration.clusters[0].layout.shardsCount
+          value: 1
+      - equal:
+          path: spec.configuration.clusters[0].layout.replicasCount
+          value: 1
+
+  - it: should reference password from env var
+    template: templates/clickhouse-installation.yaml
+    asserts:
+      - exists:
+          path: spec.configuration.users["vardis/password_env_name"]
+      - equal:
+          path: spec.configuration.users["vardis/password_env_name"]
+          value: CLICKHOUSE_PASSWORD
+
+  - it: should set memory cap
+    template: templates/clickhouse-installation.yaml
+    set:
+      clickhouse:
+        maxServerMemoryUsage: "8589934592"
+    asserts:
+      - equal:
+          path: spec.configuration.settings.max_server_memory_usage
+          value: "8589934592"
+
+  - it: should include s3 storage config
+    template: templates/clickhouse-installation.yaml
+    set:
+      s3:
+        endpoint: nbg1.your-objectstorage.com
+        bucket: vardis-datalake
+        region: nbg1
+    asserts:
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "nbg1.your-objectstorage.com"
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "vardis-datalake"
+
+  - it: should not render when clickhouse is disabled
+    template: templates/clickhouse-installation.yaml
+    set:
+      clickhouse:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render clickhouse secret when no existingSecret
+    template: templates/clickhouse-secret.yaml
+    set:
+      clickhouse:
+        password: "supersecret"
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-clickhouse
+      - equal:
+          path: stringData.password
+          value: "supersecret"
+
+  - it: should not render secret when existingSecret is set
+    template: templates/clickhouse-secret.yaml
+    set:
+      clickhouse:
+        existingSecret:
+          name: my-existing-secret
+          key: password
+    asserts:
+      - hasDocuments:
+          count: 0

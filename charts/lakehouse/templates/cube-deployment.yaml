@@ -26,26 +26,9 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      initContainers:
-        - name: wait-for-db
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["bash", "-c"]
-          args:
-            - |
-              until pg_isready -h "$PGHOST" -U "$PGUSER"; do
-                echo "Waiting for pgbouncer..."
-                sleep 3
-              done
-              echo "Database ready"
-          env:
-            - name: PGHOST
-              value: {{ include "lakehouse.fullname" . }}-pgbouncer
-            - name: PGUSER
-              value: {{ .Values.postgres.user | quote }}
       containers:
         - name: cube
-          image: {{ .Values.cube.image.repository }}:{{ .Values.cube.image.tag }}
+          image: "{{ .Values.cube.image.repository }}:{{ .Values.cube.image.tag }}"
           imagePullPolicy: {{ .Values.cube.image.pullPolicy }}
           ports:
             - name: http
@@ -56,24 +39,24 @@ spec:
               protocol: TCP
           env:
             - name: CUBEJS_DB_TYPE
-              value: postgres
+              value: clickhouse
             - name: CUBEJS_DB_HOST
-              value: {{ include "lakehouse.fullname" . }}-pgbouncer
+              value: {{ include "lakehouse.clickhouse.host" . }}
             - name: CUBEJS_DB_PORT
-              value: {{ .Values.postgres.port | quote }}
+              value: "8123"
             - name: CUBEJS_DB_NAME
-              value: {{ .Values.postgres.database | quote }}
+              value: {{ .Values.clickhouse.database | quote }}
             - name: CUBEJS_DB_USER
-              value: {{ .Values.postgres.user | quote }}
+              value: {{ .Values.clickhouse.user | quote }}
             - name: CUBEJS_DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lakehouse.passwordSecretName" . }}
-                  key: {{ include "lakehouse.passwordKey" . }}
+                  name: {{ include "lakehouse.clickhouse.secretName" . }}
+                  key: {{ include "lakehouse.clickhouse.secretKey" . }}
             - name: CUBEJS_API_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lakehouse.fullname" . }}-cube
+                  name: {{ include "lakehouse.cube.jwtSecretName" . }}
                   key: jwt-secret
             {{- if .Values.cube.jwt.jwksUrl }}
             - name: CUBEJS_JWK_URL
@@ -97,6 +80,14 @@ spec:
               value: {{ .Values.cube.refreshWorker | quote }}
             - name: CUBEJS_SCHEDULED_REFRESH_TIMER
               value: {{ .Values.cube.scheduledRefreshTimer | quote }}
+            {{- if .Values.cube.preAggregationsSchema }}
+            - name: CUBEJS_PRE_AGGREGATIONS_SCHEMA
+              value: {{ .Values.cube.preAggregationsSchema | quote }}
+            {{- end }}
+            {{- if .Values.cube.scheduledRefreshTimezones }}
+            - name: CUBEJS_SCHEDULED_REFRESH_TIMEZONES
+              value: {{ .Values.cube.scheduledRefreshTimezones | quote }}
+            {{- end }}
             - name: CUBEJS_MODEL_PATH
               value: "/cube/model"
           volumeMounts:

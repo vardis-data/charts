@@ -1,4 +1,4 @@
-from sys import exit
+import sys
 
 from httpx import ConnectError, HTTPStatusError, get
 from loguru import logger
@@ -19,10 +19,10 @@ def main() -> None:
         _ = get(f"{settings.nessie_uri}/v2/namespaces").raise_for_status()
     except ConnectError:
         logger.error("Nessie catalog is not reachable")
-        exit(1)
+        sys.exit(1)
     except HTTPStatusError as e:
         logger.error(f"Nessie catalog returned {e.response.status_code}")
-        exit(1)
+        sys.exit(1)
 
     logger.info("Nessie catalog is healthy")
 
@@ -30,7 +30,7 @@ def main() -> None:
         run(settings)
     except Exception:
         logger.exception("Maintenance failed")
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

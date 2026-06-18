@@ -99,7 +99,6 @@ def run(settings: Settings) -> None:
     catalog = build_catalog(settings)
     namespaces = catalog.list_namespaces()
     logger.info(f"Found {len(namespaces)} namespace(s)")
-
     all_tables = [table for ns in namespaces for table in catalog.list_tables(ns)]
     total_snapshots = sum(process_table(tid, catalog, cutoff, settings.dry_run) for tid in all_tables)
     logger.info(f"Done. Expired {total_snapshots} snapshot(s)")

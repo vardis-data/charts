@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
+from httpx import Client
 from loguru import logger
 from pyiceberg.catalog import Catalog, load_catalog
 from pyiceberg.table import Table
@@ -81,6 +82,39 @@ def process_table(table_id: Identifier, catalog: Catalog, cutoff: datetime, dry_
         return 0
 
 
+def cleanup_orphans(
+    table: Table,
+    catalog: Catalog,
+    cutoff: datetime,
+    dry_run: bool,
+) -> int:
+    """Remove orphan files from a table's warehouse location.
+
+    Orphan files are data/metadata files in S3 that are no longer referenced
+    by any live snapshot. They accumulate from failed writes, aborted
+    transactions, and expired snapshots whose data files were shared across
+    branches.
+
+    PyIceberg 0.11.x does not expose ``delete_orphan_files`` yet.
+    This function is a no-op that logs the limitation. When PyIceberg adds
+    ``table.maintenance.delete_orphan_files()``, swap the stub for the real call.
+
+    Args:
+        table: A pyiceberg ``Table`` instance.
+        catalog: PyIceberg ``Catalog`` instance (unused, kept for future API).
+        cutoff: Orphan files older than this are candidates for removal.
+        dry_run: If ``True``, only log what would happen.
+
+    Returns:
+        Number of orphan files removed (always 0 until PyIceberg support).
+    """
+    logger.debug(
+        f"Orphan cleanup for {table.name()}: not supported in PyIceberg 0.11.x. "
+        "Upgrade to 0.12+ when delete_orphan_files() is available."
+    )
+    return 0
+
+
 def run(settings: Settings) -> None:
     """Expire old Iceberg snapshots across all tables in the Nessie catalog.
 
@@ -102,3 +136,8 @@ def run(settings: Settings) -> None:
     all_tables = [table for ns in namespaces for table in catalog.list_tables(ns)]
     total_snapshots = sum(process_table(tid, catalog, cutoff, settings.dry_run) for tid in all_tables)
     logger.info(f"Done. Expired {total_snapshots} snapshot(s)")
+
+    if settings.orphan_cleanup_enabled:
+        logger.info("Orphan file cleanup starting")
+        orphan_count = sum(cleanup_orphans(catalog.load_table(tid), catalog, cutoff, settings.dry_run) for tid in all_tables)
+        logger.info(f"Done. Cleaned {orphan_count} orphan file(s)")

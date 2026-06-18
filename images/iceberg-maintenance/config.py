@@ -31,3 +31,5 @@ class Settings(BaseSettings):
     """S3 access key ID."""
     s3_secret_access_key: SecretStr = SecretStr("")
     """S3 secret access key."""
+    orphan_cleanup_enabled: bool = True
+    """Whether to remove orphan files after snapshot expiration."""

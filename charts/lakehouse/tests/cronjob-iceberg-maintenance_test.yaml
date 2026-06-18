@@ -50,6 +50,27 @@ tests:
             name: ICEBERG_DRY_RUN
             value: "true"
 
+  - it: should set orphan cleanup enabled by default
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: ICEBERG_ORPHAN_CLEANUP_ENABLED
+            value: "true"
+
+  - it: should respect orphan cleanup disabled
+    set:
+      maintenance:
+        iceberg:
+          orphanCleanup:
+            enabled: false
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: ICEBERG_ORPHAN_CLEANUP_ENABLED
+            value: "false"
+
   - it: should set S3 path style from values
     set:
       s3:

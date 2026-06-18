@@ -375,6 +375,8 @@ maintenance:
     schedule: "0 3 * * 0"
     retentionDays: 30
     dryRun: false
+    orphanCleanup:
+      enabled: true
     image:
       repository: ghcr.io/vardis-data/iceberg-maintenance
       tag: "main"

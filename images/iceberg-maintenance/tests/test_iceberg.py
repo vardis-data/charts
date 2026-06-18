@@ -7,7 +7,19 @@ from pyiceberg.catalog import Catalog
 from pyiceberg.table import Table
 
 from config import Settings
-from maintenance.iceberg import build_catalog, expire_table, process_table
+from maintenance.iceberg import build_catalog, cleanup_orphans, expire_table, process_table
+
+
+class TestCleanupOrphans:
+    def test_returns_zero(self, table: MagicMock, catalog: MagicMock, cutoff: datetime) -> None:
+        result = cleanup_orphans(cast(Table, table), cast(Catalog, catalog), cutoff, dry_run=False)
+        assert result == 0
+
+    def test_logs_limitation(self, table: MagicMock, cutoff: datetime) -> None:
+        cat = MagicMock(spec=Catalog)
+        with patch("maintenance.iceberg.logger") as mock_logger:
+            cleanup_orphans(cast(Table, table), cast(Catalog, cat), cutoff, dry_run=False)
+        mock_logger.debug.assert_called()
 
 
 class TestBuildCatalog:

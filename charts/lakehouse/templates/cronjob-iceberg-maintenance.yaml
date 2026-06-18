@@ -36,6 +36,8 @@ spec:
                   value: {{ .Values.maintenance.iceberg.retentionDays | quote }}
                 - name: ICEBERG_DRY_RUN
                   value: {{ .Values.maintenance.iceberg.dryRun | quote }}
+                - name: ICEBERG_ORPHAN_CLEANUP_ENABLED
+                  value: {{ .Values.maintenance.iceberg.orphanCleanup.enabled | quote }}
                 - name: ICEBERG_S3_ENDPOINT
                   value: {{ .Values.maintenance.iceberg.s3.endpoint | quote }}
                 - name: ICEBERG_S3_REGION

@@ -30,6 +30,7 @@ jobs:
     needs: matrix
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         image: ${{ fromJson(needs.matrix.outputs.images) }}
     permissions:

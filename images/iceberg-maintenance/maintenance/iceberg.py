@@ -99,11 +99,8 @@ def cleanup_orphans(table: Table) -> int:
     Returns:
         Number of orphan files removed (always 0 until PyIceberg support).
     """
-    logger.debug(
-        f"Orphan cleanup for {table.name()}: not supported in "
-        "PyIceberg 0.11.x. Upgrade to 0.12+ when "
-        "delete_orphan_files() is available."
-    )
+    msg = f"Orphan cleanup for {table.name()}: not supported in PyIceberg 0.11.x. Upgrade to 0.12+ when delete_orphan_files() is available."
+    logger.debug(msg)
     return 0
 
 

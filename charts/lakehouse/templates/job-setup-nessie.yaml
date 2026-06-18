@@ -60,7 +60,7 @@ spec:
               echo "Nessie setup complete."
           env:
             - name: PGHOST
-              value: {{ include "lakehouse.metadata.host" . }}
+              value: {{ include "lakehouse.metadata.host" . | quote }}
             - name: PGPORT
               value: {{ include "lakehouse.metadata.port" . | quote }}
             - name: PGDATABASE
@@ -70,8 +70,8 @@ spec:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lakehouse.nessiePasswordSecretName" . }}
-                  key: {{ include "lakehouse.nessiePasswordKey" . }}
+                  name: {{ include "lakehouse.nessiePasswordSecretName" . | quote }}
+                  key: {{ include "lakehouse.nessiePasswordKey" . | quote }}
             - name: NESSIE_USER
               value: {{ .Values.nessie.postgres.user | quote }}
             - name: NESSIE_DB
@@ -79,5 +79,5 @@ spec:
             - name: NESSIE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lakehouse.nessiePasswordSecretName" . }}
-                  key: {{ include "lakehouse.nessiePasswordKey" . }}
+                  name: {{ include "lakehouse.nessiePasswordSecretName" . | quote }}
+                  key: {{ include "lakehouse.nessiePasswordKey" . | quote }}

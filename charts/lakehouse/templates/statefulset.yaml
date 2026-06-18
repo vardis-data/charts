@@ -75,8 +75,8 @@ spec:
             - name: NESSIE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lakehouse.nessiePasswordSecretName" . }}
-                  key: {{ include "lakehouse.nessiePasswordKey" . }}
+                  name: {{ include "lakehouse.nessiePasswordSecretName" . | quote }}
+                  key: {{ include "lakehouse.nessiePasswordKey" . | quote }}
             {{- include "lakehouse.env" . | nindent 12 }}
           volumeMounts:
             {{- include "lakehouse.volumeMounts" . | nindent 12 }}

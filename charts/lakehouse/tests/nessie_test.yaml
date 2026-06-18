@@ -48,14 +48,16 @@ tests:
             name: NESSIE_VERSION_STORE_TYPE
             value: JDBC
 
-  - it: should set JDBC URL pointing to primary postgres
+  - it: should set JDBC URL pointing to metadata postgres
     template: templates/nessie-deployment.yaml
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
             name: QUARKUS_DATASOURCE_JDBC_URL
-            value: "jdbc:postgresql://RELEASE-NAME-lakehouse:5432/nessie"
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=='QUARKUS_DATASOURCE_JDBC_URL')].value
+          pattern: ".*jdbc:postgresql://RELEASE-NAME-lakehouse-metadata:5432/vardis_metadata"
 
   - it: should set nessie postgres user
     template: templates/nessie-deployment.yaml
@@ -64,7 +66,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: QUARKUS_DATASOURCE_USERNAME
-            value: "nessie"
+            value: "vardis"
 
   - it: should set default branch
     template: templates/nessie-deployment.yaml
@@ -183,7 +185,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: NESSIE_USER
-            value: "nessie"
+            value: "vardis"
 
   - it: setup-nessie job should set NESSIE_DB env from values
     template: templates/job-setup-nessie.yaml
@@ -192,7 +194,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: NESSIE_DB
-            value: "nessie"
+            value: "vardis_metadata"
 
   - it: setup-nessie job should read NESSIE_PASSWORD from existing secret
     template: templates/job-setup-nessie.yaml

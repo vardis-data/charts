@@ -93,19 +93,19 @@ password
 - name: POSTGRES_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: {{ include "lakehouse.passwordSecretName" . }}
-      key: {{ include "lakehouse.passwordKey" . }}
+      name: {{ include "lakehouse.passwordSecretName" . | quote }}
+      key: {{ include "lakehouse.passwordKey" . | quote }}
 {{- if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}
 - name: S3_ACCESS_KEY_ID
   valueFrom:
     secretKeyRef:
-      name: {{ include "lakehouse.s3SecretName" . }}
-      key: {{ include "lakehouse.s3AccessKeyIdKey" . }}
+      name: {{ include "lakehouse.s3SecretName" . | quote }}
+      key: {{ include "lakehouse.s3AccessKeyIdKey" . | quote }}
 - name: S3_SECRET_ACCESS_KEY
   valueFrom:
     secretKeyRef:
-      name: {{ include "lakehouse.s3SecretName" . }}
-      key: {{ include "lakehouse.s3SecretAccessKeyKey" . }}
+      name: {{ include "lakehouse.s3SecretName" . | quote }}
+      key: {{ include "lakehouse.s3SecretAccessKeyKey" . | quote }}
 {{- end }}
 {{- end }}
 
@@ -118,6 +118,34 @@ password
 {{- $libs := prepend .Values.extensions.sharedPreloadLibraries "pg_duckdb" | uniq }}
 - "-c"
 - "shared_preload_libraries={{ join "," $libs }}"
+{{- end }}
+
+{{- define "lakehouse.nessieExtraEnv" -}}
+{{- if .Values.nessie.warehouseLocation }}
+- name: NESSIE_CATALOG_WAREHOUSES__{{ .Values.nessie.warehouseName | upper }}__LOCATION
+  value: {{ .Values.nessie.warehouseLocation | quote }}
+{{ end }}
+{{ if .Values.s3.region }}
+- name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_REGION
+  value: {{ .Values.s3.region | quote }}
+{{ end }}
+{{ if .Values.s3.endpoint }}
+- name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_ENDPOINT
+  value: "https://{{ .Values.s3.endpoint }}"
+{{ end }}
+{{ if eq .Values.s3.urlStyle "path" }}
+- name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_PATH_STYLE_ACCESS
+  value: "true"
+{{ end }}
+{{ if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}
+- name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_ACCESS_KEY
+  value: "urn:nessie-secret:quarkus:s3-credentials"
+- name: S3_CREDENTIALS
+  valueFrom:
+    secretKeyRef:
+      name: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.name | quote }}{{ else }}{{ include "lakehouse.fullname" . | quote }}{{ end }}
+      key: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.keys.credentials | quote }}{{ else }}"s3Credentials"{{ end }}
+{{ end }}
 {{- end }}
 
 {{- define "lakehouse.probes" -}}

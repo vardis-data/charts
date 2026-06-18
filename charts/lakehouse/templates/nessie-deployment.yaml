@@ -59,37 +59,13 @@ spec:
             - name: QUARKUS_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "lakehouse.nessiePasswordSecretName" . }}
-                  key: {{ include "lakehouse.nessiePasswordKey" . }}
+                  name: {{ include "lakehouse.nessiePasswordSecretName" . | quote }}
+                  key: {{ include "lakehouse.nessiePasswordKey" . | quote }}
             - name: NESSIE_DEFAULT_BRANCH
               value: {{ .Values.nessie.defaultBranch | quote }}
             - name: NESSIE_CATALOG_DEFAULT_WAREHOUSE
               value: {{ .Values.nessie.warehouseName | quote }}
-            {{- if .Values.nessie.warehouseLocation }}
-            - name: NESSIE_CATALOG_WAREHOUSES__{{ .Values.nessie.warehouseName | upper }}__LOCATION
-              value: {{ .Values.nessie.warehouseLocation | quote }}
-            {{- end }}
-            {{- if .Values.s3.region }}
-            - name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_REGION
-              value: {{ .Values.s3.region | quote }}
-            {{- end }}
-            {{- if .Values.s3.endpoint }}
-            - name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_ENDPOINT
-              value: "https://{{ .Values.s3.endpoint }}"
-            {{- end }}
-            {{- if eq .Values.s3.urlStyle "path" }}
-            - name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_PATH_STYLE_ACCESS
-              value: "true"
-            {{- end }}
-            {{- if or .Values.s3.accessKeyId .Values.s3.existingSecret.name }}
-            - name: NESSIE_CATALOG_SERVICE_S3_DEFAULT_OPTIONS_ACCESS_KEY
-              value: "urn:nessie-secret:quarkus:s3-credentials"
-            - name: S3_CREDENTIALS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.name }}{{ else }}{{ include "lakehouse.fullname" . }}{{ end }}
-                  key: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.keys.credentials }}{{ else }}s3Credentials{{ end }}
-            {{- end }}
+            {{- include "lakehouse.nessieExtraEnv" . | indent 12 }}
           livenessProbe:
             httpGet:
               path: /q/health/live

@@ -97,6 +97,8 @@ spec:
               value: {{ .Values.cube.refreshWorker | quote }}
             - name: CUBEJS_SCHEDULED_REFRESH_TIMER
               value: {{ .Values.cube.scheduledRefreshTimer | quote }}
+            - name: CUBEJS_MODEL_PATH
+              value: "/cube/model"
           volumeMounts:
             - name: model
               mountPath: /cube/model

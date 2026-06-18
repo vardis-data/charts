@@ -164,8 +164,8 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
-    { name = "pytest-mock" },
     { name = "ruff" },
+    { name = "types-mock" },
 ]
 
 [package.metadata]
@@ -180,8 +180,8 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-mock", specifier = ">=3.14" },
     { name = "ruff", specifier = ">=0.11.0" },
+    { name = "types-mock", specifier = ">=5.0" },
 ]
 
 [[package]]
@@ -456,18 +456,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pytest-mock"
-version = "3.15.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pytest" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
-]
-
-[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -569,6 +557,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/47/c6/ee486fd809e357697ee8a44d3d69222b344920433d3b6666ccd9b374630c/tenacity-9.1.4.tar.gz", hash = "sha256:adb31d4c263f2bd041081ab33b498309a57c77f9acf2db65aadf0898179cf93a", size = 49413, upload-time = "2026-02-07T10:45:33.841Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/c1/eb8f9debc45d3b7918a32ab756658a0904732f75e555402972246b0b8e71/tenacity-9.1.4-py3-none-any.whl", hash = "sha256:6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55", size = 28926, upload-time = "2026-02-07T10:45:32.24Z" },
+]
+
+[[package]]
+name = "types-mock"
+version = "5.2.0.20260518"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/a4/26595e2a9407752c2e3cd5b17d7884db847e39834a2575cf15b5c3b19a27/types_mock-5.2.0.20260518.tar.gz", hash = "sha256:49af9c18aac4caa90e0e1e8437e2160cd8b3f126053dae6453d65b393590fcf9", size = 11577, upload-time = "2026-05-18T06:02:42.607Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/d6/da3bf7cc26ebe587e8c50a505d302f5755840fc24fbbd704b770c43b764b/types_mock-5.2.0.20260518-py3-none-any.whl", hash = "sha256:3c511875b6f37d30c70add3e72265d1c21202b8544751361e3ca94f7a757a03d", size = 10459, upload-time = "2026-05-18T06:02:41.224Z" },
 ]
 
 [[package]]

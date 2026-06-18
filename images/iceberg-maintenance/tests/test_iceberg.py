@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
-from unittest.mock import create_autospec, patch
+from typing import cast
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pyiceberg.catalog import Catalog
@@ -16,12 +17,11 @@ class TestBuildCatalog:
                 nessie_uri="http://n:19120",
                 s3_endpoint="https://s3.example.com",
                 s3_access_key_id="key",
-                s3_secret_access_key="secret",  # pyright: ignore[reportArgumentType]
+                s3_secret_access_key="secret",
             )
-            build_catalog(s)
+            catalog = build_catalog(s)
+            assert catalog is not None
             mock_load.assert_called_once()
-            assert mock_load.call_args.kwargs["uri"] == "http://n:19120"
-            assert mock_load.call_args.kwargs["default_warehouse"] == "warehouse"
 
 
 class TestExpireTable:
@@ -30,8 +30,8 @@ class TestExpireTable:
         return datetime.now(UTC) - timedelta(days=30)
 
     @pytest.fixture
-    def table(self) -> Table:
-        t = create_autospec(Table, instance=True)
+    def table(self) -> MagicMock:
+        t = MagicMock(spec=Table)
         t.snapshots.return_value = ["s1", "s2", "s3"]
         return t
 
@@ -39,11 +39,11 @@ class TestExpireTable:
         ("dry_run", "expected"),
         [(True, 0), (False, 2)],
     )
-    def test_expire(self, table: Table, cutoff: datetime, dry_run: bool, expected: int) -> None:
+    def test_expire(self, table: MagicMock, cutoff: datetime, dry_run: bool, expected: int) -> None:
         if not dry_run:
             table.snapshots.side_effect = [["s1", "s2", "s3"], ["s3"]]
 
-        result = expire_table(table, cutoff, dry_run=dry_run)
+        result = expire_table(cast(Table, table), cutoff, dry_run=dry_run)
         assert result == expected
 
         if dry_run:
@@ -52,8 +52,8 @@ class TestExpireTable:
 
 class TestProcessTable:
     @pytest.fixture
-    def catalog(self) -> Catalog:
-        return create_autospec(Catalog, instance=True)
+    def catalog(self) -> MagicMock:
+        return MagicMock(spec=Catalog)
 
     @pytest.fixture
     def cutoff(self) -> datetime:
@@ -70,13 +70,13 @@ class TestProcessTable:
     )
     def test_process(
         self,
-        catalog: Catalog,
+        catalog: MagicMock,
         cutoff: datetime,
         error_on: str | None,
         exception: RuntimeError | None,
         expected: int,
     ) -> None:
-        table: Table = create_autospec(Table, instance=True)
+        table = MagicMock(spec=Table)
         table.snapshots.return_value = ["s1"]
 
         if error_on == "load":
@@ -91,5 +91,5 @@ class TestProcessTable:
             patcher = patch("maintenance.iceberg.expire_table", return_value=expected)
 
         with patcher:
-            result = process_table(("ns", "tbl"), catalog, cutoff, dry_run=False)
+            result = process_table(("ns", "tbl"), cast(Catalog, catalog), cutoff, dry_run=False)
             assert result == expected

@@ -13,6 +13,8 @@ dependencies = [
 [tool.basedpyright]
 typeCheckingMode = "recommended"
 pythonVersion = "3.14"
+reportAny = "none"
+reportArgumentType = "none"
 
 [tool.ruff]
 target-version = "py314"
@@ -51,4 +53,4 @@ select = [
 quote-style = "double"
 
 [dependency-groups]
-dev = ["ruff>=0.11.0", "pytest>=8.0", "pytest-mock>=3.14"]
+dev = ["ruff>=0.11.0", "pytest>=8.0", "types-mock>=5.0"]

@@ -1,0 +1,37 @@
+suite: homepage tests
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: should render deployment
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-homepage
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/gethomepage/homepage:v0.10.9"
+
+  - it: should have correct container port
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 3000
+
+  - it: should respect replica count
+    set:
+      replicaCount: 2
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+
+  - it: should mount configmap as volume
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: RELEASE-NAME-homepage

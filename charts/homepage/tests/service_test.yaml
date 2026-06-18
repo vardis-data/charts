@@ -1,0 +1,14 @@
+suite: homepage tests
+templates:
+  - templates/service.yaml
+tests:
+  - it: should render service
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-homepage
+      - equal:
+          path: spec.ports[0].port
+          value: 3000

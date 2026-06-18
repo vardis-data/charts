@@ -1,0 +1,11 @@
+suite: homepage tests
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should render configmap
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-homepage

@@ -1,0 +1,59 @@
+{{- if .Values.maintenance.iceberg.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-iceberg-maintenance
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.maintenance.iceberg.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "lakehouse.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: iceberg-maintenance
+              image: "{{ .Values.maintenance.iceberg.image.repository }}:{{ .Values.maintenance.iceberg.image.tag }}"
+              imagePullPolicy: {{ .Values.maintenance.iceberg.image.pullPolicy }}
+              env:
+                - name: ICEBERG_NESSIE_URI
+                  value: "http://{{ include "lakehouse.fullname" . }}-nessie:{{ .Values.nessie.port }}"
+                - name: ICEBERG_WAREHOUSE
+                  value: {{ .Values.nessie.warehouseName | quote }}
+                - name: ICEBERG_RETENTION_DAYS
+                  value: {{ .Values.maintenance.iceberg.retentionDays | quote }}
+                - name: ICEBERG_DRY_RUN
+                  value: {{ .Values.maintenance.iceberg.dryRun | quote }}
+                - name: ICEBERG_S3_ENDPOINT
+                  value: {{ .Values.maintenance.iceberg.s3.endpoint | quote }}
+                - name: ICEBERG_S3_REGION
+                  value: {{ .Values.s3.region | quote }}
+                - name: ICEBERG_S3_PATH_STYLE
+                  value: {{ .Values.s3.urlStyle | eq "path" | quote }}
+                - name: ICEBERG_S3_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.name }}{{ else }}{{ include "lakehouse.fullname" . }}{{ end }}
+                      key: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.keys.accessKeyId }}{{ else }}s3AccessKeyId{{ end }}
+                - name: ICEBERG_S3_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.name }}{{ else }}{{ include "lakehouse.fullname" . }}{{ end }}
+                      key: {{ if .Values.s3.existingSecret.name }}{{ .Values.s3.existingSecret.keys.secretAccessKey }}{{ else }}s3SecretAccessKey{{ end }}
+              {{- with .Values.maintenance.iceberg.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+{{- end }}

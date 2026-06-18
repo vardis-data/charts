@@ -370,6 +370,24 @@ maintenance:
       limits:
         cpu: 1000m
         memory: 512Mi
+  iceberg:
+    enabled: true
+    schedule: "0 3 * * 0"
+    retentionDays: 30
+    dryRun: false
+    image:
+      repository: ghcr.io/vardis-data/iceberg-maintenance
+      tag: "main"
+      pullPolicy: IfNotPresent
+    s3:
+      endpoint: ""
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
 
 # -- PgBouncer: connection pooler between PostgREST and pg-duckdb
 # Transaction pooling multiplexes API connections into a small pool of real

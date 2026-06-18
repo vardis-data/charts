@@ -11,14 +11,13 @@ from maintenance.iceberg import build_catalog, cleanup_orphans, expire_table, pr
 
 
 class TestCleanupOrphans:
-    def test_returns_zero(self, table: MagicMock, catalog: MagicMock, cutoff: datetime) -> None:
-        result = cleanup_orphans(cast(Table, table), cast(Catalog, catalog), cutoff, dry_run=False)
+    def test_returns_zero(self, table: MagicMock) -> None:
+        result = cleanup_orphans(cast(Table, table))
         assert result == 0
 
-    def test_logs_limitation(self, table: MagicMock, cutoff: datetime) -> None:
-        cat = MagicMock(spec=Catalog)
+    def test_logs_limitation(self, table: MagicMock) -> None:
         with patch("maintenance.iceberg.logger") as mock_logger:
-            cleanup_orphans(cast(Table, table), cast(Catalog, cat), cutoff, dry_run=False)
+            cleanup_orphans(cast(Table, table))
         mock_logger.debug.assert_called()
 
 

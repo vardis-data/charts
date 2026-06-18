@@ -1,6 +1,5 @@
 from datetime import UTC, datetime, timedelta
 
-from httpx import Client
 from loguru import logger
 from pyiceberg.catalog import Catalog, load_catalog
 from pyiceberg.table import Table
@@ -82,12 +81,7 @@ def process_table(table_id: Identifier, catalog: Catalog, cutoff: datetime, dry_
         return 0
 
 
-def cleanup_orphans(
-    table: Table,
-    catalog: Catalog,
-    cutoff: datetime,
-    dry_run: bool,
-) -> int:
+def cleanup_orphans(table: Table) -> int:
     """Remove orphan files from a table's warehouse location.
 
     Orphan files are data/metadata files in S3 that are no longer referenced
@@ -101,16 +95,14 @@ def cleanup_orphans(
 
     Args:
         table: A pyiceberg ``Table`` instance.
-        catalog: PyIceberg ``Catalog`` instance (unused, kept for future API).
-        cutoff: Orphan files older than this are candidates for removal.
-        dry_run: If ``True``, only log what would happen.
 
     Returns:
         Number of orphan files removed (always 0 until PyIceberg support).
     """
     logger.debug(
-        f"Orphan cleanup for {table.name()}: not supported in PyIceberg 0.11.x. "
-        "Upgrade to 0.12+ when delete_orphan_files() is available."
+        f"Orphan cleanup for {table.name()}: not supported in "
+        "PyIceberg 0.11.x. Upgrade to 0.12+ when "
+        "delete_orphan_files() is available."
     )
     return 0
 
@@ -139,5 +131,5 @@ def run(settings: Settings) -> None:
 
     if settings.orphan_cleanup_enabled:
         logger.info("Orphan file cleanup starting")
-        orphan_count = sum(cleanup_orphans(catalog.load_table(tid), catalog, cutoff, settings.dry_run) for tid in all_tables)
+        orphan_count = sum(cleanup_orphans(catalog.load_table(tid)) for tid in all_tables)
         logger.info(f"Done. Cleaned {orphan_count} orphan file(s)")

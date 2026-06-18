@@ -1,0 +1,17 @@
+suite: nginx-s3-gateway tests
+templates:
+  - templates/service.yaml
+tests:
+  - it: should render service
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-nginx-s3-gateway
+
+  - it: should expose port 80
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 80

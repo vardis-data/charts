@@ -1,0 +1,93 @@
+suite: cube configmap tests
+templates:
+  - templates/cube-configmap.yaml
+tests:
+  - it: should render cube model configmap
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-lakehouse-cube-model
+      - matchRegex:
+          path: metadata.labels["app.kubernetes.io/component"]
+          pattern: cube
+
+  - it: should not render when cube is disabled
+    set:
+      cube:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should contain cubes.yaml model file
+    set:
+      cube:
+        model:
+          cubes.yaml: |
+            cubes:
+              - name: eventos_mensais
+    asserts:
+      - exists:
+          path: data["cubes.yaml"]
+      - matchRegex:
+          path: data["cubes.yaml"]
+          pattern: "eventos_mensais"
+
+  - it: should contain procedimentos_mensais cube
+    set:
+      cube:
+        model:
+          cubes.yaml: |
+            cubes:
+              - name: procedimentos_mensais
+    asserts:
+      - matchRegex:
+          path: data["cubes.yaml"]
+          pattern: "procedimentos_mensais"
+
+  - it: should contain total_valor_pago measure
+    set:
+      cube:
+        model:
+          cubes.yaml: |
+            cubes:
+              - name: procedimentos_mensais
+                measures:
+                  - name: total_valor_pago
+                    type: sum
+    asserts:
+      - matchRegex:
+          path: data["cubes.yaml"]
+          pattern: "total_valor_pago"
+
+  - it: should contain join relationships
+    set:
+      cube:
+        model:
+          cubes.yaml: |
+            cubes:
+              - name: eventos_mensais
+                joins:
+                  - name: procedimentos_mensais
+                    relationship: hasMany
+    asserts:
+      - matchRegex:
+          path: data["cubes.yaml"]
+          pattern: "hasMany"
+
+  - it: should support multiple model files
+    set:
+      cube:
+        model:
+          cubes.yaml: |
+            cubes:
+              - name: eventos_mensais
+          migrations.yaml: |
+            {}
+    asserts:
+      - exists:
+          path: data["cubes.yaml"]
+      - exists:
+          path: data["migrations.yaml"]

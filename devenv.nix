@@ -18,6 +18,12 @@ in
     just
   ];
 
+  languages.python = {
+    enable = true;
+    version = "3.14";
+    uv.enable = true;
+  };
+
   scripts = {
     template.exec = "helm template $1 charts/$1";
     package.exec = "helm package charts/$1";

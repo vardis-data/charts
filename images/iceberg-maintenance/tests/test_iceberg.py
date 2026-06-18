@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 from typing import cast
 from unittest.mock import MagicMock, patch
 
@@ -25,16 +25,6 @@ class TestBuildCatalog:
 
 
 class TestExpireTable:
-    @pytest.fixture
-    def cutoff(self) -> datetime:
-        return datetime.now(UTC) - timedelta(days=30)
-
-    @pytest.fixture
-    def table(self) -> MagicMock:
-        t = MagicMock(spec=Table)
-        t.snapshots.return_value = ["s1", "s2", "s3"]
-        return t
-
     @pytest.mark.parametrize(
         ("dry_run", "expected"),
         [(True, 0), (False, 2)],
@@ -51,14 +41,6 @@ class TestExpireTable:
 
 
 class TestProcessTable:
-    @pytest.fixture
-    def catalog(self) -> MagicMock:
-        return MagicMock(spec=Catalog)
-
-    @pytest.fixture
-    def cutoff(self) -> datetime:
-        return datetime.now(UTC)
-
     @pytest.mark.parametrize(
         ("error_on", "exception", "expected"),
         [
@@ -85,6 +67,7 @@ class TestProcessTable:
             catalog.load_table.return_value = table
 
         patcher: object
+
         if error_on == "expire":
             patcher = patch("maintenance.iceberg.expire_table", side_effect=exception)
         else:

@@ -13,8 +13,12 @@ dependencies = [
 [tool.basedpyright]
 typeCheckingMode = "recommended"
 pythonVersion = "3.14"
-reportAny = "none"
-reportArgumentType = "none"
+
+[[tool.basedpyright.executionEnvironments]]
+root = "tests"
+extraPaths = ["."]
+reportAny = false
+reportArgumentType = false
 
 [tool.ruff]
 target-version = "py314"

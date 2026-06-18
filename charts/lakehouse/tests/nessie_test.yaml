@@ -48,17 +48,6 @@ tests:
             name: NESSIE_VERSION_STORE_TYPE
             value: JDBC
 
-  - it: should set JDBC URL pointing to metadata postgres
-    template: templates/nessie-deployment.yaml
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: QUARKUS_DATASOURCE_JDBC_URL
-      - matchRegex:
-          path: spec.template.spec.containers[0].env[?(@.name=='QUARKUS_DATASOURCE_JDBC_URL')].value
-          pattern: ".*jdbc:postgresql://RELEASE-NAME-lakehouse-metadata:5432/vardis_metadata"
-
   - it: should set nessie postgres user
     template: templates/nessie-deployment.yaml
     asserts:

@@ -128,6 +128,6 @@ spec:
           requests:
             storage: {{ .Values.persistence.size | quote }}
   {{- else }}
-      - name: data
-        emptyDir: {}
+        - name: data
+          emptyDir: {}
   {{- end }}

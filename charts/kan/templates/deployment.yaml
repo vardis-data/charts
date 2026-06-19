@@ -36,11 +36,16 @@ spec:
                 secretKeyRef:
                   name: {{ include "kan.secretName" . }}
                   key: BETTER_AUTH_SECRET
+            {{- if .Values.sqlite.enabled }}
+            - name: BETTER_AUTH_DATABASE_URL
+              value: "sqlite://{{ .Values.sqlite.path }}"
+            {{- else }}
             - name: POSTGRES_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "kan.secretName" . }}
                   key: POSTGRES_URL
+            {{- end }}
             {{- if .Values.s3.enabled }}
             - name: S3_ENDPOINT
               value: {{ .Values.s3.endpoint | quote }}

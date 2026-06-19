@@ -1,9 +1,12 @@
 dependencies:
+- name: common
+  repository: oci://ghcr.io/vardis-data/charts
+  version: 1.0.2
 - name: postgres
   repository: oci://registry-1.docker.io/cloudpirates
   version: 0.18.3
 - name: valkey
   repository: https://valkey.io/valkey-helm
   version: 0.9.3
-digest: sha256:bd2ff074c4dd675b61f82f702323838e970fe9e57224fb35209efc2aa41d30ac
-generated: "2026-03-23T19:31:57.214686122-03:00"
+digest: sha256:3561dc7e30902313a46e54adb099e7691017ca2eb7739169e3a080bb5af68c52
+generated: "2026-06-19T12:47:47.400489182-03:00"

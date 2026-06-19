@@ -16,6 +16,10 @@ database:
   user: kan
   password: ""
 
+sqlite:
+  enabled: false
+  path: /data/db.sqlite3
+
 s3:
   enabled: false
   endpoint: ""

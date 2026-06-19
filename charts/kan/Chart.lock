@@ -1,6 +1,9 @@
 dependencies:
+- name: common
+  repository: oci://ghcr.io/vardis-data/charts
+  version: 1.0.2
 - name: postgres
   repository: oci://registry-1.docker.io/cloudpirates
   version: 0.18.3
-digest: sha256:615d1ec5415e1b59cbbdb1b98a5730e305e32ec052450d93eb299742b024f67a
-generated: "2026-03-22T20:18:58.397543665-03:00"
+digest: sha256:dacd18cf0e3f941bf3ca1022edf6d6cd7ec25854d54d483cf62e38fa55761202
+generated: "2026-06-19T12:47:58.038751477-03:00"

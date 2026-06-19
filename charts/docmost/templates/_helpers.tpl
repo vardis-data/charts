@@ -68,7 +68,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "docmost.databaseUrl" -}}
+{{- if .Values.database.url }}
+{{- .Values.database.url }}
+{{- else }}
 postgresql://{{ include "docmost.databaseUser" . }}:{{ include "docmost.databasePassword" . }}@{{ include "docmost.databaseHost" . }}:{{ include "docmost.databasePort" . }}/{{ include "docmost.databaseName" . }}?schema=public
+{{- end }}
 {{- end }}
 
 {{- define "docmost.redisHost" -}}

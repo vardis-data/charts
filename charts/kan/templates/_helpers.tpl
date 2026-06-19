@@ -68,7 +68,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "kan.databaseUrl" -}}
+{{- if .Values.database.url }}
+{{- .Values.database.url }}
+{{- else }}
 postgresql://{{ include "kan.databaseUser" . }}:{{ include "kan.databasePassword" . }}@{{ include "kan.databaseHost" . }}:{{ include "kan.databasePort" . }}/{{ include "kan.databaseName" . }}
+{{- end }}
 {{- end }}
 
 {{- define "kan.secretName" -}}

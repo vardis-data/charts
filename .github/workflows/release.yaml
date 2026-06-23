@@ -129,6 +129,7 @@ jobs:
             git add "$CHART_YAML"
             git commit -m "chore: bump $CHART to $NEW_VERSION [skip ci]"
             git tag "$TAG"
+            git push origin "$TAG"
 
             PREV_TAG=$(git tag --sort=-v:refname | grep -E "^${CHART}-v" | sed -n '2p' || true)
             gh release create "$TAG" \
@@ -153,4 +154,3 @@ jobs:
           done
 
           git push origin HEAD:main
-          git push origin --tags

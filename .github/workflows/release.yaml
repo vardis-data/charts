@@ -5,6 +5,11 @@ on:
     branches: [main]
     paths: ["charts/**"]
   workflow_dispatch:
+    inputs:
+      force-all:
+        description: 'Release all charts (ignore change detection)'
+        type: boolean
+        default: false
 
 jobs:
   detect:
@@ -19,7 +24,11 @@ jobs:
         run: helm repo add valkey https://valkey.io/valkey-helm
       - id: list
         run: |
-          charts=$(ct list-changed --config ct.yaml --since HEAD~1 | jq -R -s -c 'split("\n")[:-1]')
+          if [[ "${{ inputs.force-all }}" == "true" ]]; then
+            charts=$(ls -d charts/*/ | sed 's|/$||' | jq -R -s -c 'split("\n")[:-1]')
+          else
+            charts=$(ct list-changed --config ct.yaml --since HEAD~1 | grep charts/ | jq -R -s -c 'split("\n")[:-1]')
+          fi
           echo "charts=$charts" >> "$GITHUB_OUTPUT"
 
   release:
@@ -64,7 +73,7 @@ jobs:
 
           echo "Releasing $NAME $VERSION..."
           helm dependency update "$CHART"
-          ct lint --config ct.yaml --since HEAD~1
+          ct lint --config ct.yaml --charts "$CHART"
           helm package "$CHART"
           helm push "${NAME}-${VERSION}.tgz" "${REGISTRY}"
       - uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0

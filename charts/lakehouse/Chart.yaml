@@ -5,6 +5,8 @@ type: application
 version: 2.0.0
 appVersion: "1.0"
 home: https://clickhouse.com
+annotations:
+  category: analytics
 sources:
   - https://github.com/Altinity/clickhouse-operator
   - https://github.com/cube-js/cube

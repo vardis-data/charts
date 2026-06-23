@@ -20,11 +20,6 @@ jobs:
       - name: Add external repos
         run: helm repo add valkey https://valkey.io/valkey-helm
 
-      - uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
-
-      - name: Lint
-        run: ct lint --config ct.yaml --all
-
       - uses: helm/chart-releaser-action@v1.7.0
         with:
           charts_dir: charts

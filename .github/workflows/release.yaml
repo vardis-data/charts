@@ -21,6 +21,8 @@ jobs:
         run: helm repo add valkey https://valkey.io/valkey-helm
 
       - uses: helm/chart-releaser-action@v1.7.0
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           charts_dir: charts
           skip_existing: true

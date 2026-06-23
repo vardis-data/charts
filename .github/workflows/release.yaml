@@ -1,8 +1,14 @@
-name: Release Chart
+name: Release Charts
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      chart:
+        description: "Chart to release (leave empty for all)"
+        required: false
+        default: ""
 
 concurrency:
   group: release
@@ -26,41 +32,43 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Parse chart name from commit message
-        id: chart
+      - name: Detect charts to release
+        id: detect
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%s)
-          echo "Commit: $COMMIT_MSG"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ inputs.chart }}" ]; then
+              CHARTS="${{ inputs.chart }}"
+            else
+              CHARTS=$(ls -d charts/*/ | xargs -I{} basename {} | tr '\n' ' ')
+            fi
+          else
+            COMMIT_MSG=$(git log -1 --pretty=%s)
+            echo "Commit: $COMMIT_MSG"
 
-          if [[ "$COMMIT_MSG" =~ ^\[skip\ ci\] ]] || [[ "$COMMIT_MSG" =~ ^chore:\ bump ]]; then
-            echo "Skipping CI commit"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
+            if [[ "$COMMIT_MSG" =~ ^\[skip\ ci\] ]] || [[ "$COMMIT_MSG" =~ ^chore:\ bump ]]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            CHART_NAME=$(echo "$COMMIT_MSG" | grep -oP '^[a-z0-9_-]+(?=:)' || true)
+
+            if [ -z "$CHART_NAME" ] || [ ! -d "charts/$CHART_NAME" ]; then
+              echo "No chart matched in commit message — skipping"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            CHARTS="$CHART_NAME"
           fi
 
-          CHART_NAME=$(echo "$COMMIT_MSG" | grep -oP '^[a-z0-9_-]+(?=:)' || true)
-
-          if [ -z "$CHART_NAME" ]; then
-            echo "No chart name found in commit message — skipping"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if [ ! -d "charts/$CHART_NAME" ]; then
-            echo "Chart directory charts/$CHART_NAME not found — skipping"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "chart=$CHART_NAME" >> "$GITHUB_OUTPUT"
-          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "charts=$CHARTS" >> "$GITHUB_OUTPUT"
 
       - name: Set up Helm
-        if: steps.chart.outputs.skip != 'true'
+        if: steps.detect.outputs.skip != 'true'
         uses: azure/setup-helm@v5
 
       - name: Cache helm-unittest binary
-        if: steps.chart.outputs.skip != 'true'
+        if: steps.detect.outputs.skip != 'true'
         id: cache-unittest
         uses: actions/cache@v4
         with:
@@ -68,99 +76,81 @@ jobs:
           key: helm-unittest-${{ env.HELM_UNITTEST_VERSION }}-linux-amd64
 
       - name: Install helm-unittest
-        if: steps.chart.outputs.skip != 'true' && steps.cache-unittest.outputs.cache-hit != 'true'
+        if: steps.detect.outputs.skip != 'true' && steps.cache-unittest.outputs.cache-hit != 'true'
         run: |
           mkdir -p "$(helm env HELM_PLUGINS)/helm-unittest"
           curl -sSL "https://github.com/helm-unittest/helm-unittest/releases/download/v${{ env.HELM_UNITTEST_VERSION }}/helm-unittest-linux-amd64-${{ env.HELM_UNITTEST_VERSION }}.tgz" \
             | tar -xz -C "$(helm env HELM_PLUGINS)/helm-unittest"
 
-      - name: Bump patch version
-        if: steps.chart.outputs.skip != 'true'
-        id: version
-        run: |
-          CHART=${{ steps.chart.outputs.chart }}
-          CHART_YAML="charts/$CHART/Chart.yaml"
-
-          CURRENT=$(yq eval '.version' "$CHART_YAML")
-          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
-          MINOR=$(echo "$CURRENT" | cut -d. -f2)
-          PATCH=$(echo "$CURRENT" | cut -d. -f3)
-          NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
-
-          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$CHART-v$NEW_VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Inject version into Chart.yaml
-        if: steps.chart.outputs.skip != 'true'
-        run: |
-          yq e '.version = strenv(VERSION)' -i charts/${{ steps.chart.outputs.chart }}/Chart.yaml
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-
-      - name: Build chart dependencies
-        if: steps.chart.outputs.skip != 'true'
-        run: |
-          CHART=${{ steps.chart.outputs.chart }}
-          if grep -q "^dependencies:" "charts/$CHART/Chart.yaml"; then
-            helm repo add valkey https://valkey.io/valkey-helm
-            helm dependency update "charts/$CHART"
-          fi
-
-      - name: Test
-        if: steps.chart.outputs.skip != 'true'
-        run: helm unittest charts/${{ steps.chart.outputs.chart }}
-
-      - name: Package
-        if: steps.chart.outputs.skip != 'true'
-        run: helm package charts/${{ steps.chart.outputs.chart }} --destination ./packaged/
-
       - name: Login to GHCR
-        if: steps.chart.outputs.skip != 'true'
+        if: steps.detect.outputs.skip != 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" \
-            | helm registry login ${{ env.REGISTRY }} \
-                -u ${{ github.actor }} \
-                --password-stdin
+            | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-      - name: Push to GHCR
-        if: steps.chart.outputs.skip != 'true'
-        run: helm push ./packaged/*.tgz oci://${{ env.REGISTRY_PREFIX }}
-
-      - name: Commit version bump and tag
-        if: steps.chart.outputs.skip != 'true'
+      - name: Configure git
+        if: steps.detect.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add charts/${{ steps.chart.outputs.chart }}/Chart.yaml
-          git commit -m "chore: bump ${{ steps.chart.outputs.chart }} to ${{ steps.version.outputs.version }} [skip ci]"
-          git tag ${{ steps.version.outputs.tag }}
-          git push origin HEAD:main
-          git push origin ${{ steps.version.outputs.tag }}
 
-      - name: Create GitHub release
-        if: steps.chart.outputs.skip != 'true'
+      - name: Release charts
+        if: steps.detect.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHART: ${{ steps.chart.outputs.chart }}
-          VERSION: ${{ steps.version.outputs.version }}
-          TAG: ${{ steps.version.outputs.tag }}
+          CHARTS: ${{ steps.detect.outputs.charts }}
         run: |
-          PREV_TAG=$(git tag --sort=-v:refname | grep -E "^${CHART}-v" | sed -n '2p' || true)
+          helm repo add valkey https://valkey.io/valkey-helm
 
-          gh release create "$TAG" \
-            --title "Release $TAG" \
-            ${PREV_TAG:+--notes-start-tag "$PREV_TAG"} \
-            --generate-notes \
-            --notes "## $CHART $TAG
+          for CHART in $CHARTS; do
+            echo "::group::$CHART"
+
+            CHART_YAML="charts/$CHART/Chart.yaml"
+            CURRENT=$(yq eval '.version' "$CHART_YAML")
+            MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+            MINOR=$(echo "$CURRENT" | cut -d. -f2)
+            PATCH=$(echo "$CURRENT" | cut -d. -f3)
+            export NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            TAG="$CHART-v$NEW_VERSION"
+
+            yq e '.version = strenv(NEW_VERSION)' -i "$CHART_YAML"
+
+            if grep -q "^dependencies:" "$CHART_YAML"; then
+              helm dependency update "charts/$CHART"
+            fi
+
+            if [ -d "charts/$CHART/tests" ]; then
+              helm unittest "charts/$CHART"
+            fi
+
+            helm package "charts/$CHART" --destination ./packaged/
+            helm push "./packaged/$CHART-$NEW_VERSION.tgz" "oci://${{ env.REGISTRY_PREFIX }}"
+
+            git add "$CHART_YAML"
+            git commit -m "chore: bump $CHART to $NEW_VERSION [skip ci]"
+            git tag "$TAG"
+
+            PREV_TAG=$(git tag --sort=-v:refname | grep -E "^${CHART}-v" | sed -n '2p' || true)
+            gh release create "$TAG" \
+              --title "Release $TAG" \
+              ${PREV_TAG:+--notes-start-tag "$PREV_TAG"} \
+              --generate-notes \
+              --notes "## $CHART $TAG
 
           ### Installation
 
           \`\`\`bash
-          helm install my-release oci://${{ env.REGISTRY_PREFIX }}/$CHART --version $VERSION
+          helm install my-release oci://${{ env.REGISTRY_PREFIX }}/$CHART --version $NEW_VERSION
           \`\`\`
 
           ### Pull
 
           \`\`\`bash
-          helm pull oci://${{ env.REGISTRY_PREFIX }}/$CHART --version $VERSION
+          helm pull oci://${{ env.REGISTRY_PREFIX }}/$CHART --version $NEW_VERSION
           \`\`\`"
+
+            echo "::endgroup::"
+          done
+
+          git push origin HEAD:main
+          git push origin --tags

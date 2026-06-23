@@ -23,3 +23,4 @@ dependencies:
     version: 0.9.3
     repository: https://valkey.io/valkey-helm
     condition: valkey.enabled
+# rebuild

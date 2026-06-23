@@ -16,3 +16,4 @@ dependencies:
   - name: common
     version: 1.0.2
     repository: oci://ghcr.io/vardis-data/charts
+# rebuild

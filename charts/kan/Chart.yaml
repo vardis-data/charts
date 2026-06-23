@@ -19,3 +19,4 @@ dependencies:
     version: 0.18.3
     repository: oci://registry-1.docker.io/cloudpirates
     condition: postgres.enabled
+# rebuild

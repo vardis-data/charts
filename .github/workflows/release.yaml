@@ -105,6 +105,8 @@ jobs:
           for CHART in $CHARTS; do
             echo "::group::$CHART"
 
+            git pull --rebase origin main
+
             CHART_YAML="charts/$CHART/Chart.yaml"
             CURRENT=$(yq eval '.version' "$CHART_YAML")
             MAJOR=$(echo "$CURRENT" | cut -d. -f1)
@@ -112,6 +114,12 @@ jobs:
             PATCH=$(echo "$CURRENT" | cut -d. -f3)
             export NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
             TAG="$CHART-v$NEW_VERSION"
+
+            if git tag --list | grep -qx "$TAG"; then
+              echo "$TAG already released — skipping"
+              echo "::endgroup::"
+              continue
+            fi
 
             yq e '.version = strenv(NEW_VERSION)' -i "$CHART_YAML"
 
@@ -129,6 +137,7 @@ jobs:
             git add "$CHART_YAML"
             git commit -m "chore: bump $CHART to $NEW_VERSION [skip ci]"
             git tag "$TAG"
+            git push origin HEAD:main
             git push origin "$TAG"
 
             PREV_TAG=$(git tag --sort=-v:refname | grep -E "^${CHART}-v" | sed -n '2p' || true)
@@ -152,5 +161,3 @@ jobs:
 
             echo "::endgroup::"
           done
-
-          git push origin HEAD:main

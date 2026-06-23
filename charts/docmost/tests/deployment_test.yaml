@@ -17,7 +17,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: "docmost/docmost:0.8.2"
+          value: "docmost/docmost:0.90"
 
   - it: should set APP_URL env var
     set:

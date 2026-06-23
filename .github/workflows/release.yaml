@@ -34,11 +34,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lint changed charts
-        run: ct lint --config ct.yaml
+        run: ct lint --config ct.yaml --since HEAD~1
 
       - name: Test changed charts
         run: |
-          for chart in $(ct list-changed --config ct.yaml); do
+          for chart in $(ct list-changed --config ct.yaml --since HEAD~1); do
             if [ -d "${chart}/tests" ]; then
               echo "Testing $chart..."
               helm unittest "$chart"
@@ -51,7 +51,7 @@ jobs:
           REGISTRY="oci://ghcr.io/${{ github.repository_owner }}/charts"
           bumped=false
 
-          for chart in $(ct list-changed --config ct.yaml); do
+          for chart in $(ct list-changed --config ct.yaml --since HEAD~1); do
             name=$(basename "$chart")
             version=$(grep '^version:' "$chart/Chart.yaml" | awk '{print $2}')
 

@@ -2,7 +2,7 @@ apiVersion: v2
 name: docmost
 description: Open-source collaborative documentation and wiki software
 type: application
-version: 1.6.1
+version: 1.0.0
 appVersion: 0.8.2
 home: https://docmost.com
 sources:
@@ -23,4 +23,3 @@ dependencies:
     version: 0.9.3
     repository: https://valkey.io/valkey-helm
     condition: valkey.enabled
-# rebuild

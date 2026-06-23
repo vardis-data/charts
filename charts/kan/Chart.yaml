@@ -2,7 +2,7 @@ apiVersion: v2
 name: kan
 description: Open-source Kanban board for project management
 type: application
-version: 1.7.0
+version: 1.0.0
 appVersion: latest
 home: https://github.com/kanbn/kan
 sources:
@@ -19,4 +19,3 @@ dependencies:
     version: 0.18.3
     repository: oci://registry-1.docker.io/cloudpirates
     condition: postgres.enabled
-# rebuild

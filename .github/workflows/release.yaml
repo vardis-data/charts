@@ -25,7 +25,7 @@ jobs:
       - name: Lint
         run: ct lint --config ct.yaml --all
 
-      - uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9e83181ba54714f # v1.7.0
+      - uses: helm/chart-releaser-action@v1.7.0
         with:
           charts_dir: charts
           skip_existing: true

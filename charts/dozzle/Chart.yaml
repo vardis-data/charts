@@ -2,7 +2,7 @@ apiVersion: v2
 name: dozzle
 description: Real-time log viewer for Docker containers
 type: application
-version: 1.0.2
+version: 1.0.3
 appVersion: "v10.5.2"
 home: https://dozzle.dev
 sources:

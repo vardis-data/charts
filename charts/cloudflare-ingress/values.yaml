@@ -33,6 +33,8 @@ certManager:
   enabled: true
   # -- Cloudflare API token for DNS01 solver (set via vals ref+envsubst in infra values)
   apiToken: ""
+  # -- Namespace where the API token secret is created (must match cert-manager's cluster-resource-namespace)
+  secretNamespace: cert-manager
   email: contato@vardis.space
   # -- Let's Encrypt server (production by default)
   acmeServer: https://acme-v02.api.letsencrypt.org/directory

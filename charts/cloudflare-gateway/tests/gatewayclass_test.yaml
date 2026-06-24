@@ -1,0 +1,43 @@
+suite: gatewayclass tests
+templates:
+  - templates/gatewayclass.yaml
+tests:
+  - it: should render GatewayClass
+    asserts:
+      - isKind:
+          of: GatewayClass
+
+  - it: should have default name and controller
+    asserts:
+      - equal:
+          path: metadata.name
+          value: vardis
+      - equal:
+          path: spec.controllerName
+          value: traefik.io/gateway-controller
+
+  - it: should respect custom name
+    set:
+      gatewayClass.name: custom-gc
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-gc
+
+  - it: should respect custom controllerName
+    set:
+      gatewayClass.controllerName: example.com/gateway
+    asserts:
+      - equal:
+          path: spec.controllerName
+          value: example.com/gateway
+
+  - it: should have standard labels
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: cloudflare-gateway
+      - exists:
+          path: metadata.labels["helm.sh/chart"]
+      - exists:
+          path: metadata.labels["app.kubernetes.io/managed-by"]

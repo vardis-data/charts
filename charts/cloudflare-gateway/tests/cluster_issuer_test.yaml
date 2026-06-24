@@ -1,0 +1,69 @@
+suite: cluster issuer tests
+templates:
+  - templates/cluster-issuer.yaml
+tests:
+  - it: should render ClusterIssuer when certManager is enabled
+    asserts:
+      - isKind:
+          of: ClusterIssuer
+
+  - it: should have default name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: letsencrypt-prod
+
+  - it: should use Let's Encrypt production server by default
+    asserts:
+      - equal:
+          path: spec.acme.server
+          value: https://acme-v02.api.letsencrypt.org/directory
+      - equal:
+          path: spec.acme.email
+          value: contato@vardis.space
+
+  - it: should respect custom email
+    set:
+      certManager.email: admin@example.com
+    asserts:
+      - equal:
+          path: spec.acme.email
+          value: admin@example.com
+
+  - it: should respect staging server
+    set:
+      certManager.acmeServer: https://acme-staging-v02.api.letsencrypt.org/directory
+    asserts:
+      - equal:
+          path: spec.acme.server
+          value: https://acme-staging-v02.api.letsencrypt.org/directory
+
+  - it: should use DNS-01 solver with cloudflare
+    asserts:
+      - equal:
+          path: spec.acme.solvers[0].dns01.cloudflare.apiTokenSecretRef.name
+          value: cloudflare-api-token
+      - equal:
+          path: spec.acme.solvers[0].dns01.cloudflare.apiTokenSecretRef.key
+          value: api-token
+
+  - it: should store account key in privateKeySecretRef
+    asserts:
+      - equal:
+          path: spec.acme.privateKeySecretRef.name
+          value: letsencrypt-prod-account-key
+
+  - it: should not render when certManager is disabled
+    set:
+      certManager.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should have standard labels
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: cloudflare-gateway
+      - exists:
+          path: metadata.labels["helm.sh/chart"]

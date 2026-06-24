@@ -1,0 +1,101 @@
+suite: gateway tests
+templates:
+  - templates/gateway.yaml
+tests:
+  - it: should render Gateway
+    asserts:
+      - isKind:
+          of: Gateway
+
+  - it: should have default name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: vardis
+
+  - it: should reference the GatewayClass
+    asserts:
+      - equal:
+          path: spec.gatewayClassName
+          value: vardis
+
+  - it: should have two listeners (http and https)
+    asserts:
+      - lengthEqual:
+          path: spec.listeners
+          count: 2
+
+  - it: should have websecure listener on port 443 with TLS terminate
+    asserts:
+      - equal:
+          path: spec.listeners[0].name
+          value: websecure
+      - equal:
+          path: spec.listeners[0].port
+          value: 443
+      - equal:
+          path: spec.listeners[0].protocol
+          value: HTTPS
+      - equal:
+          path: spec.listeners[0].tls.mode
+          value: Terminate
+
+  - it: should reference vardis-space-wildcard secret for TLS
+    asserts:
+      - equal:
+          path: spec.listeners[0].tls.certificateRefs[0].name
+          value: vardis-space-wildcard
+      - equal:
+          path: spec.listeners[0].tls.certificateRefs[0].kind
+          value: Secret
+
+  - it: should have web listener on port 80
+    asserts:
+      - equal:
+          path: spec.listeners[1].name
+          value: web
+      - equal:
+          path: spec.listeners[1].port
+          value: 80
+      - equal:
+          path: spec.listeners[1].protocol
+          value: HTTP
+
+  - it: should allow routes from all namespaces
+    asserts:
+      - equal:
+          path: spec.listeners[0].allowedRoutes.namespaces.from
+          value: All
+      - equal:
+          path: spec.listeners[1].allowedRoutes.namespaces.from
+          value: All
+
+  - it: should respect custom name
+    set:
+      gateway.name: custom-gw
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-gw
+
+  - it: should respect custom ports
+    set:
+      gateway.httpsPort: 8443
+      gateway.httpPort: 8080
+    asserts:
+      - equal:
+          path: spec.listeners[0].port
+          value: 8443
+      - equal:
+          path: spec.listeners[1].port
+          value: 8080
+
+  - it: should have standard labels
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: cloudflare-gateway
+      - exists:
+          path: metadata.labels["helm.sh/chart"]
+      - exists:
+          path: metadata.labels["app.kubernetes.io/managed-by"]

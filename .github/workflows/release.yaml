@@ -39,28 +39,38 @@ jobs:
             if [ -n "${{ inputs.chart }}" ]; then
               CHARTS="${{ inputs.chart }}"
             else
-              CHARTS=$(ls -d charts/*/ | xargs -I{} basename {} | tr '\n' ' ')
+              CHARTS=$(ls -d charts/*/ | xargs -I{} basename {} | grep -v '^common$' | tr '\n' ' ')
             fi
           else
             COMMIT_MSG=$(git log -1 --pretty=%s)
-            echo "Commit: $COMMIT_MSG"
-
             if [[ "$COMMIT_MSG" =~ ^\[skip\ ci\] ]] || [[ "$COMMIT_MSG" =~ ^chore:\ bump ]]; then
               echo "skip=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
 
-            CHART_NAME=$(echo "$COMMIT_MSG" | grep -oP '^[a-z0-9_-]+(?=:)' || true)
+            CHANGED=$(git diff --name-only HEAD^ HEAD | grep '^charts/' | cut -d'/' -f2 | sort -u)
 
-            if [ -z "$CHART_NAME" ] || [ ! -d "charts/$CHART_NAME" ]; then
-              echo "No chart matched in commit message — skipping"
+            CHARTS=""
+            for CHART in $CHANGED; do
+              if [ "$CHART" = "common" ]; then
+                DEPENDENTS=$(grep -rl 'name: common' charts/*/Chart.yaml 2>/dev/null \
+                  | sed 's|charts/\([^/]*\)/Chart.yaml|\1|' | tr '\n' ' ')
+                CHARTS="$CHARTS $DEPENDENTS"
+              elif [ -d "charts/$CHART" ]; then
+                CHARTS="$CHARTS $CHART"
+              fi
+            done
+
+            CHARTS=$(echo "$CHARTS" | tr ' ' '\n' | sort -u | grep -v '^common$' | grep -v '^$' | tr '\n' ' ')
+
+            if [ -z "$CHARTS" ]; then
+              echo "No charts changed — skipping"
               echo "skip=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-
-            CHARTS="$CHART_NAME"
           fi
 
+          echo "Charts to release: $CHARTS"
           echo "charts=$CHARTS" >> "$GITHUB_OUTPUT"
 
       - name: Set up Helm

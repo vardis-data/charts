@@ -40,3 +40,10 @@ Selector labels
 app.kubernetes.io/name: {{ include "cloudflare-ingress.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Cloudflared component name
+*/}}
+{{- define "cloudflare-ingress.cloudflaredName" -}}
+cloudflared
+{{- end }}

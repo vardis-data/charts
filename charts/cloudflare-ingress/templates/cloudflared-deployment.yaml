@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "cloudflare-ingress.fullname" . }}
+  name: {{ include "cloudflare-ingress.cloudflaredName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cloudflare-ingress.labels" . | nindent 4 }}
@@ -28,7 +28,7 @@ spec:
             - name: TUNNEL_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "cloudflare-ingress.fullname" . }}-tunnel
+                  name: {{ include "cloudflare-ingress.cloudflaredName" . }}-tunnel
                   key: TUNNEL_TOKEN
           {{- with .Values.cloudflared.livenessProbe }}
           livenessProbe:

@@ -13,6 +13,8 @@ cloudflared:
     limits:
       cpu: 200m
       memory: 256Mi
+  # -- tunnel token (set via vals ref+envsubst in infra values)
+  tunnelToken: ""
   # -- cloudflared arguments
   args:
     - tunnel
@@ -29,6 +31,8 @@ cloudflared:
 # -- cert-manager resources (ClusterIssuer + Certificate + Secret)
 certManager:
   enabled: true
+  # -- Cloudflare API token for DNS01 solver (set via vals ref+envsubst in infra values)
+  apiToken: ""
   email: contato@vardis.space
   # -- Let's Encrypt server (production by default)
   acmeServer: https://acme-v02.api.letsencrypt.org/directory

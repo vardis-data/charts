@@ -1,6 +1,1 @@
-{{- if .Values.ingress.enabled }}
-{{- if eq .Values.ingress.className "tailscale" }}
-{{- $tailscaleValues := merge . (dict "Values" (merge .Values (dict "tailscale" (dict "enabled" true "hostname" .Values.ingress.hostname "tags" .Values.ingress.tags)))) }}
-{{- include "common.tailscale-ingress" $tailscaleValues }}
-{{- end }}
-{{- end }}
+{{- include "common.tailscale-exposure" . }}

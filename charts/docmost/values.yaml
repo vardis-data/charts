@@ -71,9 +71,8 @@ service:
   type: ClusterIP
   port: 80
 
-ingress:
+tailscale:
   enabled: false
-  className: tailscale
   hostname: docmost
   tags: ""
 

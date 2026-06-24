@@ -2,25 +2,25 @@ suite: ingress tests
 templates:
   - templates/ingress.yaml
 tests:
-  - it: should not render ingress when disabled
+  - it: should not render ingress when tailscale disabled
     set:
-      ingress.enabled: false
+      tailscale.enabled: false
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: should render ingress when enabled
+  - it: should render ingress when tailscale enabled
     set:
-      ingress.enabled: true
-      ingress.hostname: dozzle-test
+      tailscale.enabled: true
+      tailscale.hostname: dozzle-test
     asserts:
       - isKind:
           of: Ingress
 
   - it: should have correct name
     set:
-      ingress.enabled: true
-      ingress.hostname: dozzle-test
+      tailscale.enabled: true
+      tailscale.hostname: dozzle-test
     asserts:
       - equal:
           path: metadata.name
@@ -28,8 +28,8 @@ tests:
 
   - it: should use tailscale ingress class
     set:
-      ingress.enabled: true
-      ingress.hostname: dozzle-test
+      tailscale.enabled: true
+      tailscale.hostname: dozzle-test
     asserts:
       - equal:
           path: spec.ingressClassName
@@ -37,8 +37,8 @@ tests:
 
   - it: should set tailscale hostname annotation
     set:
-      ingress.enabled: true
-      ingress.hostname: dozzle-test
+      tailscale.enabled: true
+      tailscale.hostname: dozzle-test
     asserts:
       - equal:
           path: metadata.annotations["tailscale.com/hostname"]
@@ -46,8 +46,8 @@ tests:
 
   - it: should default tailscale tags from hostname
     set:
-      ingress.enabled: true
-      ingress.hostname: dozzle-test
+      tailscale.enabled: true
+      tailscale.hostname: dozzle-test
     asserts:
       - equal:
           path: metadata.annotations["tailscale.com/tags"]
@@ -55,9 +55,9 @@ tests:
 
   - it: should use custom tags when specified
     set:
-      ingress.enabled: true
-      ingress.hostname: dozzle-test
-      ingress.tags: "tag:custom"
+      tailscale.enabled: true
+      tailscale.hostname: dozzle-test
+      tailscale.tags: "tag:custom"
     asserts:
       - equal:
           path: metadata.annotations["tailscale.com/tags"]
@@ -65,8 +65,8 @@ tests:
 
   - it: should route to dozzle service on port 8080
     set:
-      ingress.enabled: true
-      ingress.hostname: dozzle-test
+      tailscale.enabled: true
+      tailscale.hostname: dozzle-test
     asserts:
       - equal:
           path: spec.defaultBackend.service.name

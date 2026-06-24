@@ -93,7 +93,7 @@ reloader:
   enabled: true
 
 postgres:
-  enabled: true
+  enabled: false
   customUser:
     name: docmost
     database: docmost

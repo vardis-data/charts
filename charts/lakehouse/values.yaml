@@ -58,7 +58,7 @@ cube:
   image:
     repository: cubejs/cube
     # renovate: datasource=docker depName=cubejs/cube
-    tag: "v0.36.26"
+    tag: "v0.36.11"
     pullPolicy: IfNotPresent
   replicas: 1
   jwt:

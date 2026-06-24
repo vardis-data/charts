@@ -17,8 +17,22 @@ database:
   password: ""
 
 sqlite:
-  enabled: false
+  enabled: true
   path: /data/db.sqlite3
+  storage: 1Gi
+
+litestream:
+  enabled: false
+  image:
+    repository: litestream/litestream
+    # renovate: datasource=docker depName=litestream/litestream
+    tag: "0.5"
+  s3:
+    endpoint: ""
+    bucket: ""
+    path: "kan/db.sqlite3"
+    accessKeyId: ""
+    secretAccessKey: ""
 
 s3:
   enabled: false
@@ -69,7 +83,7 @@ reloader:
   enabled: true
 
 postgres:
-  enabled: true
+  enabled: false
   customUser:
     name: kan
     database: kan

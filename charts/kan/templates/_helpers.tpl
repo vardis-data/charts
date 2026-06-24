@@ -27,51 +27,11 @@ app.kubernetes.io/name: {{ include "kan.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{- define "kan.databaseHost" -}}
-{{- if .Values.postgres.enabled }}
-{{- printf "%s-postgres" .Release.Name }}
-{{- else }}
-{{- .Values.database.host }}
-{{- end }}
-{{- end }}
-
-{{- define "kan.databasePort" -}}
-{{- if .Values.postgres.enabled }}
-{{- 5432 }}
-{{- else }}
-{{- .Values.database.port }}
-{{- end }}
-{{- end }}
-
-{{- define "kan.databaseName" -}}
-{{- if .Values.postgres.enabled }}
-{{- .Values.postgres.customUser.database }}
-{{- else }}
-{{- .Values.database.name }}
-{{- end }}
-{{- end }}
-
-{{- define "kan.databaseUser" -}}
-{{- if .Values.postgres.enabled }}
-{{- .Values.postgres.customUser.name }}
-{{- else }}
-{{- .Values.database.user }}
-{{- end }}
-{{- end }}
-
-{{- define "kan.databasePassword" -}}
-{{- if .Values.postgres.enabled }}
-{{- .Values.postgres.customUser.password }}
-{{- else }}
-{{- .Values.database.password }}
-{{- end }}
-{{- end }}
-
 {{- define "kan.databaseUrl" -}}
 {{- if .Values.database.url }}
 {{- .Values.database.url }}
 {{- else }}
-postgresql://{{ include "kan.databaseUser" . }}:{{ include "kan.databasePassword" . }}@{{ include "kan.databaseHost" . }}:{{ include "kan.databasePort" . }}/{{ include "kan.databaseName" . }}
+postgresql://{{ .Values.database.user }}:{{ .Values.database.password }}@{{ .Values.database.host }}:{{ .Values.database.port }}/{{ .Values.database.name }}
 {{- end }}
 {{- end }}
 

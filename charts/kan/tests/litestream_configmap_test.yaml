@@ -1,0 +1,39 @@
+suite: litestream configmap tests
+templates:
+  - templates/litestream-configmap.yaml
+tests:
+  - it: should not render configmap when litestream disabled
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render configmap when litestream enabled
+    set:
+      litestream:
+        enabled: true
+        s3:
+          bucket: my-bucket
+          path: kan/db.sqlite3
+          endpoint: https://s3.example.com
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-kan-litestream
+
+  - it: should contain correct litestream config
+    set:
+      litestream:
+        enabled: true
+        s3:
+          bucket: my-bucket
+          path: kan/db.sqlite3
+          endpoint: https://s3.example.com
+    asserts:
+      - matchRegex:
+          path: data["litestream.yml"]
+          pattern: "s3://my-bucket/kan/db.sqlite3"
+      - matchRegex:
+          path: data["litestream.yml"]
+          pattern: "endpoint: https://s3.example.com"

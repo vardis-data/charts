@@ -91,3 +91,79 @@ tests:
     asserts:
       - exists:
           path: spec.template.spec.containers[0].resources
+
+  - it: should mount data volume in main container when sqlite enabled
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+            mountPath: /data
+
+  - it: should not have litestream sidecar by default
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+
+  - it: should add litestream init container when enabled
+    set:
+      litestream:
+        enabled: true
+        image:
+          repository: litestream/litestream
+          tag: "0.5"
+        s3:
+          bucket: my-bucket
+          path: kan/db.sqlite3
+          endpoint: https://s3.example.com
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: litestream-restore
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: "litestream/litestream:0.5"
+
+  - it: should add litestream sidecar when enabled
+    set:
+      litestream:
+        enabled: true
+        image:
+          repository: litestream/litestream
+          tag: "0.5"
+        s3:
+          bucket: my-bucket
+          path: kan/db.sqlite3
+          endpoint: https://s3.example.com
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 2
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: litestream
+
+  - it: should mount litestream config and data in sidecar
+    set:
+      litestream:
+        enabled: true
+        image:
+          repository: litestream/litestream
+          tag: "0.5"
+        s3:
+          bucket: my-bucket
+          path: kan/db.sqlite3
+          endpoint: https://s3.example.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].volumeMounts
+          content:
+            name: data
+            mountPath: /data
+      - contains:
+          path: spec.template.spec.containers[1].volumeMounts
+          content:
+            name: litestream-config
+            mountPath: /etc/litestream.yml
+            subPath: litestream.yml

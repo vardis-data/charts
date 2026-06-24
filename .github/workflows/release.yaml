@@ -144,7 +144,7 @@ jobs:
             helm package "charts/$CHART" --destination ./packaged/
             helm push "./packaged/$CHART-$NEW_VERSION.tgz" "oci://${{ env.REGISTRY_PREFIX }}"
 
-            git add "$CHART_YAML"
+            git add "charts/$CHART/"
             git commit -m "chore: bump $CHART to $NEW_VERSION [skip ci]"
             git tag "$TAG"
             git push origin HEAD:main

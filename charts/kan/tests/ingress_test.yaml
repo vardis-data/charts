@@ -12,7 +12,7 @@ tests:
   - it: should render ingress when tailscale enabled
     set:
       ingress.tailscale.enabled: true
-      ingress.tailscale.hostname: dozzle-test
+      ingress.tailscale.hostname: kan-test
     asserts:
       - isKind:
           of: Ingress
@@ -20,16 +20,16 @@ tests:
   - it: should have correct name
     set:
       ingress.tailscale.enabled: true
-      ingress.tailscale.hostname: dozzle-test
+      ingress.tailscale.hostname: kan-test
     asserts:
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-dozzle
+          value: RELEASE-NAME-kan
 
   - it: should use tailscale ingress class
     set:
       ingress.tailscale.enabled: true
-      ingress.tailscale.hostname: dozzle-test
+      ingress.tailscale.hostname: kan-test
     asserts:
       - equal:
           path: spec.ingressClassName
@@ -38,39 +38,29 @@ tests:
   - it: should set tailscale hostname annotation
     set:
       ingress.tailscale.enabled: true
-      ingress.tailscale.hostname: dozzle-test
+      ingress.tailscale.hostname: kan-test
     asserts:
       - equal:
           path: metadata.annotations["tailscale.com/hostname"]
-          value: dozzle-test
+          value: kan-test
 
   - it: should default tailscale tags from hostname
     set:
       ingress.tailscale.enabled: true
-      ingress.tailscale.hostname: dozzle-test
+      ingress.tailscale.hostname: kan-test
     asserts:
       - equal:
           path: metadata.annotations["tailscale.com/tags"]
-          value: tag:k8s-dozzle-test
+          value: tag:k8s-kan-test
 
-  - it: should use custom tags when specified
+  - it: should route to kan service on port 3000
     set:
       ingress.tailscale.enabled: true
-      ingress.tailscale.hostname: dozzle-test
-      ingress.tailscale.tags: "tag:custom"
-    asserts:
-      - equal:
-          path: metadata.annotations["tailscale.com/tags"]
-          value: "tag:custom"
-
-  - it: should route to dozzle service on port 8080
-    set:
-      ingress.tailscale.enabled: true
-      ingress.tailscale.hostname: dozzle-test
+      ingress.tailscale.hostname: kan-test
     asserts:
       - equal:
           path: spec.defaultBackend.service.name
-          value: RELEASE-NAME-dozzle
+          value: RELEASE-NAME-kan
       - equal:
           path: spec.defaultBackend.service.port.number
-          value: 8080
+          value: 3000

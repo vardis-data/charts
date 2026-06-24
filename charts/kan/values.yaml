@@ -51,10 +51,11 @@ service:
   type: ClusterIP
   port: 3000
 
-tailscale:
-  enabled: false
-  hostname: kan
-  tags: ""
+ingress:
+  tailscale:
+    enabled: false
+    hostname: kan
+    tags: ""
 
 resources:
   requests:

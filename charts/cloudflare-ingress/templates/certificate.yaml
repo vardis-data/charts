@@ -5,7 +5,7 @@ metadata:
   name: vardis-space-wildcard
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cloudflare-gateway.labels" . | nindent 4 }}
+    {{- include "cloudflare-ingress.labels" . | nindent 4 }}
 spec:
   secretName: vardis-space-wildcard
   issuerRef:

@@ -10,10 +10,11 @@ service:
   type: ClusterIP
   port: 3000
 
-tailscale:
-  enabled: false
-  hostname: homepage
-  tags: ""
+ingress:
+  tailscale:
+    enabled: false
+    hostname: homepage
+    tags: ""
 
 # Homepage configuration files. Each value is a raw YAML string
 # that will be mounted as a config file inside the container.

@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "cloudflare-gateway.fullname" . }}
+  name: {{ include "cloudflare-ingress.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cloudflare-gateway.labels" . | nindent 4 }}
+    {{- include "cloudflare-ingress.labels" . | nindent 4 }}
 spec:
   {{- if .Values.cloudflared.replicas }}
   replicas: {{ .Values.cloudflared.replicas }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "cloudflare-gateway.selectorLabels" . | nindent 6 }}
+      {{- include "cloudflare-ingress.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "cloudflare-gateway.selectorLabels" . | nindent 8 }}
+        {{- include "cloudflare-ingress.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: cloudflared
@@ -28,7 +28,7 @@ spec:
             - name: TUNNEL_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "cloudflare-gateway.fullname" . }}-tunnel
+                  name: {{ include "cloudflare-ingress.fullname" . }}-tunnel
                   key: TUNNEL_TOKEN
           {{- with .Values.cloudflared.livenessProbe }}
           livenessProbe:

@@ -11,7 +11,7 @@ tests:
     asserts:
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-cloudflare-gateway
+          value: RELEASE-NAME-cloudflare-ingress
 
   - it: should have 2 replicas by default
     asserts:
@@ -61,7 +61,7 @@ tests:
           value: TUNNEL_TOKEN
       - equal:
           path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
-          value: RELEASE-NAME-cloudflare-gateway-tunnel
+          value: RELEASE-NAME-cloudflare-ingress-tunnel
       - equal:
           path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.key
           value: TUNNEL_TOKEN
@@ -113,9 +113,9 @@ tests:
     asserts:
       - equal:
           path: metadata.labels["app.kubernetes.io/name"]
-          value: cloudflare-gateway
+          value: cloudflare-ingress
       - exists:
           path: metadata.labels["helm.sh/chart"]
       - equal:
           path: spec.selector.matchLabels["app.kubernetes.io/name"]
-          value: cloudflare-gateway
+          value: cloudflare-ingress

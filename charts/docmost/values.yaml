@@ -71,10 +71,11 @@ service:
   type: ClusterIP
   port: 80
 
-tailscale:
-  enabled: false
-  hostname: docmost
-  tags: ""
+ingress:
+  tailscale:
+    enabled: false
+    hostname: docmost
+    tags: ""
 
 livenessProbe:
   enabled: true

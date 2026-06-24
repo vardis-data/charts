@@ -1,1 +1,1 @@
-{{- include "common.tailscale-exposure" . }}
+{{- include "common.ingress.tailscale" . }}

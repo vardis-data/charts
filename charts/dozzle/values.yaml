@@ -10,10 +10,11 @@ service:
   type: ClusterIP
   port: 8080
 
-tailscale:
-  enabled: false
-  hostname: dozzle
-  tags: ""
+ingress:
+  tailscale:
+    enabled: false
+    hostname: dozzle
+    tags: ""
 
 resources:
   requests:

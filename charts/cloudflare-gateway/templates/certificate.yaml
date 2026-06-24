@@ -1,0 +1,16 @@
+{{- if .Values.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: vardis-space-wildcard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cloudflare-gateway.labels" . | nindent 4 }}
+spec:
+  secretName: vardis-space-wildcard
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    {{- toYaml .Values.certManager.dnsNames | nindent 4 }}
+{{- end }}

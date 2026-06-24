@@ -1,0 +1,65 @@
+# -- Gateway API resources
+gatewayClass:
+  # -- Name of the GatewayClass
+  name: vardis
+  # -- Controller name (must match the Traefik implementation)
+  controllerName: traefik.io/gateway-controller
+
+gateway:
+  # -- Name of the Gateway
+  name: vardis
+  # -- Port for HTTPS
+  httpsPort: 443
+  # -- Port for HTTP (will redirect to HTTPS)
+  httpPort: 80
+
+# -- HTTPRoute definitions (key = route name)
+# Each entry creates an HTTPRoute in the backend service's namespace
+httproutes: {}
+# Example:
+# httproutes:
+#   datalake:
+#     hostnames:
+#       - datalake.vardis.space
+#     service: lakehouse-cube
+#     port: 4000
+#     namespace: lakehouse
+
+# -- cloudflared tunnel client
+cloudflared:
+  enabled: true
+  image:
+    repository: cloudflare/cloudflared
+    tag: 2025.5.0
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  # -- cloudflared arguments
+  args:
+    - tunnel
+    - --no-autoupdate
+    - run
+  livenessProbe:
+    httpGet:
+      path: /ready
+      port: 2000
+    failureThreshold: 1
+    initialDelaySeconds: 10
+    periodSeconds: 10
+
+# -- cert-manager resources (ClusterIssuer + Certificate + Secret)
+certManager:
+  enabled: true
+  email: contato@vardis.space
+  # -- Let's Encrypt server (production by default)
+  acmeServer: https://acme-v02.api.letsencrypt.org/directory
+  # -- Wildcard certificate for the zone
+  dnsNames:
+    - vardis.space
+    - "*.vardis.space"

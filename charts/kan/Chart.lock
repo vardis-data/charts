@@ -1,9 +1,9 @@
 dependencies:
 - name: common
   repository: file://../common
-  version: 1.1.0
+  version: 1.1.1
 - name: postgres
   repository: oci://registry-1.docker.io/cloudpirates
   version: 0.18.3
-digest: sha256:2e57efd9e40bd70a5700f9b747f7d856f8ab828a05cdbe5da6fa546f9e277593
-generated: "2026-06-24T15:49:45.979106163-03:00"
+digest: sha256:bf73f77d4935ef20169eb2bc8bf5b271b00cf06f07c7724e55c836a32d6f3037
+generated: "2026-06-24T19:15:27.40467698Z"

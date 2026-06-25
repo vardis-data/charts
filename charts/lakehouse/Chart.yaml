@@ -2,7 +2,7 @@ apiVersion: v2
 name: lakehouse
 description: Lakehouse serving layer — ClickHouse query engine and Cube semantic layer
 type: application
-version: 1.0.7
+version: 1.0.8
 appVersion: "1.0"
 home: https://clickhouse.com
 annotations:

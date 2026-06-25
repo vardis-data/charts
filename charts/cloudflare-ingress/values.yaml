@@ -28,6 +28,14 @@ cloudflared:
     initialDelaySeconds: 10
     periodSeconds: 10
 
+# -- Cloudflare Tunnel ingress routing rules
+tunnel:
+  # -- List of ingress rules. Each rule has hostname and service.
+  # A catch-all http_status:404 is always appended automatically.
+  ingress: []
+  # - hostname: example.vardis.space
+  #   service: http://my-service.my-namespace.svc.cluster.local:8080
+
 # -- cert-manager resources (ClusterIssuer + Certificate + Secret)
 certManager:
   enabled: true

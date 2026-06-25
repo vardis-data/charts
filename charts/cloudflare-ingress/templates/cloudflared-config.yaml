@@ -1,0 +1,17 @@
+{{- if and .Values.cloudflared.enabled .Values.tunnel.ingress }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cloudflare-ingress.cloudflaredName" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cloudflare-ingress.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    ingress:
+      {{- range .Values.tunnel.ingress }}
+      - hostname: {{ .hostname }}
+        service: {{ .service }}
+      {{- end }}
+      - service: http_status:404
+{{- end }}

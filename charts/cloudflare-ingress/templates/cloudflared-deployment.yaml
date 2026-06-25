@@ -24,12 +24,22 @@ spec:
           imagePullPolicy: {{ .Values.cloudflared.image.pullPolicy }}
           args:
             {{- toYaml .Values.cloudflared.args | nindent 12 }}
+            {{- if .Values.tunnel.ingress }}
+            - --config
+            - /etc/cloudflared/config.yaml
+            {{- end }}
           env:
             - name: TUNNEL_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ include "cloudflare-ingress.cloudflaredName" . }}-tunnel
                   key: TUNNEL_TOKEN
+          {{- if .Values.tunnel.ingress }}
+          volumeMounts:
+            - name: cloudflared-config
+              mountPath: /etc/cloudflared
+              readOnly: true
+          {{- end }}
           {{- with .Values.cloudflared.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -38,4 +48,10 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      {{- if .Values.tunnel.ingress }}
+      volumes:
+        - name: cloudflared-config
+          configMap:
+            name: {{ include "cloudflare-ingress.cloudflaredName" . }}-config
+      {{- end }}
 {{- end }}

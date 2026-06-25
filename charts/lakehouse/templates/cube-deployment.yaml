@@ -26,6 +26,32 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.clickhouse.databases }}
+      initContainers:
+        - name: init-databases
+          image: "clickhouse/clickhouse-client:{{ .Values.clickhouse.image.tag }}"
+          imagePullPolicy: {{ .Values.clickhouse.image.pullPolicy }}
+          env:
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lakehouse.clickhouse.secretName" . }}
+                  key: {{ include "lakehouse.clickhouse.secretKey" . }}
+          command:
+            - sh
+            - -c
+            - |
+              {{- range .Values.clickhouse.databases }}
+              until clickhouse-client \
+                --host {{ include "lakehouse.clickhouse.host" $ }} \
+                --port 9000 \
+                --user {{ $.Values.clickhouse.user }} \
+                --password "$CLICKHOUSE_PASSWORD" \
+                --query "CREATE DATABASE IF NOT EXISTS {{ . }}"; do
+                echo "Waiting for ClickHouse to be ready..."; sleep 3;
+              done
+              {{- end }}
+      {{- end }}
       containers:
         - name: cube
           image: "{{ .Values.cube.image.repository }}:{{ .Values.cube.image.tag }}"

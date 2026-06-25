@@ -18,6 +18,8 @@ clickhouse:
   existingSecret:
     name: ""
     key: "password"
+  # -- Databases to create on first install (init container)
+  databases: []
   # -- Hard memory cap in bytes (default: 12GB = 12884901888)
   maxServerMemoryUsage: "12884901888"
   persistence:

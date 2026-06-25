@@ -43,7 +43,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: CUBEJS_DB_HOST
-            value: RELEASE-NAME-lakehouse
+            value: clickhouse-RELEASE-NAME-lakehouse
 
   - it: should have no initContainers
     asserts:

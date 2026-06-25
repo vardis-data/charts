@@ -75,6 +75,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/* ClickHouse host for Cube connection */}}
+{{/* Altinity operator names the common service clickhouse-{chi-name} */}}
 {{- define "lakehouse.clickhouse.host" -}}
-{{- include "lakehouse.fullname" . }}
+{{- printf "clickhouse-%s" (include "lakehouse.fullname" .) }}
 {{- end }}

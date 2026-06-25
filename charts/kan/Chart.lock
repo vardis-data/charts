@@ -4,9 +4,9 @@ dependencies:
   version: 1.1.1
 - name: litestream
   repository: file://../litestream
-  version: 1.0.0
+  version: 1.0.1
 - name: postgres
   repository: oci://registry-1.docker.io/cloudpirates
   version: 0.18.3
-digest: sha256:2367593d217b58e049327db0bb3dea779dd3cbcdb8fab2125a53e2ed9a1b8086
-generated: "2026-06-25T16:17:51.599061954-03:00"
+digest: sha256:e7e3f7ea8020c38104dd399105996a0861929270296cad16c0ff2e5d974d79a4
+generated: "2026-06-25T19:55:05.852658058Z"

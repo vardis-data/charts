@@ -18,7 +18,7 @@ spec:
           shardsCount: 1
           replicasCount: 1
     users:
-      {{ .Values.clickhouse.user }}/password_env_name: CLICKHOUSE_PASSWORD
+      {{ .Values.clickhouse.user }}/password_sha256_hex: {{ .Values.clickhouse.password | sha256sum }}
       {{ .Values.clickhouse.user }}/networks/ip:
         - "0.0.0.0/0"
         - "::/0"

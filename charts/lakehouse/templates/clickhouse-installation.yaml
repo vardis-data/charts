@@ -33,7 +33,7 @@ spec:
             <disks>
               <s3>
                 <type>s3</type>
-                <endpoint>https://{{ .Values.s3.endpoint }}/{{ .Values.s3.bucket }}/clickhouse/</endpoint>
+                <endpoint>{{ .Values.s3.endpoint }}/{{ .Values.s3.bucket }}/clickhouse/</endpoint>
                 <access_key_id from_env="S3_ACCESS_KEY_ID"/>
                 <secret_access_key from_env="S3_SECRET_ACCESS_KEY"/>
                 <region>{{ .Values.s3.region }}</region>

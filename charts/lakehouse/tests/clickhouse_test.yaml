@@ -31,14 +31,17 @@ tests:
           path: spec.configuration.clusters[0].layout.replicasCount
           value: 1
 
-  - it: should reference password from env var
+  - it: should use password_sha256_hex for user authentication
     template: templates/clickhouse-installation.yaml
+    set:
+      clickhouse:
+        password: testpassword
     asserts:
       - exists:
-          path: spec.configuration.users["vardis/password_env_name"]
+          path: spec.configuration.users["vardis/password_sha256_hex"]
       - equal:
-          path: spec.configuration.users["vardis/password_env_name"]
-          value: CLICKHOUSE_PASSWORD
+          path: spec.configuration.users["vardis/password_sha256_hex"]
+          value: 9f735e0df9a1ddc702bf0a1a7b83033f9f7153a00c29de82cedadc9957289b05
 
   - it: should set memory cap
     template: templates/clickhouse-installation.yaml

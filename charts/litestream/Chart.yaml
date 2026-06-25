@@ -2,4 +2,4 @@ apiVersion: v2
 name: litestream
 description: Litestream library for SQLite to S3 replication
 type: library
-version: 1.0.0
+version: 1.0.1

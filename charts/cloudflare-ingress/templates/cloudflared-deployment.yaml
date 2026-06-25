@@ -28,6 +28,7 @@ spec:
             - --config
             - /etc/cloudflared/config.yaml
             {{- end }}
+            - run
           env:
             - name: TUNNEL_TOKEN
               valueFrom:

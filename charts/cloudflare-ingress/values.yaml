@@ -19,7 +19,6 @@ cloudflared:
   args:
     - tunnel
     - --no-autoupdate
-    - run
   livenessProbe:
     httpGet:
       path: /ready

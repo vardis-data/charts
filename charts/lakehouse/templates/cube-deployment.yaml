@@ -26,8 +26,17 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.clickhouse.databases }}
       initContainers:
+        - name: copy-model
+          image: busybox:1.37
+          command: ['sh', '-c', 'cp /model-src/* /cube/model/']
+          volumeMounts:
+            - name: model-src
+              mountPath: /model-src
+              readOnly: true
+            - name: model
+              mountPath: /cube/model
+        {{- if .Values.clickhouse.databases }}
         - name: init-databases
           image: "{{ .Values.clickhouse.image.repository }}:{{ .Values.clickhouse.image.tag }}"
           imagePullPolicy: {{ .Values.clickhouse.image.pullPolicy }}
@@ -51,7 +60,7 @@ spec:
                 echo "Waiting for ClickHouse to be ready..."; sleep 3;
               done
               {{- end }}
-      {{- end }}
+        {{- end }}
       containers:
         - name: cube
           image: "{{ .Values.cube.image.repository }}:{{ .Values.cube.image.tag }}"
@@ -137,7 +146,9 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 5
       volumes:
-        - name: model
+        - name: model-src
           configMap:
             name: {{ include "lakehouse.fullname" . }}-cube-model
+        - name: model
+          emptyDir: {}
 {{- end }}

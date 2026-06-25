@@ -45,10 +45,11 @@ tests:
             name: CUBEJS_DB_HOST
             value: clickhouse-RELEASE-NAME-lakehouse
 
-  - it: should have no initContainers by default
+  - it: should always have copy-model initContainer
     asserts:
-      - notExists:
-          path: spec.template.spec.initContainers
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: copy-model
 
   - it: should render init-databases container when databases are set
     set:
@@ -58,7 +59,7 @@ tests:
           - vardis
     asserts:
       - equal:
-          path: spec.template.spec.initContainers[0].name
+          path: spec.template.spec.initContainers[1].name
           value: init-databases
 
   - it: should use clickhouse-server image for init container
@@ -68,7 +69,7 @@ tests:
           - prod
     asserts:
       - matchRegex:
-          path: spec.template.spec.initContainers[0].image
+          path: spec.template.spec.initContainers[1].image
           pattern: clickhouse/clickhouse-server
 
   - it: should pass clickhouse password to init container
@@ -78,7 +79,7 @@ tests:
           - prod
     asserts:
       - contains:
-          path: spec.template.spec.initContainers[0].env
+          path: spec.template.spec.initContainers[1].env
           content:
             name: CLICKHOUSE_PASSWORD
             valueFrom:

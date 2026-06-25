@@ -1,0 +1,3 @@
+{{- include "litestream.secret" $ }}
+---
+{{- include "litestream.configmap" $ }}

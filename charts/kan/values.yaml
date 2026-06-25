@@ -27,6 +27,8 @@ litestream:
     repository: litestream/litestream
     # renovate: datasource=docker depName=litestream/litestream
     tag: "0.5"
+  dbPath: /data/db.sqlite3
+  secretName: ""
   s3:
     endpoint: ""
     bucket: ""

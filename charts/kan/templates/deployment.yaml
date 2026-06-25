@@ -18,34 +18,10 @@ spec:
         reloader.stakater.com/auto: "true"
       {{- end }}
     spec:
-      {{- if .Values.litestream.enabled }}
+      {{- if include "litestream.enabled" . }}
       initContainers:
-        - name: litestream-restore
-          image: "{{ .Values.litestream.image.repository }}:{{ .Values.litestream.image.tag }}"
-          args:
-            - restore
-            - -if-replica-exists
-            - -config
-            - /etc/litestream.yml
-            - {{ .Values.sqlite.path }}
-          env:
-            - name: LITESTREAM_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kan.secretName" . }}
-                  key: LITESTREAM_ACCESS_KEY_ID
-            - name: LITESTREAM_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kan.secretName" . }}
-                  key: LITESTREAM_SECRET_ACCESS_KEY
-          volumeMounts:
-            - name: data
-              mountPath: /data
-            - name: litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-      {{- end }}
+        - {{- include "litestream.initContainer" $ | nindent 10 }}
+    {{- end }}
       containers:
         - name: kan
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -124,43 +100,13 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-        {{- if .Values.litestream.enabled }}
-        - name: litestream
-          image: "{{ .Values.litestream.image.repository }}:{{ .Values.litestream.image.tag }}"
-          args:
-            - replicate
-            - -config
-            - /etc/litestream.yml
-          {{- with .Values.litestream.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          env:
-            - name: LITESTREAM_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kan.secretName" . }}
-                  key: LITESTREAM_ACCESS_KEY_ID
-            - name: LITESTREAM_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kan.secretName" . }}
-                  key: LITESTREAM_SECRET_ACCESS_KEY
-          volumeMounts:
-            - name: data
-              mountPath: /data
-            - name: litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
+        {{- if include "litestream.enabled" . }}
+        - {{- include "litestream.sidecar" $ | nindent 10 }}
         {{- end }}
       {{- if .Values.sqlite.enabled }}
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: {{ include "kan.fullname" . }}-data
-        {{- if .Values.litestream.enabled }}
-        - name: litestream-config
-          configMap:
-            name: {{ include "kan.fullname" . }}-litestream
-        {{- end }}
+        {{- include "litestream.volumes" $ | nindent 8 }}
       {{- end }}

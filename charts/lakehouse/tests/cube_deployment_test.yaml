@@ -61,7 +61,7 @@ tests:
           path: spec.template.spec.initContainers[0].name
           value: init-databases
 
-  - it: should use clickhouse-client image for init container
+  - it: should use clickhouse-server image for init container
     set:
       clickhouse:
         databases:
@@ -69,7 +69,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.initContainers[0].image
-          pattern: clickhouse/clickhouse-client
+          pattern: clickhouse/clickhouse-server
 
   - it: should pass clickhouse password to init container
     set:

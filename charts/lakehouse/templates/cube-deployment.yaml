@@ -29,7 +29,7 @@ spec:
       {{- if .Values.clickhouse.databases }}
       initContainers:
         - name: init-databases
-          image: "clickhouse/clickhouse-client:{{ .Values.clickhouse.image.tag }}"
+          image: "{{ .Values.clickhouse.image.repository }}:{{ .Values.clickhouse.image.tag }}"
           imagePullPolicy: {{ .Values.clickhouse.image.pullPolicy }}
           env:
             - name: CLICKHOUSE_PASSWORD

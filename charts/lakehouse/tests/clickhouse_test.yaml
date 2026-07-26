@@ -81,10 +81,10 @@ tests:
           pattern: "<hot_cold>"
       - matchRegex:
           path: spec.configuration.files["config.d/storage.xml"]
-          pattern: "<hot>.*<disk>default</disk>.*</hot>"
+          pattern: "(?s)<hot>.*<disk>default</disk>.*</hot>"
       - matchRegex:
           path: spec.configuration.files["config.d/storage.xml"]
-          pattern: "<cold>.*<disk>s3</disk>.*</cold>"
+          pattern: "(?s)<cold>.*<disk>s3</disk>.*</cold>"
 
   - it: should configure filesystem cache for s3 disk
     template: templates/clickhouse-installation.yaml

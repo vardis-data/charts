@@ -38,16 +38,23 @@ spec:
                 <secret_access_key from_env="S3_SECRET_ACCESS_KEY"/>
                 <region>{{ .Values.s3.region }}</region>
                 <use_environment_credentials>false</use_environment_credentials>
+                <data_cache_enabled>1</data_cache_enabled>
+                <data_cache_path>/tmp/clickhouse-data-cache/</data_cache_path>
+                <data_cache_max_size>{{ .Values.clickhouse.storage.dataCacheMaxSize }}</data_cache_max_size>
               </s3>
             </disks>
             <policies>
-              <s3_only>
+              <hot_cold>
                 <volumes>
-                  <main>
+                  <hot>
+                    <disk>default</disk>
+                  </hot>
+                  <cold>
                     <disk>s3</disk>
-                  </main>
+                  </cold>
                 </volumes>
-              </s3_only>
+                <move_factor>{{ .Values.clickhouse.storage.moveFactor }}</move_factor>
+              </hot_cold>
             </policies>
           </storage_configuration>
         </clickhouse>

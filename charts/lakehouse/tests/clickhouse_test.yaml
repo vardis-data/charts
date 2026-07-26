@@ -68,6 +68,57 @@ tests:
           path: spec.configuration.files["config.d/storage.xml"]
           pattern: "vardis-datalake"
 
+  - it: should configure hot_cold storage policy
+    template: templates/clickhouse-installation.yaml
+    set:
+      s3:
+        endpoint: nbg1.your-objectstorage.com
+        bucket: vardis-datalake
+        region: nbg1
+    asserts:
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "<hot_cold>"
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "<hot>.*<disk>default</disk>.*</hot>"
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "<cold>.*<disk>s3</disk>.*</cold>"
+
+  - it: should configure filesystem cache for s3 disk
+    template: templates/clickhouse-installation.yaml
+    set:
+      s3:
+        endpoint: nbg1.your-objectstorage.com
+        bucket: vardis-datalake
+        region: nbg1
+    asserts:
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "<data_cache_enabled>1</data_cache_enabled>"
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "<data_cache_path>/tmp/clickhouse-data-cache/</data_cache_path>"
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "<data_cache_max_size>10737418240</data_cache_max_size>"
+
+  - it: should configure move_factor for hot_cold policy
+    template: templates/clickhouse-installation.yaml
+    set:
+      s3:
+        endpoint: nbg1.your-objectstorage.com
+        bucket: vardis-datalake
+        region: nbg1
+      clickhouse:
+        storage:
+          moveFactor: "0.2"
+    asserts:
+      - matchRegex:
+          path: spec.configuration.files["config.d/storage.xml"]
+          pattern: "<move_factor>0.2</move_factor>"
+
   - it: should not render when clickhouse is disabled
     template: templates/clickhouse-installation.yaml
     set:

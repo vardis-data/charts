@@ -23,9 +23,15 @@ clickhouse:
   # -- Hard memory cap in bytes (default: 12GB = 12884901888)
   maxServerMemoryUsage: "12884901888"
   persistence:
-    # -- Local PVC size for metadata and merge tmp (data lives on S3)
+    # -- Local PVC size for hot tier (data spills to S3 when near capacity)
     size: 20Gi
     storageClass: ""
+  # -- Hot/cold storage policy configuration
+  storage:
+    # -- Fraction of hot volume capacity that triggers spill to cold (0.1 = spill when 90% full)
+    moveFactor: "0.1"
+    # -- Filesystem cache size for S3 reads (10GB default)
+    dataCacheMaxSize: "10737418240"
   resources:
     requests:
       cpu: 500m

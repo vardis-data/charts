@@ -1,17 +1,8 @@
-{
-  pkgs,
-  inputs,
-  ...
-}:
+{ inputs, ... }:
 {
   imports = [ inputs.flakes.devenvModules.default ];
 
   name = "vardis/charts";
-
-  packages = with pkgs; [
-    helm
-    just
-  ];
 
   languages = {
     helm = {

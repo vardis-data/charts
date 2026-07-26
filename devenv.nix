@@ -18,10 +18,13 @@ in
     just
   ];
 
-  languages.python = {
-    enable = true;
-    version = "3.14";
-    uv.enable = true;
+  languages = {
+    helm.enable = true;
+    python = {
+      enable = true;
+      version = "3.14";
+      uv.enable = true;
+    };
   };
 
   scripts = {
@@ -38,18 +41,8 @@ in
   git-hooks.hooks = {
     shellcheck.enable = true;
     shfmt.enable = true;
-    yamlfmt = {
-      enable = true;
-      name = "Format YAML";
-      entry = "${pkgs.yq-go}/bin/yq eval -i .";
-      files = "(Chart|values|ct)\\.yaml$";
-      language = "system";
-      pass_filenames = true;
-    };
-    yamllint = {
-      enable = true;
-      excludes = [ "templates" ];
-    };
+    yamlfmt.enable = true;
+    yamllint.enable = true;
     helm-lint = {
       enable = true;
       name = "helm lint";

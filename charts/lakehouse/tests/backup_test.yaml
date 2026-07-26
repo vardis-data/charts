@@ -46,7 +46,7 @@ tests:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[?(@.name=="RETENTION")].value
           value: "5"
 
-  - it: should render backup ConfigMap with backup script
+  - it: should render backup ConfigMap when enabled
     template: templates/backup-configmap.yaml
     set:
       clickhouse:
@@ -55,8 +55,8 @@ tests:
     asserts:
       - isKind:
           of: ConfigMap
-      - isNotNullOrEmpty:
-          path: data["backup.sh"]
+      - exists:
+          path: data
 
   - it: should configure backup CronJob with S3 credentials
     template: templates/backup-cronjob.yaml

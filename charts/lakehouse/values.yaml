@@ -22,6 +22,16 @@ clickhouse:
   databases: []
   # -- Hard memory cap in bytes (default: 12GB = 12884901888)
   maxServerMemoryUsage: "12884901888"
+  # -- Backup configuration using native ClickHouse BACKUP commands
+  backup:
+    # -- Enable backup CronJobs
+    enabled: true
+    # -- Cron schedule for backups (default: hourly)
+    schedule: "0 * * * *"
+    # -- Cron schedule for pruning old backups (default: daily at 01:00)
+    pruneSchedule: "0 1 * * *"
+    # -- Number of backup chains to retain (each chain = 1 base + up to 23 incrementals)
+    retention: 3
   persistence:
     # -- Local PVC size for hot tier (data spills to S3 when near capacity)
     size: 20Gi

@@ -1,0 +1,61 @@
+{{- if .Values.clickhouse.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-backup-prune
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  schedule: "{{ .Values.clickhouse.backup.pruneSchedule }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "lakehouse.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: backup-prune
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: prune
+              image: minio/mc:latest
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -e
+                  mc alias set local "{{ .Values.s3.endpoint }}" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
+                  
+                  BUCKET="{{ .Values.s3.bucket }}"
+                  PREFIX="clickhouse/backups/"
+                  RETENTION={{ .Values.clickhouse.backup.retention }}
+                  
+                  # List date directories (format: YYYY-MM-DD/)
+                  DIRS=$(mc ls "local/$BUCKET/$PREFIX" 2>/dev/null | awk '{print $NF}' | sed 's|/$||' | sort -r)
+                  
+                  COUNT=0
+                  for dir in $DIRS; do
+                    COUNT=$((COUNT + 1))
+                    if [ $COUNT -gt $RETENTION ]; then
+                      echo "Deleting old backup chain: $dir"
+                      mc rm --recursive --force "local/$BUCKET/$PREFIX$dir/"
+                    else
+                      echo "Keeping backup chain: $dir"
+                    fi
+                  done
+                  
+                  echo "Prune complete. Kept $((COUNT < RETENTION ? COUNT : RETENTION)) chains."
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "lakehouse.s3.secretName" . }}
+                      key: {{ include "lakehouse.s3.accessKeyIdKey" . }}
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "lakehouse.s3.secretName" . }}
+                      key: {{ include "lakehouse.s3.secretAccessKeyKey" . }}
+{{- end }}

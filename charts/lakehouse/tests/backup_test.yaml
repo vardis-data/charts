@@ -1,0 +1,71 @@
+suite: backup tests
+templates:
+  - templates/backup-configmap.yaml
+  - templates/backup-cronjob.yaml
+  - templates/backup-prune-cronjob.yaml
+tests:
+  - it: should not render backup resources when disabled
+    template: templates/backup-configmap.yaml
+    set:
+      clickhouse:
+        backup:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render backup CronJob when enabled
+    template: templates/backup-cronjob.yaml
+    set:
+      clickhouse:
+        backup:
+          enabled: true
+          schedule: "0 */2 * * *"
+    asserts:
+      - isKind:
+          of: CronJob
+      - equal:
+          path: spec.schedule
+          value: "0 */2 * * *"
+
+  - it: should render prune CronJob with correct retention
+    template: templates/backup-prune-cronjob.yaml
+    set:
+      clickhouse:
+        backup:
+          enabled: true
+          pruneSchedule: "0 2 * * *"
+          retention: 5
+    asserts:
+      - isKind:
+          of: CronJob
+      - equal:
+          path: spec.schedule
+          value: "0 2 * * *"
+      - matchRegex:
+          path: spec.jobTemplate.spec.template.spec.containers[0].args[0]
+          pattern: "RETENTION=5"
+
+  - it: should render backup ConfigMap with backup script
+    template: templates/backup-configmap.yaml
+    set:
+      clickhouse:
+        backup:
+          enabled: true
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - isNotNullOrEmpty:
+          path: data["backup.sh"]
+
+  - it: should configure backup CronJob with S3 credentials
+    template: templates/backup-cronjob.yaml
+    set:
+      clickhouse:
+        backup:
+          enabled: true
+    asserts:
+      - isNotNullOrEmpty:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[?(@.name=="AWS_ACCESS_KEY_ID")]
+      - isNotNullOrEmpty:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[?(@.name=="AWS_SECRET_ACCESS_KEY")]

@@ -1,0 +1,50 @@
+{{- if .Values.clickhouse.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-backup
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  schedule: "{{ .Values.clickhouse.backup.schedule }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "lakehouse.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: "{{ .Values.clickhouse.image.repository }}:{{ .Values.clickhouse.image.tag }}"
+              command: ["/bin/bash", "/scripts/backup.sh"]
+              env:
+                - name: CLICKHOUSE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "lakehouse.clickhouse.secretName" . }}
+                      key: {{ include "lakehouse.clickhouse.secretKey" . }}
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "lakehouse.s3.secretName" . }}
+                      key: {{ include "lakehouse.s3.accessKeyIdKey" . }}
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "lakehouse.s3.secretName" . }}
+                      key: {{ include "lakehouse.s3.secretAccessKeyKey" . }}
+              volumeMounts:
+                - name: backup-script
+                  mountPath: /scripts
+          volumes:
+            - name: backup-script
+              configMap:
+                name: {{ include "lakehouse.fullname" . }}-backup-script
+                defaultMode: 0755
+{{- end }}

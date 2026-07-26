@@ -1,0 +1,49 @@
+{{- if .Values.clickhouse.backup.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "lakehouse.fullname" . }}-backup-script
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+data:
+  backup.sh: |
+    #!/bin/bash
+    set -e
+    
+    CH_HOST="{{ include "lakehouse.fullname" . }}"
+    CH_PORT="9000"
+    CH_USER="{{ .Values.clickhouse.user }}"
+    CH_PASSWORD="$CLICKHOUSE_PASSWORD"
+    S3_ENDPOINT="{{ .Values.s3.endpoint }}"
+    S3_BUCKET="{{ .Values.s3.bucket }}"
+    S3_FOLDER="clickhouse/backups"
+    DATABASES="{{ .Values.clickhouse.database }}"
+    
+    DATE=$(date +%Y-%m-%d)
+    HOUR=$(date +%H)
+    
+    BASE_PATH="$S3_FOLDER/$DATE/base"
+    INCR_PATH="$S3_FOLDER/$DATE/$HOUR"
+    
+    # Hour 0 always creates a base backup; other hours create incrementals
+    if [ "$HOUR" = "00" ]; then
+        echo "Creating base backup for $DATE"
+        clickhouse-client \
+            --host "$CH_HOST" \
+            --port "$CH_PORT" \
+            --user "$CH_USER" \
+            --password "$CH_PASSWORD" \
+            --query "BACKUP DATABASE $DATABASES TO S3('https://$S3_ENDPOINT/$S3_BUCKET/$BASE_PATH')"
+        echo "Base backup complete"
+    else
+        LATEST_BASE="https://$S3_ENDPOINT/$S3_BUCKET/$BASE_PATH"
+        echo "Creating incremental backup for $HOUR (base: $LATEST_BASE)"
+        clickhouse-client \
+            --host "$CH_HOST" \
+            --port "$CH_PORT" \
+            --user "$CH_USER" \
+            --password "$CH_PASSWORD" \
+            --query "BACKUP DATABASE $DATABASES TO S3('https://$S3_ENDPOINT/$S3_BUCKET/$INCR_PATH') SETTINGS base_backup = S3('$LATEST_BASE')"
+        echo "Incremental backup complete"
+    fi
+{{- end }}

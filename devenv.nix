@@ -1,7 +1,5 @@
-{ inputs, ... }:
+{ pkgs, ... }:
 {
-  imports = [ inputs.flakes.devenvModules.default ];
-
   name = "vardis/charts";
 
   languages = {
@@ -32,6 +30,7 @@
     shfmt.enable = true;
     yamlfmt.enable = true;
     yamllint.enable = true;
+    ripsecrets.enable = true;
     helm-lint = {
       enable = true;
       name = "helm lint";

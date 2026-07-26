@@ -3,3 +3,4 @@
 /.devenv
 .devenv/
 __pycache__
+.pre-commit-config.yaml

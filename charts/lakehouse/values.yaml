@@ -17,7 +17,7 @@ clickhouse:
   # -- Reference an existing Secret for the ClickHouse password
   existingSecret:
     name: ""
-    key: "password"
+    key: password
   # -- Databases to create on first install (init container)
   databases: []
   # -- Hard memory cap in bytes (default: 12GB = 12884901888)
@@ -27,9 +27,9 @@ clickhouse:
     # -- Enable backup CronJobs
     enabled: true
     # -- Cron schedule for backups (default: hourly)
-    schedule: "0 * * * *"
+    schedule: 0 * * * *
     # -- Cron schedule for pruning old backups (default: daily at 01:00)
-    pruneSchedule: "0 1 * * *"
+    pruneSchedule: 0 1 * * *
     # -- Number of backup chains to retain (each chain = 1 base + up to 23 incrementals)
     retention: 3
   persistence:
@@ -49,7 +49,6 @@ clickhouse:
     limits:
       cpu: 4000m
       memory: 12Gi
-
 # -- S3-compatible object storage used as ClickHouse S3 disk.
 s3:
   # -- S3 endpoint hostname (e.g. "nbg1.your-objectstorage.com")
@@ -66,9 +65,8 @@ s3:
   existingSecret:
     name: ""
     keys:
-      accessKeyId: "s3AccessKeyId"
-      secretAccessKey: "s3SecretAccessKey"
-
+      accessKeyId: s3AccessKeyId
+      secretAccessKey: s3SecretAccessKey
 # -- Cube: semantic layer with REST API (:4000) and SQL API (:15432).
 # Connects to ClickHouse as its database backend.
 cube:
@@ -76,7 +74,7 @@ cube:
   image:
     repository: cubejs/cube
     # renovate: datasource=docker depName=cubejs/cube
-    tag: "v0.36.11"
+    tag: v0.36.11
     pullPolicy: IfNotPresent
   replicas: 1
   jwt:
@@ -110,13 +108,10 @@ cube:
     limits:
       cpu: 1000m
       memory: 1Gi
-
 # -- Optional image pull secrets for private registries
 imagePullSecrets: []
-
 # -- Extra labels applied to all resources
 commonLabels: {}
-
 # -- Stakater Reloader: auto-restart pods on ConfigMap/Secret changes
 reloader:
   enabled: true

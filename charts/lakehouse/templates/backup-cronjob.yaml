@@ -24,6 +24,16 @@ spec:
               image: "{{ .Values.clickhouse.image.repository }}:{{ .Values.clickhouse.image.tag }}"
               command: ["/bin/bash", "/scripts/backup.sh"]
               env:
+                - name: CLICKHOUSE_HOST
+                  value: "{{ include "lakehouse.fullname" . }}"
+                - name: CLICKHOUSE_USER
+                  value: "{{ .Values.clickhouse.user }}"
+                - name: CLICKHOUSE_DATABASES
+                  value: "{{ .Values.clickhouse.database }}"
+                - name: S3_ENDPOINT
+                  value: "{{ .Values.s3.endpoint }}"
+                - name: S3_BUCKET
+                  value: "{{ .Values.s3.bucket }}"
                 - name: CLICKHOUSE_PASSWORD
                   valueFrom:
                     secretKeyRef:

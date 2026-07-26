@@ -42,9 +42,9 @@ tests:
       - equal:
           path: spec.schedule
           value: "0 2 * * *"
-      - matchRegex:
-          path: spec.jobTemplate.spec.template.spec.containers[0].args[0]
-          pattern: "RETENTION=5"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[?(@.name=="RETENTION")].value
+          value: "5"
 
   - it: should render backup ConfigMap with backup script
     template: templates/backup-configmap.yaml

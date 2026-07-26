@@ -22,32 +22,14 @@ spec:
           containers:
             - name: prune
               image: minio/mc:latest
-              command: ["/bin/sh", "-c"]
-              args:
-                - |
-                  set -e
-                  mc alias set local "{{ .Values.s3.endpoint }}" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
-                  
-                  BUCKET="{{ .Values.s3.bucket }}"
-                  PREFIX="clickhouse/backups/"
-                  RETENTION={{ .Values.clickhouse.backup.retention }}
-                  
-                  # List date directories (format: YYYY-MM-DD/)
-                  DIRS=$(mc ls "local/$BUCKET/$PREFIX" 2>/dev/null | awk '{print $NF}' | sed 's|/$||' | sort -r)
-                  
-                  COUNT=0
-                  for dir in $DIRS; do
-                    COUNT=$((COUNT + 1))
-                    if [ $COUNT -gt $RETENTION ]; then
-                      echo "Deleting old backup chain: $dir"
-                      mc rm --recursive --force "local/$BUCKET/$PREFIX$dir/"
-                    else
-                      echo "Keeping backup chain: $dir"
-                    fi
-                  done
-                  
-                  echo "Prune complete. Kept $((COUNT < RETENTION ? COUNT : RETENTION)) chains."
+              command: ["/bin/sh", "/scripts/prune.sh"]
               env:
+                - name: S3_ENDPOINT
+                  value: "{{ .Values.s3.endpoint }}"
+                - name: S3_BUCKET
+                  value: "{{ .Values.s3.bucket }}"
+                - name: RETENTION
+                  value: "{{ .Values.clickhouse.backup.retention }}"
                 - name: AWS_ACCESS_KEY_ID
                   valueFrom:
                     secretKeyRef:
@@ -58,4 +40,12 @@ spec:
                     secretKeyRef:
                       name: {{ include "lakehouse.s3.secretName" . }}
                       key: {{ include "lakehouse.s3.secretAccessKeyKey" . }}
+              volumeMounts:
+                - name: backup-script
+                  mountPath: /scripts
+          volumes:
+            - name: backup-script
+              configMap:
+                name: {{ include "lakehouse.fullname" . }}-backup-script
+                defaultMode: 0755
 {{- end }}

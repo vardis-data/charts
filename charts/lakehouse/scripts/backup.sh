@@ -3,19 +3,19 @@ set -euo pipefail
 
 date_str="$(date +%Y-%m-%d)"
 hour="$(date +%H)"
-s3_base="https://${S3_ENDPOINT}/${S3_BUCKET}/clickhouse/backups/${date_str}/base"
-s3_incr="https://${S3_ENDPOINT}/${S3_BUCKET}/clickhouse/backups/${date_str}/${hour}"
+s3_base="${S3_ENDPOINT}/${S3_BUCKET}/clickhouse/backups/${date_str}/base"
+s3_incr="${S3_ENDPOINT}/${S3_BUCKET}/clickhouse/backups/${date_str}/${hour}"
 
 ch_client() {
 	clickhouse-client \
-		--host "${CLICKHOUSE_HOST}" \
+		--host "$CLICKHOUSE_HOST" \
 		--port 9000 \
-		--user "${CLICKHOUSE_USER}" \
-		--password "${CLICKHOUSE_PASSWORD}" \
+		--user "$CLICKHOUSE_USER" \
+		--password "$CLICKHOUSE_PASSWORD" \
 		"$@"
 }
 
-if [ "${hour}" = "00" ]; then
+if [ "$hour" = "00" ]; then
 	echo "Creating base backup for ${date_str}"
 	ch_client --query "BACKUP DATABASE ${CLICKHOUSE_DATABASES} TO S3('${s3_base}')"
 	echo "Base backup complete"

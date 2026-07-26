@@ -3,11 +3,6 @@
   inputs,
   ...
 }:
-let
-  helm = pkgs.wrapHelm pkgs.kubernetes-helm {
-    plugins = [ pkgs.kubernetes-helmPlugins.helm-unittest ];
-  };
-in
 {
   imports = [ inputs.flakes.devenvModules.default ];
 
@@ -19,7 +14,10 @@ in
   ];
 
   languages = {
-    helm.enable = true;
+    helm = {
+      enable = true;
+      plugins = [ "helm-unittest" ];
+    };
     python = {
       enable = true;
       version = "3.14";
@@ -46,32 +44,18 @@ in
     helm-lint = {
       enable = true;
       name = "helm lint";
-      entry = toString (
-        pkgs.writeShellScript "helm-lint-on-change" ''
-          set -e
-          for chart in $(printf '%s\n' "$@" | cut -d/ -f1-2 | sort -u); do
-            ${helm}/bin/helm lint "$chart"
-          done
-        ''
-      );
+      entry = "helm lint charts/*";
       files = "^charts/";
       language = "system";
-      pass_filenames = true;
+      pass_filenames = false;
     };
     helm-unittest = {
       enable = true;
       name = "helm unittest";
-      entry = toString (
-        pkgs.writeShellScript "helm-unittest-on-change" ''
-          set -e
-          for chart in $(printf '%s\n' "$@" | cut -d/ -f1-2 | sort -u); do
-            ${helm}/bin/helm unittest "$chart"
-          done
-        ''
-      );
+      entry = "helm unittest charts/*";
       files = "^charts/";
       language = "system";
-      pass_filenames = true;
+      pass_filenames = false;
     };
   };
 }
